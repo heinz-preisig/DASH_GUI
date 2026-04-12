@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RDFLib Test</title>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@pyscript/core@0.5.0/dist/core.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@pyscript/core@0.5.0/dist/core.css">
+</head>
+<body>
+    <h1>RDFLib Test</h1>
+    <div id="output">Loading RDFLib...</div>
+    
+    <py-config>
+    packages = ["rdflib"]
+    </py-config>
+
+    <py-script>
+        import js
+        print("Testing RDFLib import...")
+        
+        try:
+            from rdflib import Graph, Namespace, Literal, URIRef
+            print("RDFLib imported successfully!")
+            
+            # Test basic RDF functionality
+            g = Graph()
+            EX = Namespace("http://example.org/")
+            
+            # Add some triples
+            g.add((EX.person1, EX.name, Literal("John")))
+            g.add((EX.person1, EX.email, Literal("john@example.com")))
+            
+            # Serialize to turtle
+            turtle_data = g.serialize(format="turtle")
+            
+            output = js.document.getElementById("output")
+            output.innerText = "RDFLib working! Generated RDF:\n\n" + turtle_data
+            
+            print("RDFLib test completed successfully!")
+            
+        except Exception as e:
+            print(f"Error: {e}")
+            output = js.document.getElementById("output")
+            output.innerText = f"Error: {e}"
+            output.style.color = "red"
+    </py-script>
+</body>
+</html>
