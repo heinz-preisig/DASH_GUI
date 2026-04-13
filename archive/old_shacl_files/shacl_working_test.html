@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SHACL Working Test</title>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@pyscript/core@0.5.0/dist/core.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@pyscript/core@0.5.0/dist/core.css">
+</head>
+<body>
+    <h1>SHACL Working Test</h1>
+    <div id="output">Loading SHACL...</div>
+    
+    <py-config>
+    packages = ["rdflib"]
+    </py-config>
+
+    <py-script>
+        import js
+        print("Testing SHACL with different approach...")
+        
+        try:
+            from rdflib import Graph, Namespace, Literal, URIRef
+            print("RDFLib imported successfully!")
+            
+            # Namespaces
+            SH = Namespace("http://www.w3.org/ns/shacl#")
+            EX = Namespace("http://example.org/")
+            
+            # Create SHACL programmatically instead of parsing text
+            g = Graph()
+            
+            # Add prefixes
+            g.bind("sh", SH)
+            g.bind("ex", EX)
+            
+            # Create Person shape programmatically
+            person_shape = EX.PersonShape
+            g.add((person_shape, URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), SH.NodeShape))
+            g.add((person_shape, SH.targetClass, EX.Person))
+            
+            # Create property shape
+            name_prop = EX.fullNameProperty
+            g.add((name_prop, URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), SH.PropertyShape))
+            g.add((name_prop, SH.path, EX.fullName))
+            g.add((name_prop, SH.name, Literal("Full Name")))
+            g.add((name_prop, SH.datatype, URIRef("http://www.w3.org/2001/XMLSchema#string")))
+            g.add((name_prop, SH.minCount, Literal(1)))
+            
+            # Link property to shape
+            g.add((person_shape, SH.property, name_prop))
+            
+            print("SHACL graph created successfully!")
+            
+            # Test serialization
+            turtle_data = g.serialize(format="turtle")
+            print(f"Serialized SHACL: {turtle_data[:100]}...")
+            
+            # Test querying
+            shapes = list(g.subjects(SH.NodeShape))
+            print(f"Found {len(shapes)} node shapes")
+            
+            output = js.document.getElementById("output")
+            result_text = f"SHACL creation successful!\n\n"
+            result_text += f"Found {len(shapes)} shapes:\n"
+            
+            for shape in shapes:
+                shape_name = str(shape).split("/")[-1]
+                result_text += f"- {shape_name}\n"
+                
+                # Get properties
+                properties = list(g.objects(shape, SH.property))
+                result_text += f"  Properties: {len(properties)}\n"
+                
+                for prop in properties:
+                    name = g.value(prop, SH.name)
+                    path = g.value(prop, SH.path)
+                    result_text += f"    - {name} ({path})\n"
+            
+            result_text += f"\nGenerated SHACL:\n{turtle_data}"
+            output.innerText = result_text
+            print("SHACL test completed successfully!")
+            
+        except Exception as e:
+            print(f"Error: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            output = js.document.getElementById("output")
+            output.innerText = f"Error: {e}"
+            output.style.color = "red"
+    </py-script>
+</body>
+</html>

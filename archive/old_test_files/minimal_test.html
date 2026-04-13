@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Minimal PyScript Test</title>
+    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+</head>
+<body>
+    <h1>Minimal PyScript Test</h1>
+    <div id="output">Loading...</div>
+    
+    <py-script>
+        output = Element("output")
+        output.write("Hello from PyScript!")
+        print("PyScript is working!")
+    </py-script>
+</body>
+</html>

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SHACL to DASH Generator</title>
+    <!-- 
+    SHACL TO DASH BROWSER GENERATOR
+    
+    This system:
+    1. Generates SHACL shapes from Python components
+    2. Maps SHACL to DASH editors in the browser
+    3. Captures user input as RDF data
+    4. Stores RDF data for knowledge graph creation
+    
+    Usage:
+    1. cd /home/heinz/1_Gits/DASH_GUI
+    2. python3 -m http.server 8000
+    3. http://localhost:8000/shacl_to_dash.html
+    -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@pyscript/core@0.5.0/dist/core.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@pyscript/core@0.5.0/dist/core.css">
+</head>
+<body style="font-family: sans-serif; padding: 20px; background-color: #f4f4f9;">
+
+    <h2>SHACL to DASH Knowledge Graph Builder</h2>
+    
+    <div style="display: flex; gap: 20px;">
+        <!-- Left Panel: Domain Selection -->
+        <div style="flex: 1; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <h3>Domain Framework</h3>
+            <select id="domain-select" style="width: 100%; padding: 8px; margin: 10px 0;">
+                <option value="">Select Domain...</option>
+                <option value="research">Research Domain</option>
+                <option value="medical">Medical Domain</option>
+                <option value="basic">Basic Components</option>
+            </select>
+            <button id="generate-btn" style="width: 100%; padding: 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Generate SHACL Form</button>
+            
+            <div style="margin-top: 20px;">
+                <h4>Generated SHACL:</h4>
+                <textarea id="shacl-display" style="width: 100%; height: 200px; font-family: monospace; font-size: 12px;" readonly></textarea>
+            </div>
+        </div>
+        
+        <!-- Right Panel: Dynamic Form -->
+        <div style="flex: 2; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <h3>Data Entry Form</h3>
+            <div id="form-container">
+                <p>Select a domain and click "Generate SHACL Form" to begin.</p>
+            </div>
+            <button id="submit-data-btn" style="margin-top: 20px; padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; display: none;">Save RDF Data</button>
+            
+            <div style="margin-top: 20px;">
+                <h4>RDF Output:</h4>
+                <textarea id="rdf-output" style="width: 100%; height: 150px; font-family: monospace; font-size: 12px;" readonly></textarea>
+            </div>
+        </div>
+    </div>
+
+    <py-config>
+    packages = ["rdflib"]
+    </py-config>
+
+    <py-script>
+        import js
+        from pyodide.ffi import create_proxy
+        from rdflib import Graph, Namespace, Literal, URIRef
+        import json
+        
+        # Namespaces
+        SH = Namespace("http://www.w3.org/ns/shacl#")
+        DASH = Namespace("http://datashapes.org/dash#")
+        EX = Namespace("http://example.org/")
+        XSD = Namespace("http://www.w3.org/2001/XMLSchema#")
+        
+        # Global variables
+        current_shacl = ""
+        current_data_graph = Graph()
+        
+        def generate_basic_person_shacl():
+            """Generate basic person SHACL shapes"""
+            shacl_data = """
+            @prefix sh: <http://www.w3.org/ns/shacl#> .
+            @prefix dash: <http://datashapes.org/dash#> .
+            @prefix ex: <http://example.org/> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            
+            ex:PersonShape a sh:NodeShape ;
+                sh:targetClass ex:Person ;
+                sh:property [
+                    sh:path ex:fullName ;
+                    sh:name "Full Name" ;
+                    sh:datatype xsd:string ;
+                    sh:minCount 1 ;
+                ] ;
+                sh:property [
+                    sh:path ex:email ;
+                    sh:name "Email" ;
+                    sh:datatype xsd:string ;
+                ] ;
+                sh:property [
+                    sh:path ex:birthDate ;
+                    sh:name "Birth Date" ;
+                    sh:datatype xsd:date ;
+                ] .
+            """
+            return shacl_data
+        
+        def generate_research_domain_shacl():
+            """Generate research domain SHACL shapes"""
+            shacl_data = """
+            @prefix sh: <http://www.w3.org/ns/shacl#> .
+            @prefix dash: <http://datashapes.org/dash#> .
+            @prefix ex: <http://example.org/> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            
+            ex:ResearchProjectShape a sh:NodeShape ;
+                sh:targetClass ex:ResearchProject ;
+                sh:property [
+                    sh:path ex:projectTitle ;
+                    sh:name "Project Title" ;
+                    sh:datatype xsd:string ;
+                    sh:minCount 1 ;
+                ] ;
+                sh:property [
+                    sh:path ex:projectDescription ;
+                    sh:name "Description" ;
+                    sh:datatype xsd:string ;
+                    dash:editor dash:TextAreaEditor ;
+                ] ;
+                sh:property [
+                    sh:path ex:startDate ;
+                    sh:name "Start Date" ;
+                    sh:datatype xsd:date ;
+                ] ;
+                sh:property [
+                    sh:path ex:fundingAmount ;
+                    sh:name "Funding Amount" ;
+                    sh:datatype xsd:decimal ;
+                ] ;
+                sh:property [
+                    sh:path ex:researcher ;
+                    sh:name "Researcher" ;
+                    sh:class ex:Person ;
+                ] .
+                
+            ex:PersonShape a sh:NodeShape ;
+                sh:targetClass ex:Person ;
+                sh:property [
+                    sh:path ex:fullName ;
+                    sh:name "Full Name" ;
+                    sh:datatype xsd:string ;
+                    sh:minCount 1 ;
+                ] ;
+                sh:property [
+                    sh:path ex:email ;
+                    sh:name "Email" ;
+                    sh:datatype xsd:string ;
+                ] .
+            """
+            return shacl_data
+        
+        def generate_medical_domain_shacl():
+            """Generate medical domain SHACL shapes"""
+            shacl_data = """
+            @prefix sh: <http://www.w3.org/ns/shacl#> .
+            @prefix dash: <http://datashapes.org/dash#> .
+            @prefix ex: <http://example.org/> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            
+            ex:PatientShape a sh:NodeShape ;
+                sh:targetClass ex:Patient ;
+                sh:property [
+                    sh:path ex:patientId ;
+                    sh:name "Patient ID" ;
+                    sh:datatype xsd:string ;
+                    sh:minCount 1 ;
+                ] ;
+                sh:property [
+                    sh:path ex:fullName ;
+                    sh:name "Full Name" ;
+                    sh:datatype xsd:string ;
+                    sh:minCount 1 ;
+                ] ;
+                sh:property [
+                    sh:path ex:diagnosis ;
+                    sh:name "Diagnosis" ;
+                    sh:datatype xsd:string ;
+                    dash:editor dash:TextAreaEditor ;
+                ] ;
+                sh:property [
+                    sh:path ex:treatment ;
+                    sh:name "Treatment" ;
+                    sh:datatype xsd:string ;
+                    dash:editor dash:TextAreaEditor ;
+                ] .
+            """
+            return shacl_data
+        
+        def build_form_from_shacl(shacl_data):
+            """Build HTML form from SHACL shapes"""
+            global current_shacl, current_data_graph
+            
+            current_shacl = shacl_data
+            current_data_graph = Graph()
+            
+            # Parse SHACL
+            g = Graph().parse(data=shacl_data, format="turtle")
+            container = js.document.getElementById("form-container")
+            container.innerHTML = ""
+            
+            form_fields = {}
+            
+            # Build form for each node shape
+            for shape in g.subjects(SH.NodeShape):
+                shape_name = str(shape).split("/")[-1].replace("Shape", "")
+                
+                # Add shape header
+                header = js.document.createElement("h4")
+                header.innerText = shape_name
+                header.style.marginTop = "20px"
+                container.appendChild(header)
+                
+                # Add properties
+                for prop in g.objects(shape, SH.property):
+                    name = str(g.value(prop, SH.name))
+                    path = str(g.value(prop, SH.path))
+                    datatype = g.value(prop, SH.datatype)
+                    editor = g.value(prop, DASH.editor)
+                    min_count = g.value(prop, SH.minCount)
+                    
+                    # Create label
+                    label = js.document.createElement("label")
+                    label.innerText = name
+                    if min_count and int(str(min_count)) > 0:
+                        label.innerText += " *"
+                    label.style.display = "block"
+                    label.style.marginTop = "10px"
+                    label.style.fontWeight = "bold"
+                    container.appendChild(label)
+                    
+                    # Create input element
+                    if editor == DASH.TextAreaEditor:
+                        element = js.document.createElement("textarea")
+                    elif datatype and "date" in str(datatype):
+                        element = js.document.createElement("input")
+                        element.type = "date"
+                    elif datatype and "decimal" in str(datatype):
+                        element = js.document.createElement("input")
+                        element.type = "number"
+                        element.step = "0.01"
+                    else:
+                        element = js.document.createElement("input")
+                        element.type = "text"
+                    
+                    element.style.width = "95%"
+                    element.style.padding = "8px"
+                    element.style.border = "1px solid #ddd"
+                    element.style.borderRadius = "4px"
+                    element.id = f"field_{path.split('/')[-1]}"
+                    
+                    container.appendChild(element)
+                    form_fields[path] = element
+            
+            # Show submit button
+            submit_btn = js.document.getElementById("submit-data-btn")
+            submit_btn.style.display = "block"
+            
+            # Display SHACL in textarea
+            shacl_display = js.document.getElementById("shacl-display")
+            shacl_display.value = shacl_data
+            
+            return form_fields
+        
+        def handle_generate_click(event):
+            """Handle generate button click"""
+            domain_select = js.document.getElementById("domain-select")
+            selected_domain = domain_select.value
+            
+            if not selected_domain:
+                js.alert("Please select a domain first.")
+                return
+            
+            # Generate SHACL based on selection
+            if selected_domain == "basic":
+                shacl_data = generate_basic_person_shacl()
+            elif selected_domain == "research":
+                shacl_data = generate_research_domain_shacl()
+            elif selected_domain == "medical":
+                shacl_data = generate_medical_domain_shacl()
+            
+            # Build form
+            build_form_from_shacl(shacl_data)
+        
+        def handle_submit_click(event):
+            """Handle submit data button click"""
+            global current_data_graph
+            
+            # Collect form data and convert to RDF
+            g = Graph().parse(data=current_shacl, format="turtle")
+            
+            # Create a subject URI for the data
+            subject = EX[f"instance_{hash(current_shacl) % 10000}"]
+            
+            # Add type
+            for shape in g.subjects(SH.NodeShape):
+                target_class = g.value(shape, SH.targetClass)
+                if target_class:
+                    current_data_graph.add((subject, URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), target_class))
+            
+            # Add property values
+            for prop in g.subjects(SH.PropertyShape):
+                path = g.value(prop, SH.path)
+                if path:
+                    field_id = f"field_{str(path).split('/')[-1]}"
+                    element = js.document.getElementById(field_id)
+                    if element and element.value:
+                        literal_value = Literal(element.value)
+                        current_data_graph.add((subject, path, literal_value))
+            
+            # Display RDF output
+            rdf_output = js.document.getElementById("rdf-output")
+            rdf_output.value = current_data_graph.serialize(format="turtle")
+            
+            js.alert("RDF data saved successfully!")
+        
+        # Set up event handlers
+        generate_btn = js.document.getElementById("generate-btn")
+        submit_btn = js.document.getElementById("submit-data-btn")
+        
+        generate_btn.onclick = create_proxy(handle_generate_click)
+        submit_btn.onclick = create_proxy(handle_submit_click)
+    </py-script>
+</body>
+</html>

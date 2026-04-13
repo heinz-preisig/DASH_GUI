@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SHACL Parsing Test</title>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@pyscript/core@0.5.0/dist/core.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@pyscript/core@0.5.0/dist/core.css">
+</head>
+<body>
+    <h1>SHACL Parsing Test</h1>
+    <div id="output">Loading SHACL parsing...</div>
+    
+    <py-config>
+    packages = ["rdflib"]
+    </py-config>
+
+    <py-script>
+        import js
+        print("Testing SHACL parsing...")
+        
+        try:
+            from rdflib import Graph, Namespace, Literal, URIRef
+            print("RDFLib imported successfully!")
+            
+            # Namespaces
+            SH = Namespace("http://www.w3.org/ns/shacl#")
+            EX = Namespace("http://example.org/")
+            
+            # Simple SHACL data (built as string to avoid HTML parsing)
+            shacl_data = (
+                "@prefix sh: <http://www.w3.org/ns/shacl#> .\n"
+                "@prefix ex: <http://example.org/> .\n"
+                "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n\n"
+                "ex:PersonShape a sh:NodeShape ;\n"
+                "    sh:targetClass ex:Person ;\n"
+                "    sh:property [\n"
+                "        sh:path ex:fullName ;\n"
+                "        sh:name \"Full Name\" ;\n"
+                "        sh:datatype xsd:string ;\n"
+                "        sh:minCount 1 ;\n"
+                "    ] ."
+            )
+            
+            print("Parsing SHACL data...")
+            g = Graph().parse(data=shacl_data, format="turtle")
+            print("SHACL parsed successfully!")
+            
+            # Test SHACL querying
+            shapes = list(g.subjects(SH.NodeShape))
+            print(f"Found {len(shapes)} node shapes")
+            
+            output = js.document.getElementById("output")
+            result_text = f"SHACL parsing successful!\n\n"
+            result_text += f"Found {len(shapes)} shapes:\n"
+            
+            for shape in shapes:
+                shape_name = str(shape).split("/")[-1]
+                result_text += f"- {shape_name}\n"
+                
+                # Get properties
+                properties = list(g.objects(shape, SH.property))
+                result_text += f"  Properties: {len(properties)}\n"
+                
+                for prop in properties:
+                    name = g.value(prop, SH.name)
+                    path = g.value(prop, SH.path)
+                    result_text += f"    - {name} ({path})\n"
+            
+            output.innerText = result_text
+            print("SHACL parsing test completed successfully!")
+            
+        except Exception as e:
+            print(f"Error: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            output = js.document.getElementById("output")
+            output.innerText = f"Error: {e}"
+            output.style.color = "red"
+    </py-script>
+</body>
+</html>

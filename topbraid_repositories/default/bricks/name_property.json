@@ -1,0 +1,30 @@
+{
+  "brick_id": "name_property",
+  "name": "Name Property",
+  "description": "Name property with constraints",
+  "object_type": "PropertyShape",
+  "targets": [],
+  "properties": {
+    "path": "foaf:name",
+    "datatype": "xsd:string"
+  },
+  "constraints": [
+    {
+      "constraint_type": "MinLengthConstraintComponent",
+      "value": 1,
+      "parameters": {}
+    },
+    {
+      "constraint_type": "MaxLengthConstraintComponent",
+      "value": 100,
+      "parameters": {}
+    }
+  ],
+  "tags": [
+    "name",
+    "basic",
+    "text",
+    "common"
+  ],
+  "metadata": {}
+}

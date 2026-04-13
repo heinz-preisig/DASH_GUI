@@ -1,0 +1,21 @@
+<component name="SHACL_Brick_Generator" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+  <module name="SHACL_Brick_Generator" />
+  <option name="INTERPRETER_OPTIONS" value="" />
+  <option name="PARENT_ENVS" value="true" />
+  <envs>
+    <env name="PYTHONPATH" value="$PROJECT_DIR$" />
+  </envs>
+  <option name="SDK_HOME" value="" />
+  <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+  <option name="IS_MODULE_SDK" value="false" />
+  <option name="ADD_CONTENT_ROOTS" value="true" />
+  <module name="run_brick_app" />
+  <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run_brick_app.py" />
+  <option name="PARAMETERS" value="--gui --repository ./default_brick_repository" />
+  <RunnerSettings RunnerId="PythonRunner">
+    <option name="runWithPythonConsole" value="false" />
+  </RunnerSettings>
+  <method v="2">
+    <option name="Make" enabled="true" />
+  </method>
+</component>

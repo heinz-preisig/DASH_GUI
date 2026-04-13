@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple SHACL Test</title>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@pyscript/core@0.5.0/dist/core.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@pyscript/core@0.5.0/dist/core.css">
+</head>
+<body style="font-family: sans-serif; padding: 20px; background-color: #f4f4f9;">
+
+    <h2>Simple SHACL Form Test</h2>
+    <div id="form-container" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <p>Loading...</p>
+    </div>
+    <button id="submit-btn" style="margin-top: 20px; padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Submit</button>
+
+    <py-config>
+    packages = ["rdflib"]
+    </py-config>
+
+    <py-script>
+        import js
+        from pyodide.ffi import create_proxy
+        from rdflib import Graph, Namespace, Literal, URIRef
+        
+        # Namespaces
+        SH = Namespace("http://www.w3.org/ns/shacl#")
+        DASH = Namespace("http://datashapes.org/dash#")
+        EX = Namespace("http://example.org/")
+        XSD = Namespace("http://www.w3.org/2001/XMLSchema#")
+        
+        # Simple SHACL data
+        shacl_data = """
+        @prefix sh: <http://www.w3.org/ns/shacl#> .
+        @prefix dash: <http://datashapes.org/dash#> .
+        @prefix ex: <http://example.org/> .
+        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+        
+        ex:PersonShape a sh:NodeShape ;
+            sh:targetClass ex:Person ;
+            sh:property [
+                sh:path ex:fullName ;
+                sh:name "Full Name" ;
+                sh:datatype xsd:string ;
+                sh:minCount 1 ;
+            ] ;
+            sh:property [
+                sh:path ex:email ;
+                sh:name "Email" ;
+                sh:datatype xsd:string ;
+            ] .
+        """
+        
+        # Parse SHACL and build form
+        g = Graph().parse(data=shacl_data, format="turtle")
+        container = js.document.getElementById("form-container")
+        container.innerHTML = ""
+        
+        # Build form for Person shape
+        for shape in g.subjects(SH.NodeShape):
+            shape_name = str(shape).split("/")[-1].replace("Shape", "")
+            
+            # Add shape header
+            header = js.document.createElement("h3")
+            header.innerText = shape_name
+            container.appendChild(header)
+            
+            # Add properties
+            for prop in g.objects(shape, SH.property):
+                name = str(g.value(prop, SH.name))
+                path = str(g.value(prop, SH.path))
+                datatype = g.value(prop, SH.datatype)
+                min_count = g.value(prop, SH.minCount)
+                
+                # Create label
+                label = js.document.createElement("label")
+                label.innerText = name
+                if min_count and int(str(min_count)) > 0:
+                    label.innerText += " *"
+                label.style.display = "block"
+                label.style.marginTop = "10px"
+                container.appendChild(label)
+                
+                # Create input
+                input_elem = js.document.createElement("input")
+                input_elem.type = "text"
+                input_elem.style.width = "95%"
+                input_elem.style.padding = "8px"
+                input_elem.id = f"field_{path.split('/')[-1]}"
+                container.appendChild(input_elem)
+        
+        def handle_submit(event):
+            # Get form values
+            name_field = js.document.getElementById("field_fullName")
+            email_field = js.document.getElementById("field_email")
+            
+            # Create RDF
+            data_graph = Graph()
+            subject = EX["person1"]
+            data_graph.add((subject, URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), EX.Person))
+            
+            if name_field and name_field.value:
+                data_graph.add((subject, EX.fullName, Literal(name_field.value)))
+            
+            if email_field and email_field.value:
+                data_graph.add((subject, EX.email, Literal(email_field.value)))
+            
+            # Show result
+            js.alert("RDF Data:\n" + data_graph.serialize(format="turtle"))
+        
+        # Set up submit handler
+        submit_btn = js.document.getElementById("submit-btn")
+        submit_btn.onclick = create_proxy(handle_submit)
+    </py-script>
+</body>
+</html>
