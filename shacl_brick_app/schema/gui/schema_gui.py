@@ -9,6 +9,9 @@ from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from ..core.schema_backend import SchemaBackendAPI, SchemaEventProcessor
+from .brick_editor import BrickEditorDialog, create_person_brick_template, create_address_brick_template
+from .library_manager import LibraryManagerDialog, SaveLoadManager, SelectLibraryDialog, CreateLibraryDialog
+from .workflow_state import BrickCreationWorkflow, WorkflowState
 
 class SchemaGUI(QMainWindow):
     """Frontend GUI for schema construction"""
@@ -22,9 +25,20 @@ class SchemaGUI(QMainWindow):
         self.backend = SchemaBackendAPI(repository_path)
         self.processor = SchemaEventProcessor(self.backend)
         
+        # Initialize workflow state machine
+        self.workflow = BrickCreationWorkflow()
+        self.workflow.set_processor(self.processor)
+        
+        # Connect workflow signals
+        self.workflow.workflow.interface_update_requested.connect(self.update_interface_state)
+        
         # UI setup
         self.init_ui()
+        self.register_workflow_widgets()
         self.load_initial_data()
+        
+        # Initialize workflow after UI is ready
+        self.workflow.initialize_workflow()
     
     def init_ui(self):
         """Initialize the user interface"""
@@ -49,6 +63,10 @@ class SchemaGUI(QMainWindow):
         
         # Create toolbar
         self.create_toolbar()
+        
+        # Register widgets with workflow state manager
+        self.register_menu_items()
+        self.register_toolbar_items()
     
     def create_menu_bar(self):
         """Create menu bar"""
@@ -76,6 +94,22 @@ class SchemaGUI(QMainWindow):
         # Schema menu
         schema_menu = menubar.addMenu('Schema')
         
+        self.create_brick_action = QAction('Create New Brick', self)
+        self.create_brick_action.triggered.connect(self.create_new_brick)
+        schema_menu.addAction(self.create_brick_action)
+        
+        schema_menu.addSeparator()
+        
+        self.create_person_brick_action = QAction('Create Person Brick', self)
+        self.create_person_brick_action.triggered.connect(self.create_person_brick)
+        schema_menu.addAction(self.create_person_brick_action)
+        
+        self.create_address_brick_action = QAction('Create Address Brick', self)
+        self.create_address_brick_action.triggered.connect(self.create_address_brick)
+        schema_menu.addAction(self.create_address_brick_action)
+        
+        schema_menu.addSeparator()
+        
         create_daisy_chain_action = QAction('Create Daisy Chain', self)
         create_daisy_chain_action.triggered.connect(self.create_daisy_chain)
         schema_menu.addAction(create_daisy_chain_action)
@@ -86,6 +120,12 @@ class SchemaGUI(QMainWindow):
         
         # Tools menu
         tools_menu = menubar.addMenu('Tools')
+        
+        self.library_manager_action = QAction('Library Manager', self)
+        self.library_manager_action.triggered.connect(self.open_library_manager)
+        tools_menu.addAction(self.library_manager_action)
+        
+        tools_menu.addSeparator()
         
         preview_interface_action = QAction('Preview Interface', self)
         preview_interface_action.triggered.connect(self.preview_interface)
@@ -110,6 +150,20 @@ class SchemaGUI(QMainWindow):
         save_schema_action.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogSaveButton))
         save_schema_action.triggered.connect(self.save_schema)
         toolbar.addAction(save_schema_action)
+        
+        toolbar.addSeparator()
+        
+        # Create new brick
+        self.toolbar_create_brick_action = QAction('New Brick', self)
+        self.toolbar_create_brick_action.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView))
+        self.toolbar_create_brick_action.triggered.connect(self.create_new_brick)
+        toolbar.addAction(self.toolbar_create_brick_action)
+        
+        # Library manager
+        self.toolbar_library_manager_action = QAction('Library Manager', self)
+        self.toolbar_library_manager_action.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DirIcon))
+        self.toolbar_library_manager_action.triggered.connect(self.open_library_manager)
+        toolbar.addAction(self.toolbar_library_manager_action)
         
         toolbar.addSeparator()
         
@@ -823,6 +877,207 @@ class SchemaGUI(QMainWindow):
     def auto_layout_schema(self):
         """Auto-layout visual schema"""
         QMessageBox.information(self, "Auto Layout", "Auto-layout coming soon")
+
+    # Brick editor methods
+    def create_new_brick(self):
+        """Create a new brick using the advanced brick editor"""
+        # Check workflow state before proceeding
+        if not self.workflow.can_perform_action("brick_create"):
+            self.show_library_warning()
+            return
+        
+        # Check if any libraries exist
+        libraries_result = self.processor.process_event({"event": "get_libraries"})
+        if libraries_result["status"] != "success" or not libraries_result["data"]["libraries"]:
+            # No libraries exist - create one first
+            self.create_library_for_brick()
+            return
+        
+        # Libraries exist, proceed with brick creation
+        self.proceed_with_brick_creation()
+    
+    def create_library_for_brick(self):
+        """Create a library before creating a brick"""
+        # Open library manager in creation mode
+        library_dialog = CreateLibraryDialog("Brick Libraries", self)
+        if library_dialog.exec() == QDialog.DialogCode.Accepted:
+            library_info = library_dialog.get_library_info()
+            
+            # Create the library
+            result = self.processor.process_event({
+                "event": "create_library",
+                **library_info
+            })
+            
+            if result["status"] == "success":
+                # Set the new library as active
+                set_result = self.processor.process_event({
+                    "event": "set_active_library",
+                    "library_name": library_info["name"]
+                })
+                
+                if set_result["status"] == "success":
+                    # Reinitialize workflow to reflect new library
+                    self.workflow.initialize_workflow()
+                    self.load_bricks()
+                    self.statusBar().showMessage(f"Created library: {library_info['name']}. Now creating brick...")
+                    
+                    # Proceed with brick creation
+                    self.proceed_with_brick_creation()
+                else:
+                    QMessageBox.critical(self, "Error", f"Failed to set active library: {set_result['message']}")
+            else:
+                QMessageBox.critical(self, "Error", f"Failed to create library: {result['message']}")
+        else:
+            # User cancelled library creation
+            self.statusBar().showMessage("Brick creation cancelled - library creation required")
+    
+    def proceed_with_brick_creation(self):
+        """Proceed with brick creation when libraries exist"""
+        # Start brick creation workflow
+        if not self.workflow.start_brick_creation():
+            self.show_library_warning()
+            return
+        
+        dialog = BrickEditorDialog(parent=self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            brick_data = dialog.get_brick_data()
+            
+            # Validate brick data with workflow
+            if not self.workflow.validate_brick_data(brick_data):
+                QMessageBox.warning(self, "Validation Error", "Brick data is invalid. Please check required fields.")
+                return
+            
+            # Prepare to save
+            if not self.workflow.prepare_to_save():
+                self.show_library_warning()
+                return
+            
+            # Get libraries for selection
+            libraries_result = self.processor.process_event({"event": "get_libraries"})
+            if libraries_result["status"] == "success" and libraries_result["data"]["libraries"]:
+                # Ask user which library to save to
+                library_dialog = SelectLibraryDialog(self.processor, "brick", self)
+                if library_dialog.exec() == QDialog.DialogCode.Accepted:
+                    library_name = library_dialog.get_selected_library()
+                    
+                    # Save brick to selected library
+                    result = SaveLoadManager.save_brick_to_library(
+                        self.processor, brick_data, library_name
+                    )
+                    
+                    if result["status"] == "success":
+                        self.workflow.complete_brick_save()
+                        self.load_bricks()  # Refresh brick list
+                        self.statusBar().showMessage(f"Created brick: {brick_data['name']} in library '{library_name}'")
+                    else:
+                        QMessageBox.critical(self, "Error", f"Failed to create brick: {result['message']}")
+                        self.workflow.cancel_brick_creation()
+                else:
+                    self.workflow.cancel_brick_creation()
+            else:
+                QMessageBox.critical(self, "Error", "No libraries available for saving")
+                self.workflow.cancel_brick_creation()
+        else:
+            self.workflow.cancel_brick_creation()
+    
+    def create_person_brick(self):
+        """Create a Person brick from template"""
+        brick_data = create_person_brick_template()
+        dialog = BrickEditorDialog(brick_data, parent=self)
+        dialog.setWindowTitle("Edit Person Brick")
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            updated_brick_data = dialog.get_brick_data()
+            result = self.processor.process_event({
+                "event": "create_brick",
+                "brick_data": updated_brick_data
+            })
+            
+            if result["status"] == "success":
+                self.load_bricks()
+                self.statusBar().showMessage(f"Created Person brick: {updated_brick_data['name']}")
+            else:
+                QMessageBox.critical(self, "Error", f"Failed to create Person brick: {result['message']}")
+    
+    def create_address_brick(self):
+        """Create an Address brick from template"""
+        brick_data = create_address_brick_template()
+        dialog = BrickEditorDialog(brick_data, parent=self)
+        dialog.setWindowTitle("Edit Address Brick")
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            updated_brick_data = dialog.get_brick_data()
+            result = self.processor.process_event({
+                "event": "create_brick",
+                "brick_data": updated_brick_data
+            })
+            
+            if result["status"] == "success":
+                self.load_bricks()
+                self.statusBar().showMessage(f"Created Address brick: {updated_brick_data['name']}")
+            else:
+                QMessageBox.critical(self, "Error", f"Failed to create Address brick: {result['message']}")
+    
+    def open_library_manager(self):
+        """Open library manager dialog"""
+        dialog = LibraryManagerDialog(self.processor, self.workflow, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.load_bricks()
+            self.load_schemas()
+            self.workflow.initialize_workflow()  # Reinitialize workflow after library changes
+            self.statusBar().showMessage("Library manager updated")
+    
+    def register_workflow_widgets(self):
+        """Register UI widgets with workflow state manager"""
+        # Store references to menu items and toolbar buttons for state management
+        self.workflow_widgets = {}
+        
+        # These will be populated after menu/toolbar creation
+        # We'll use a delayed registration approach
+    
+    def register_menu_items(self):
+        """Register menu items with workflow after menu creation"""
+        if hasattr(self, 'create_brick_action'):
+            self.workflow.interface_manager.register_widget("menu_create_brick", self.create_brick_action)
+        if hasattr(self, 'create_person_brick_action'):
+            self.workflow.interface_manager.register_widget("menu_create_person_brick", self.create_person_brick_action)
+        if hasattr(self, 'create_address_brick_action'):
+            self.workflow.interface_manager.register_widget("menu_create_address_brick", self.create_address_brick_action)
+        if hasattr(self, 'library_manager_action'):
+            self.workflow.interface_manager.register_widget("menu_library_manager", self.library_manager_action)
+    
+    def register_toolbar_items(self):
+        """Register toolbar items with workflow after toolbar creation"""
+        if hasattr(self, 'toolbar_create_brick_action'):
+            self.workflow.interface_manager.register_widget("toolbar_new_brick", self.toolbar_create_brick_action)
+        if hasattr(self, 'toolbar_library_manager_action'):
+            self.workflow.interface_manager.register_widget("toolbar_library_manager", self.toolbar_library_manager_action)
+    
+    def update_interface_state(self):
+        """Update interface based on current workflow state"""
+        # Update status bar with workflow status
+        status = self.workflow.get_workflow_status()
+        
+        if not status["has_active_library"]:
+            self.statusBar().showMessage("Warning: No active library set. Please create or select a library first.", 5000)
+        elif status["ready_for_brick_creation"]:
+            self.statusBar().showMessage("Ready to create bricks")
+        else:
+            self.statusBar().showMessage(f"Current state: {status['current_state']}")
+        
+        # Update interface elements
+        self.workflow.interface_manager.update_interface()
+    
+    def show_library_warning(self):
+        """Show warning when no library is available"""
+        QMessageBox.warning(
+            self, 
+            "No Library Available",
+            "You need to create a brick library before you can create bricks.\n\n"
+            "Please go to Tools > Library Manager to create a library first."
+        )
+        
+        # Open library manager automatically
+        self.open_library_manager()
 
 # Dialog classes (same as before, but updated to use event processor)
 class TemplateConfigDialog(QDialog):
