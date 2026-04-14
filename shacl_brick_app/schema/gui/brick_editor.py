@@ -9,6 +9,7 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from typing import Dict, List, Any, Optional
 import uuid
+from .ontology_browser import OntologyBrowserDialog
 
 class ConstraintEditor(QWidget):
     """Widget for editing SHACL constraints"""
@@ -146,9 +147,27 @@ class PropertyEditor(QWidget):
         self.name_edit.textChanged.connect(self.emit_property_changed)
         basic_layout.addRow("Name:", self.name_edit)
         
+        # Property path with dropdown for common options
+        path_layout = QHBoxLayout()
         self.path_edit = QLineEdit()
         self.path_edit.textChanged.connect(self.emit_property_changed)
-        basic_layout.addRow("Path:", self.path_edit)
+        path_layout.addWidget(self.path_edit)
+        
+        # Add dropdown for common property paths
+        self.path_combo = QComboBox()
+        self.path_combo.setEditable(True)
+        self.populate_common_properties()
+        self.path_combo.currentTextChanged.connect(self.on_path_selected)
+        path_layout.addWidget(self.path_combo)
+        
+        # Add ontology browser button for properties
+        prop_ontology_btn = QPushButton("📚 Browse")
+        prop_ontology_btn.setToolTip("Browse ontologies for properties")
+        prop_ontology_btn.setMaximumWidth(80)
+        prop_ontology_btn.clicked.connect(self.browse_ontologies_for_property)
+        path_layout.addWidget(prop_ontology_btn)
+        
+        basic_layout.addRow("Property:", path_layout)
         
         self.datatype_combo = QComboBox()
         self.datatype_combo.addItems([
@@ -184,10 +203,78 @@ class PropertyEditor(QWidget):
         if self.property_data:
             self.load_property_data()
     
+    def populate_common_properties(self):
+        """Populate common property dropdown with user-friendly options"""
+        common_props = [
+            ("--- Person Properties ---", ""),
+            ("First Name", "schema:firstName"),
+            ("Last Name", "schema:lastName"),
+            ("Full Name", "schema:name"),
+            ("Email", "schema:email"),
+            ("Phone", "schema:telephone"),
+            ("Birth Date", "schema:birthDate"),
+            ("Age", "schema:age"),
+            ("Gender", "schema:gender"),
+            
+            ("--- Address Properties ---", ""),
+            ("Street Address", "schema:streetAddress"),
+            ("City", "schema:addressLocality"),
+            ("State/Region", "schema:addressRegion"),
+            ("Postal Code", "schema:postalCode"),
+            ("Country", "schema:addressCountry"),
+            
+            ("--- Organization Properties ---", ""),
+            ("Organization Name", "schema:legalName"),
+            ("Department", "schema:department"),
+            ("Employee Count", "schema:numberOfEmployees"),
+            ("Website", "schema:url"),
+            
+            ("--- Product Properties ---", ""),
+            ("Product Name", "schema:name"),
+            ("Brand", "schema:brand"),
+            ("Price", "schema:price"),
+            ("Color", "schema:color"),
+            ("Size", "schema:size"),
+            ("Weight", "schema:weight"),
+            
+            ("--- Document Properties ---", ""),
+            ("Title", "schema:name"),
+            ("Description", "schema:description"),
+            ("Author", "schema:author"),
+            ("Creation Date", "schema:dateCreated"),
+            ("Modified Date", "schema:dateModified"),
+            
+            ("--- Custom ---", ""),
+            ("Custom Property", "")
+        ]
+        
+        for display_text, value in common_props:
+            if display_text.startswith("---"):
+                # Add separator
+                self.path_combo.addItem(display_text)
+                self.path_combo.model().item(self.path_combo.count() - 1).setEnabled(False)
+            else:
+                self.path_combo.addItem(display_text, value)
+    
+    def on_path_selected(self, text):
+        """Handle property path selection from dropdown"""
+        # Get the data associated with the selected item
+        current_data = self.path_combo.currentData()
+        if current_data:
+            self.path_edit.setText(current_data)
+    
     def load_property_data(self):
         """Load existing property data"""
         self.name_edit.setText(self.property_data.get("name", ""))
         self.path_edit.setText(self.property_data.get("path", ""))
+        
+        # Set path combo if matching value exists
+        path_value = self.property_data.get("path", "")
+        if path_value:
+            for i in range(self.path_combo.count()):
+                if self.path_combo.itemData(i) == path_value:
+                    self.path_combo.setCurrentIndex(i)
+                    break
         
         datatype = self.property_data.get("datatype", "xsd:string")
         self.datatype_combo.setCurrentText(datatype)
@@ -251,17 +338,26 @@ class BrickEditorDialog(QDialog):
         self.object_type_combo.addItems(["NodeShape", "PropertyShape"])
         basic_layout.addRow("Object Type:", self.object_type_combo)
         
-        # Target class with help
+        # Target class with user-friendly dropdown
         target_class_layout = QHBoxLayout()
-        self.target_class_edit = QLineEdit()
-        target_class_layout.addWidget(QLabel("Target Class:"))
-        target_class_layout.addWidget(self.target_class_edit)
+        target_class_layout.addWidget(QLabel("What does this brick represent?"))
+        
+        self.target_class_combo = QComboBox()
+        self.target_class_combo.setEditable(True)  # Allow custom entries
+        self.populate_target_classes()
+        target_class_layout.addWidget(self.target_class_combo)
         
         help_target_btn = QPushButton("?")
         help_target_btn.setFixedSize(20, 20)
         help_target_btn.setToolTip("Click for help with target classes")
         help_target_btn.clicked.connect(self.show_target_class_help)
         target_class_layout.addWidget(help_target_btn)
+        
+        # Add ontology browser button
+        ontology_btn = QPushButton("📚 Browse Ontologies")
+        ontology_btn.setToolTip("Browse and select from loaded ontologies")
+        ontology_btn.clicked.connect(self.browse_ontologies_for_class)
+        target_class_layout.addWidget(ontology_btn)
         
         basic_layout.addRow(target_class_layout)
         
@@ -308,17 +404,93 @@ class BrickEditorDialog(QDialog):
         if self.brick_data:
             self.load_brick_data()
     
+    def populate_target_classes(self):
+        """Populate target class combo with user-friendly options"""
+        # Add user-friendly options with technical values
+        common_classes = [
+            ("--- People ---", ""),
+            ("Person (general person)", "schema:Person"),
+            ("Student", "schema:Student"),
+            ("Employee", "schema:Employee"),
+            ("Customer", "schema:Customer"),
+            ("Patient", "schema:Patient"),
+            ("Teacher", "schema:Teacher"),
+            
+            ("--- Organizations ---", ""),
+            ("Organization (general)", "schema:Organization"),
+            ("Company/Corporation", "schema:Corporation"),
+            ("School/University", "schema:EducationalOrganization"),
+            ("Government", "schema:GovernmentOrganization"),
+            
+            ("--- Locations ---", ""),
+            ("Address", "schema:PostalAddress"),
+            ("Place (general)", "schema:Place"),
+            ("City/Town", "schema:City"),
+            ("Country", "schema:Country"),
+            
+            ("--- Products & Services ---", ""),
+            ("Product (general)", "schema:Product"),
+            ("Service", "schema:Service"),
+            ("Book", "schema:Book"),
+            ("Vehicle", "schema:Vehicle"),
+            
+            ("--- Events ---", ""),
+            ("Event (general)", "schema:Event"),
+            ("Meeting", "schema:Meeting"),
+            ("Conference", "schema:Conference"),
+            
+            ("--- Documents & Media ---", ""),
+            ("Document", "schema:DigitalDocument"),
+            ("Image", "schema:ImageObject"),
+            ("Video", "schema:VideoObject"),
+            
+            ("--- Custom ---", ""),
+            ("Custom entity (enter your own)", "")
+        ]
+        
+        for display_text, value in common_classes:
+            if display_text.startswith("---"):
+                # Add separator
+                self.target_class_combo.addItem(display_text)
+                self.target_class_combo.model().item(self.target_class_combo.count() - 1).setEnabled(False)
+            else:
+                self.target_class_combo.addItem(display_text, value)
+    
     def load_brick_data(self):
         """Load existing brick data"""
         self.brick_name_edit.setText(self.brick_data.get("name", ""))
         self.object_type_combo.setCurrentText(self.brick_data.get("object_type", "NodeShape"))
-        self.target_class_edit.setText(self.brick_data.get("target_class", ""))
+        
+        # Set target class from combo box
+        target_class = self.brick_data.get("target_class", "")
+        if target_class:
+            # Find matching item in combo
+            for i in range(self.target_class_combo.count()):
+                if self.target_class_combo.itemData(i) == target_class:
+                    self.target_class_combo.setCurrentIndex(i)
+                    break
+            else:
+                # If not found, set as custom text
+                self.target_class_combo.setCurrentText(target_class)
+        
         self.description_edit.setPlainText(self.brick_data.get("description", ""))
         
-        # Load properties
-        properties = self.brick_data.get("properties", [])
-        for prop_data in properties:
-            self.add_property(prop_data)
+        # Load properties - handle both dict and list formats
+        properties = self.brick_data.get("properties", {})
+        if isinstance(properties, dict):
+            # Convert dict to list format for the editor
+            for prop_name, prop_data in properties.items():
+                prop_data_for_editor = {
+                    "name": prop_name,
+                    "path": prop_data.get("path", ""),
+                    "datatype": prop_data.get("datatype", "xsd:string"),
+                    "constraints": prop_data.get("constraints", [])
+                }
+                self.add_property(prop_data_for_editor)
+        elif isinstance(properties, list):
+            # Handle legacy list format
+            for prop_data in properties:
+                self.add_property(prop_data)
     
     def add_property(self, property_data: Dict[str, Any] = None):
         """Add a new property editor"""
@@ -347,18 +519,32 @@ class BrickEditorDialog(QDialog):
     
     def get_brick_data(self) -> Dict[str, Any]:
         """Get current brick data"""
-        properties = []
+        # Convert property list to dictionary format expected by backend
+        properties_dict = {}
         for editor in self.property_editors:
             if not editor.isHidden():  # Skip removed editors
-                properties.append(editor.get_property_data())
+                prop_data = editor.get_property_data()
+                prop_name = prop_data.get("name", "")
+                if prop_name:
+                    properties_dict[prop_name] = {
+                        "path": prop_data.get("path", ""),
+                        "datatype": prop_data.get("datatype", "xsd:string"),
+                        "constraints": prop_data.get("constraints", [])
+                    }
+        
+        # Get target class from combo
+        target_class = self.target_class_combo.currentData()
+        if not target_class:
+            # Use custom text if no data associated
+            target_class = self.target_class_combo.currentText().strip()
         
         return {
             "brick_id": self.brick_data.get("brick_id", str(uuid.uuid4())),
             "name": self.brick_name_edit.text(),
             "object_type": self.object_type_combo.currentText(),
-            "target_class": self.target_class_edit.text(),
+            "target_class": target_class,
             "description": self.description_edit.toPlainText(),
-            "properties": properties,
+            "properties": properties_dict,
             "constraints": [],  # Brick-level constraints
             "metadata": {}
         }
@@ -368,11 +554,17 @@ class BrickEditorDialog(QDialog):
         brick_data = self.get_brick_data()
         
         # Basic validation
-        if not brick_data["name"]:
+        if not brick_data["name"].strip():
             QMessageBox.warning(self, "Validation Error", "Please enter a brick name")
             return
         
-        if not brick_data["properties"]:
+        # Allow empty properties for new bricks (they can be added later)
+        # Only validate properties if we're editing an existing brick with properties
+        existing_props = self.brick_data.get("properties", {})
+        current_props = brick_data.get("properties", {})
+        
+        # Check if we're editing an existing brick that had properties
+        if self.brick_data and isinstance(existing_props, dict) and existing_props and not current_props:
             QMessageBox.warning(self, "Validation Error", "Please add at least one property")
             return
         
@@ -382,49 +574,51 @@ class BrickEditorDialog(QDialog):
     def show_target_class_help(self):
         """Show help dialog for target classes"""
         help_text = """
-# Target Classes Help
+# What Does This Brick Represent?
 
-## What is a Target Class?
-A target class defines what type of entity your brick represents.
+## Simple Explanation
+Think of a "Target Class" as telling the system: **"What kind of thing am I describing?"**
 
-## Common Target Classes:
+## Easy Examples
 
-### Person-Related:
-- schema:Person - General person
-- schema:Student - Student
-- schema:Employee - Employee
-- schema:Customer - Customer
-- schema:Patient - Patient
+### For People:
+- **Person** - General information about any person
+- **Student** - Someone who studies at a school
+- **Employee** - Someone who works for a company
+- **Customer** - Someone who buys products/services
+- **Patient** - Someone receiving medical care
 
-### Organization:
-- schema:Organization - General organization
-- schema:Corporation - Company
-- schema:EducationalOrganization - School
+### For Organizations:
+- **Organization** - Any company, club, or group
+- **Company** - A business or corporation
+- **School** - Educational institution
 
-### Location:
-- schema:PostalAddress - Mailing address
-- schema:Place - General place
-- schema:City - City/town
+### For Places:
+- **Address** - Street address information
+- **Place** - Any location or venue
+- **City** - A town or city
 
-### Product:
-- schema:Product - General product
-- schema:Service - Service offering
-- schema:Book - Book
+### For Products:
+- **Product** - Any item you can buy
+- **Service** - Something someone does for you
+- **Book** - A book or publication
 
-### Event:
-- schema:Event - General event
-- schema:Meeting - Meeting
-- schema:Conference - Conference
+### For Events:
+- **Event** - Any happening or occasion
+- **Meeting** - A scheduled get-together
 
-## Custom Classes:
-You can also create your own:
-- ex:StudentRecord - Student record
-- ex:ProjectProposal - Project proposal
+## How to Use
+1. **Pick from the dropdown** - Choose the closest match
+2. **Don't see what you need?** - Type your own description
+3. **Not sure?** - Start with "Person" or "Organization"
 
-## Examples:
-- schema:Person (for person information)
-- schema:PostalAddress (for address data)
-- schema:Product (for product details)
+## Real Examples
+- Creating a student form? Choose "Student"
+- Making an address book? Choose "Address" 
+- Describing a product? Choose "Product"
+- Building a contact list? Choose "Person"
+
+**Tip:** The dropdown shows the most common options. You can also type anything that describes what you're working with!
         """
         
         dialog = HelpDialog("Target Classes Help", help_text, self)
@@ -540,6 +734,36 @@ You can also create your own:
         
         dialog = HelpDialog("Properties Help", help_text, self)
         dialog.exec()
+    
+    def browse_ontologies_for_class(self):
+        """Browse ontologies to select target class"""
+        dialog = OntologyBrowserDialog(self)
+        dialog.term_selected.connect(self.on_class_selected_from_ontology)
+        dialog.exec()
+    
+    def browse_ontologies_for_property(self):
+        """Browse ontologies to select property"""
+        dialog = OntologyBrowserDialog(self)
+        dialog.term_selected.connect(self.on_property_selected_from_ontology)
+        dialog.exec()
+    
+    def on_class_selected_from_ontology(self, term_type: str, name: str, uri: str):
+        """Handle class selection from ontology browser"""
+        if term_type == "class":
+            # Set the target class
+            self.target_class_combo.setCurrentText(uri)
+            # Also update the brick name if it's empty
+            if not self.brick_name_edit.text().strip():
+                self.brick_name_edit.setText(name + " Shape")
+    
+    def on_property_selected_from_ontology(self, term_type: str, name: str, uri: str):
+        """Handle property selection from ontology browser"""
+        if term_type == "property":
+            # Find the current property editor (from the parent tab)
+            current_tab = self.parent().parent().properties_tabs.currentWidget()
+            if current_tab and hasattr(current_tab, 'path_edit'):
+                current_tab.path_edit.setText(uri)
+                current_tab.name_edit.setText(name)
 
 class HelpDialog(QDialog):
     """Dialog for displaying help information"""

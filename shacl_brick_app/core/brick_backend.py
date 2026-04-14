@@ -29,6 +29,11 @@ class BrickBackendAPI:
                 "System"
             )
             self.repository.set_active_library("default")
+        elif not self.repository.active_library:
+            # Libraries exist but no active library is set
+            # Set the first available library as active
+            first_library = next(iter(self.repository.libraries.keys()))
+            self.repository.set_active_library(first_library)
     
     # ========== REPOSITORY MANAGEMENT ==========
     
@@ -83,6 +88,77 @@ class BrickBackendAPI:
             return {
                 "status": "success",
                 "data": {"deleted_library": library_name}
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": str(e)
+            }
+    
+    # ========== LIBRARY MANAGEMENT ==========
+    
+    def get_brick_libraries(self) -> Dict[str, Any]:
+        """Get all available brick libraries"""
+        try:
+            libraries = self.repository.libraries
+            library_data = []
+            for lib_name, library in libraries.items():
+                library_data.append({
+                    "name": lib_name,
+                    "description": library.description,
+                    "author": library.author,
+                    "brick_count": len(library.bricks)
+                })
+            
+            return {
+                "status": "success",
+                "data": {
+                    "libraries": library_data
+                }
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": str(e)
+            }
+    
+    def get_all_bricks(self) -> Dict[str, Any]:
+        """Get all bricks from all libraries"""
+        try:
+            all_bricks = []
+            libraries = self.repository.libraries
+            
+            for lib_name, library in libraries.items():
+                bricks = library.list_bricks()
+                for brick in bricks:
+                    brick_dict = brick.to_dict()
+                    brick_dict["library"] = lib_name
+                    all_bricks.append(brick_dict)
+            
+            return {
+                "status": "success",
+                "data": {
+                    "bricks": all_bricks,
+                    "total_count": len(all_bricks)
+                }
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": str(e)
+            }
+    
+    def set_active_library(self, library_name: str) -> Dict[str, Any]:
+        """Set the active library"""
+        try:
+            library = self.repository.get_library(library_name)
+            if not library:
+                return {"status": "error", "message": f"Library {library_name} not found"}
+            
+            self.repository.set_active_library(library_name)
+            return {
+                "status": "success",
+                "data": {"active_library": library_name}
             }
         except Exception as e:
             return {
@@ -345,43 +421,7 @@ class BrickBackendAPI:
                 "message": str(e)
             }
     
-    def update_brick(self, brick_id: str, updates: Dict[str, Any],
-                     library_name: Optional[str] = None) -> Dict[str, Any]:
-        """Update an existing brick"""
-        try:
-            if library_name:
-                library = self.repository.get_library(library_name)
-                if not library:
-                    return {"status": "error", "message": f"Library {library_name} not found"}
-            else:
-                library = self.repository.get_active_library()
-                if not library:
-                    return {"status": "error", "message": "No active library set"}
-            
-            brick = library.get_brick(brick_id)
-            if not brick:
-                return {"status": "error", "message": f"Brick {brick_id} not found"}
-            
-            # Update brick properties
-            if "name" in updates:
-                brick.name = updates["name"]
-            if "description" in updates:
-                brick.description = updates["description"]
-            if "properties" in updates:
-                brick.properties.update(updates["properties"])
-            if "tags" in updates:
-                brick.tags = updates["tags"]
-            
-            return {
-                "status": "success",
-                "data": brick.to_dict()
-            }
-        except Exception as e:
-            return {
-                "status": "error",
-                "message": str(e)
-            }
-    
+        
     def delete_brick(self, brick_id: str, library_name: Optional[str] = None) -> Dict[str, Any]:
         """Delete a brick"""
         try:
@@ -562,6 +602,176 @@ class BrickBackendAPI:
                 "status": "error",
                 "message": str(e)
             }
+    
+    def create_guided_brick(self, step1, step2, step3, custom_name=None):
+        """Create brick based on guided user selections"""
+        try:
+            if step1 == "thing":
+                return self._create_thing_brick(step2, step3, custom_name)
+            elif step1 == "property":
+                return self._create_property_brick(step2, step3, custom_name)
+            elif step1 == "relationship":
+                return self._create_relationship_brick(step2, step3, custom_name)
+            elif step1 == "rule":
+                return self._create_rule_brick(step2, step3, custom_name)
+            else:
+                return {"status": "error", "message": f"Unknown step1 selection: {step1}"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+    
+    def _create_thing_brick(self, step2, step3, custom_name):
+        """Create a thing brick"""
+        if step2 == "specific_type":
+            name = custom_name or "Person_Shape"
+            return self.create_nodeshape_brick(
+                brick_id=name.lower().replace(" ", "_"),
+                name=name,
+                description="Person shape with common properties",
+                target_class="http://schema.org/Person",
+                properties={
+                    "name": {"datatype": "http://www.w3.org/2001/XMLSchema#string"},
+                    "email": {"datatype": "http://www.w3.org/2001/XMLSchema#string"}
+                },
+                constraints=[]
+            )
+            
+        elif step2 == "with_properties":
+            name = custom_name or "Thing_With_Properties"
+            properties = {
+                "name": {"datatype": "http://www.w3.org/2001/XMLSchema#string"},
+                "description": {"datatype": "http://www.w3.org/2001/XMLSchema#string"},
+                "identifier": {"datatype": "http://www.w3.org/2001/XMLSchema#string"}
+            }
+            
+            if step3 == "required":
+                properties["name"]["min_count"] = 1
+            elif step3 == "text_length":
+                properties["description"]["max_length"] = 500
+            elif step3 == "date_format":
+                properties["identifier"]["datatype"] = "http://www.w3.org/2001/XMLSchema#date"
+            
+            return self.create_nodeshape_brick(
+                brick_id=name.lower().replace(" ", "_"),
+                name=name,
+                description="Thing with specific properties",
+                target_class="http://schema.org/Thing",
+                properties=properties,
+                constraints=[]
+            )
+            
+        elif step2 == "all_of_type":
+            name = custom_name or "All_Persons_Shape"
+            properties = {
+                "name": {"datatype": "http://www.w3.org/2001/XMLSchema#string"},
+                "email": {"datatype": "http://www.w3.org/2001/XMLSchema#string"},
+                "phone": {"datatype": "http://www.w3.org/2001/XMLSchema#string"}
+            }
+            
+            if step3 == "required":
+                properties["name"]["min_count"] = 1
+            elif step3 == "number_only":
+                properties["phone"]["pattern"] = "^[+]?[0-9\\s\\-()]*[0-9][0-9\\s\\-()]*$"
+            elif step3 == "email_format":
+                properties["email"]["pattern"] = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+            
+            return self.create_nodeshape_brick(
+                brick_id=name.lower().replace(" ", "_"),
+                name=name,
+                description="Shape for all instances of Person type",
+                target_class="http://schema.org/Person",
+                properties=properties,
+                constraints=[]
+            )
+            
+        else:
+            return {"status": "error", "message": f"Thing creation for '{step2}' not implemented"}
+    
+    def _create_property_brick(self, step2, step3, custom_name):
+        """Create a property brick"""
+        property_types = {
+            "text_length": {
+                "name": "TextProperty",
+                "path": "http://schema.org/text",
+                "datatype": "http://www.w3.org/2001/XMLSchema#string"
+            },
+            "date_format": {
+                "name": "DateProperty", 
+                "path": "http://schema.org/date",
+                "datatype": "http://www.w3.org/2001/XMLSchema#date"
+            },
+            "email_format": {
+                "name": "EmailProperty",
+                "path": "http://schema.org/email", 
+                "datatype": "http://www.w3.org/2001/XMLSchema#string"
+            },
+            "number_only": {
+                "name": "NumberProperty",
+                "path": "http://schema.org/number",
+                "datatype": "http://www.w3.org/2001/XMLSchema#decimal"
+            }
+        }
+        
+        if step3 in property_types:
+            prop_info = property_types[step3]
+            name = custom_name or prop_info["name"]
+            
+            constraints = []
+            if step3 == "text_length":
+                constraints = [{"constraint_type": "MaxLengthConstraintComponent", "value": 255}]
+            
+            return self.create_propertyshape_brick(
+                brick_id=name.lower().replace(" ", "_"),
+                name=name,
+                description=f"Property for {step3.replace('_', ' ')}",
+                path=prop_info["path"],
+                properties={"datatype": prop_info["datatype"]},
+                constraints=constraints if step3 == "text_length" else []
+            )
+        else:
+            return {"status": "error", "message": f"Property creation for '{step3}' not implemented"}
+    
+    def update_brick(self, brick_id: str, brick_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update an existing brick"""
+        try:
+            library = self.repository.get_active_library()
+            if not library:
+                return {"status": "error", "message": "No active library set"}
+            
+            # Get existing brick
+            existing_brick = library.get_brick(brick_id)
+            if not existing_brick:
+                return {"status": "error", "message": f"Brick {brick_id} not found"}
+            
+            # Update brick properties
+            existing_brick.name = brick_data.get("name", existing_brick.name)
+            existing_brick.description = brick_data.get("description", existing_brick.description)
+            existing_brick.properties = brick_data.get("properties", existing_brick.properties)
+            existing_brick.constraints = brick_data.get("constraints", existing_brick.constraints)
+            
+            # Save updated brick
+            library.add_brick(existing_brick)
+            
+            # Persist changes to disk
+            library_path = self.repository.repository_path / library.name
+            library.save_to_directory(library_path)
+            
+            return {
+                "status": "success",
+                "data": {
+                    "brick": existing_brick.to_dict(),
+                    "message": f"Brick {brick_id} updated successfully"
+                }
+            }
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+    
+    def _create_relationship_brick(self, step2, step3, custom_name):
+        """Create a relationship brick"""
+        return {"status": "error", "message": "Relationship bricks not implemented yet"}
+    
+    def _create_rule_brick(self, step2, step3, custom_name):
+        """Create a rule brick"""
+        return {"status": "error", "message": "Rule bricks not implemented yet"}
 
 # Event processor for clean frontend/backend communication
 class BrickEventProcessor:
@@ -634,6 +844,20 @@ class BrickEventProcessor:
             return self.backend.delete_brick(
                 event["brick_id"],
                 event.get("library_name")
+            )
+        
+        elif event_type == "create_guided_brick":
+            return self.backend.create_guided_brick(
+                event["step1"],
+                event["step2"], 
+                event["step3"],
+                event.get("custom_name")
+            )
+        
+        elif event_type == "update_brick":
+            return self.backend.update_brick(
+                event["brick_id"],
+                event["brick_data"]
             )
         
         elif event_type == "export_library":

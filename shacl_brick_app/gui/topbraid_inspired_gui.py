@@ -708,8 +708,73 @@ class TopBraidInspiredGUI(QMainWindow):
         )
         
         if file_path:
-            # TODO: Implement ontology import
-            QMessageBox.information(self, "Import Ontology", f"Ontology import from: {file_path}\n(Feature coming soon)")
+            try:
+                ontology_data = self.parse_ontology_file(file_path)
+                if ontology_data:
+                    name = os.path.basename(file_path).split('.')[0]
+                    self.loaded_ontologies[name] = ontology_data
+                    
+                    # Add to tree
+                    item = QTreeWidgetItem(self.ontology_tree, [
+                        name,
+                        str(len(ontology_data["classes"])),
+                        str(len(ontology_data["properties"]))
+                    ])
+                    item.setData(0, Qt.ItemDataRole.UserRole, ontology_data)
+                    
+                    QMessageBox.information(self, "Success", f"Ontology '{name}' imported successfully!")
+                else:
+                    QMessageBox.warning(self, "Error", "Could not parse ontology file")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to import ontology: {str(e)}")
+    
+    def parse_ontology_file(self, file_path: str):
+        """Parse ontology file and extract classes/properties"""
+        try:
+            from rdflib import Graph, URIRef, RDF, RDFS, OWL
+            
+            graph = Graph()
+            graph.parse(file_path)
+            
+            # Extract classes
+            classes = []
+            for subject in graph.subjects(RDF.type, OWL.Class):
+                if isinstance(subject, URIRef):
+                    classes.append(str(subject).split('#')[-1].split('/')[-1])
+            
+            for subject in graph.subjects(RDF.type, RDFS.Class):
+                if isinstance(subject, URIRef):
+                    name = str(subject).split('#')[-1].split('/')[-1]
+                    if name not in classes:
+                        classes.append(name)
+            
+            # Extract properties
+            properties = []
+            for subject in graph.subjects(RDF.type, OWL.ObjectProperty):
+                if isinstance(subject, URIRef):
+                    properties.append(str(subject).split('#')[-1].split('/')[-1])
+            
+            for subject in graph.subjects(RDF.type, OWL.DatatypeProperty):
+                if isinstance(subject, URIRef):
+                    name = str(subject).split('#')[-1].split('/')[-1]
+                    if name not in properties:
+                        properties.append(name)
+            
+            # Get namespace
+            namespaces = list(graph.namespaces())
+            namespace = ""
+            if namespaces:
+                namespace = str(namespaces[0][1])
+            
+            return {
+                "namespace": namespace,
+                "uri": file_path,
+                "classes": classes,
+                "properties": properties
+            }
+        except Exception as e:
+            print(f"Error parsing ontology: {e}")
+            return None
     
     def export_schema(self):
         """Export schema to SHACL"""

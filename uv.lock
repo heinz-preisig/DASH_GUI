@@ -135,6 +135,7 @@ dependencies = [
     { name = "pandas" },
     { name = "pyqt6" },
     { name = "rdflib" },
+    { name = "sc-pylibs" },
 ]
 
 [package.metadata]
@@ -143,6 +144,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=3.0.2" },
     { name = "pyqt6", specifier = ">=6.11.0" },
     { name = "rdflib", specifier = ">=7.6.0" },
+    { name = "sc-pylibs", specifier = ">=0.0.0.1" },
 ]
 
 [[package]]
@@ -494,6 +496,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/c8/5a/b17e1e257d3e6f2e7
 wheels = [
     { url = "https://files.pythonhosted.org/packages/67/f3/6cd296376653270ac1b423bb30bd70942d9916b6978c6f40472d6ac038e7/retrying-1.4.2-py3-none-any.whl", hash = "sha256:bbc004aeb542a74f3569aeddf42a2516efefcdaff90df0eb38fbfbf19f179f59", size = 10859, upload-time = "2025-08-03T03:35:23.829Z" },
 ]
+
+[[package]]
+name = "sc-pylibs"
+version = "0.0.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/6b/d9/cda6fc6ee0dad192432c869be32284784a0f8751dfc1963762dbf433ba2d/sc-pylibs-0.0.0.1.tar.gz", hash = "sha256:b1ac53216a8a09e5f2ef92220a79196a7cf25c63f060207ec48c40d0de90ea95", size = 969, upload-time = "2024-09-09T09:05:14.013Z" }
 
 [[package]]
 name = "setuptools"

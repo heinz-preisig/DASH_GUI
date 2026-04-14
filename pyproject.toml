@@ -8,4 +8,5 @@ dependencies = [
     "pandas>=3.0.2",
     "pyqt6>=6.11.0",
     "rdflib>=7.6.0",
+    "sc-pylibs>=0.0.0.1",
 ]
