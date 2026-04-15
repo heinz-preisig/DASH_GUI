@@ -84,7 +84,7 @@ class BrickEditorBackend:
     
     def set_current_brick(self, brick_data: Dict[str, Any]):
         """Set current brick and emit update event"""
-        self.current_brick = brick_data
+        self.current_brick = brick_data.copy()
         self.emit_event('brick_updated', self.current_brick)
     
     def update_brick_field(self, field_name: str, value: Any):
@@ -210,7 +210,22 @@ class BrickEditorBackend:
             
             # Update or create brick
             if "brick_id" in self.current_brick and self.current_brick["brick_id"]:
-                result = self.brick_api.update_brick(self.current_brick["brick_id"], self.current_brick)
+                # Check if brick actually exists in database
+                existing_brick = self.brick_api.get_brick_details(self.current_brick["brick_id"])
+                if existing_brick["status"] == "success":
+                    # Brick exists, update it
+                    result = self.brick_api.update_brick(self.current_brick["brick_id"], self._working_brick)
+                else:
+                    # Brick doesn't exist in database, create it
+                    result = self.brick_api.create_nodeshape_brick(
+                        self._working_brick["brick_id"],
+                        self._working_brick["name"],
+                        self._working_brick["description"],
+                        self._working_brick.get("target_class"),
+                        self._working_brick.get("properties", {}),
+                        self._working_brick.get("constraints", []),
+                        self._working_brick.get("tags", [])
+                    )
             else:
                 # Create new brick
                 self.current_brick["brick_id"] = str(uuid.uuid4())
@@ -244,18 +259,10 @@ class BrickEditorBackend:
         object_type = brick_data.get("object_type", "")
         
         if object_type == "NodeShape":
-            # NodeShape requires targets with TargetClass
-            targets = brick_data.get("targets", [])
-            if not targets:
-                return False, "Targets are required for NodeShape"
-            
-            # Check if any target has TargetClass type
-            has_target_class = any(
-                target.get("target_type") == "TargetClass" and target.get("value", "").strip()
-                for target in targets
-            )
-            if not has_target_class:
-                return False, "TargetClass is required for NodeShape"
+            # NodeShape requires target class
+            target_class = brick_data.get("target_class", "").strip()
+            if not target_class:
+                return False, "Target class is required for NodeShape"
                 
         elif object_type == "PropertyShape":
             # PropertyShape requires path

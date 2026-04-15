@@ -18,6 +18,8 @@ class BrickBackendAPI:
     def __init__(self, repository_path: str = "brick_repositories"):
         """Initialize the backend"""
         self.repository = BrickRepository(repository_path)
+        self.config_file = "config.json"
+        self._load_config()
         self._initialize_default_library()
     
     def _initialize_default_library(self):
@@ -34,6 +36,32 @@ class BrickBackendAPI:
             # Set the first available library as active
             first_library = next(iter(self.repository.libraries.keys()))
             self.repository.set_active_library(first_library)
+    
+    def _load_config(self):
+        """Load configuration from file"""
+        import json
+        import os
+        try:
+            if os.path.exists(self.config_file):
+                with open(self.config_file, 'r') as f:
+                    config = json.load(f)
+                    self.last_export_dir = config.get('export', {}).get('last_directory')
+        except Exception:
+            pass
+    
+    def _save_config(self):
+        """Save configuration to file"""
+        import json
+        try:
+            config = {
+                'export': {
+                    'last_directory': self.last_export_dir
+                }
+            }
+            with open(self.config_file, 'w') as f:
+                json.dump(config, f, indent=2)
+        except Exception:
+            pass
     
     # ========== REPOSITORY MANAGEMENT ==========
     
@@ -772,6 +800,64 @@ class BrickBackendAPI:
     def _create_rule_brick(self, step2, step3, custom_name):
         """Create a rule brick"""
         return {"status": "error", "message": "Rule bricks not implemented yet"}
+    
+    def compose_brick_with_properties(self, node_brick_id: str, property_brick_ids: List[str], 
+                                    composed_name: str, composed_description: str,
+                                    target_class: Optional[str] = None) -> Dict[str, Any]:
+        """Compose a node brick by adding existing property bricks to it"""
+        try:
+            # Get the node brick
+            node_brick = self.get_brick_details(node_brick_id)
+            if not node_brick or node_brick["status"] != "success":
+                return {"status": "error", "message": f"Node brick {node_brick_id} not found"}
+            
+            # Get all property bricks
+            composed_properties = {}
+            composed_constraints = []
+            
+            for prop_brick_id in property_brick_ids:
+                prop_brick = self.get_brick_details(prop_brick_id)
+                if not prop_brick or prop_brick["status"] != "success":
+                    return {"status": "error", "message": f"Property brick {prop_brick_id} not found"}
+                
+                # Add property to composed brick
+                prop_name = prop_brick["data"]["name"]
+                prop_path = prop_brick["data"]["path"]
+                prop_datatype = prop_brick["data"]["datatype"]
+                prop_constraints = prop_brick["data"].get("constraints", [])
+                
+                composed_properties[prop_name] = {
+                    "path": prop_path,
+                    "datatype": prop_datatype,
+                    "constraints": prop_constraints
+                }
+                
+                # Add property constraints to composed constraints
+                composed_constraints.extend(prop_constraints)
+            
+            # Create the composed brick
+            composed_brick_data = {
+                "name": composed_name,
+                "description": composed_description,
+                "target_class": target_class,
+                "object_type": "NodeShape",
+                "properties": composed_properties,
+                "constraints": composed_constraints
+            }
+            
+            # Generate brick ID and create/update brick
+            composed_brick_id = composed_name.lower().replace(" ", "_")
+            result = self.update_brick(composed_brick_id, composed_brick_data)
+            
+            return {
+                "status": "success",
+                "message": f"Brick '{composed_name}' created by composing {len(property_brick_ids)} property bricks",
+                "brick_id": composed_brick_id,
+                "data": composed_brick_data
+            }
+            
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
 
 # Event processor for clean frontend/backend communication
 class BrickEventProcessor:

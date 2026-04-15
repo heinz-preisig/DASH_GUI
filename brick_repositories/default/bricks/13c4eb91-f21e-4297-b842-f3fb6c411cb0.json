@@ -1,0 +1,36 @@
+{
+  "brick_id": "13c4eb91-f21e-4297-b842-f3fb6c411cb0",
+  "name": "myFirstTest",
+  "description": "",
+  "object_type": "NodeShape",
+  "targets": [
+    {
+      "target_type": "TargetClass",
+      "value": "http://xmlns.com/foaf/0.1/Person"
+    }
+  ],
+  "properties": {
+    "firstName": {
+      "name": "firstName",
+      "path": "http://xmlns.com/foaf/0.1/firstName",
+      "datatype": "xsd:string",
+      "constraints": [
+        {
+          "constraint_type": "minLength",
+          "value": "2"
+        },
+        {
+          "constraint_type": "maxLength",
+          "value": "100"
+        },
+        {
+          "constraint_type": "minCount",
+          "value": "1"
+        }
+      ]
+    }
+  },
+  "constraints": [],
+  "tags": [],
+  "metadata": {}
+}
