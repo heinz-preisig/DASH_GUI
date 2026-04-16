@@ -10,10 +10,27 @@
     }
   ],
   "properties": {
+    "Date Property": {
+      "constraints": [],
+      "datatype": {
+        "constraints": [
+          {
+            "constraint_type": "minLength",
+            "parameters": {},
+            "value": "10"
+          },
+          {
+            "constraint_type": "maxLength",
+            "parameters": {},
+            "value": "100"
+          }
+        ],
+        "value": "xsd:date"
+      },
+      "name": "Date Property",
+      "path": "schema:date"
+    },
     "firstName": {
-      "name": "firstName",
-      "path": "http://xmlns.com/foaf/0.1/firstName",
-      "datatype": "xsd:string",
       "constraints": [
         {
           "constraint_type": "minLength",
@@ -27,10 +44,16 @@
           "constraint_type": "minCount",
           "value": "1"
         }
-      ]
+      ],
+      "datatype": "xsd:string",
+      "name": "firstName",
+      "path": "http://xmlns.com/foaf/0.1/firstName"
     }
   },
   "constraints": [],
   "tags": [],
-  "metadata": {}
+  "metadata": {},
+  "created_at": "2026-04-16T08:05:40.666832",
+  "updated_at": "2026-04-16T08:05:40.666834",
+  "target_class": "http://xmlns.com/foaf/0.1/Person"
 }

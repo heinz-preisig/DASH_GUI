@@ -189,6 +189,53 @@ class CompleteGuidedGUI(QMainWindow):
         """Request class browser - trigger backend dialog"""
         self.editor_backend.request_class_browser()
 
+    def _request_context_browser(self):
+        """Request context-aware ontology browser"""
+        current_object_type = self.object_type_combo.currentText()
+        
+        if current_object_type == "NodeShape":
+            # Show class browser for NodeShape
+            self._request_class_browser()
+        elif current_object_type == "PropertyShape":
+            # Show property browser for PropertyShape
+            self._request_property_browser()
+        else:
+            # Default to class browser
+            self._request_class_browser()
+
+    def _request_property_browser(self):
+        """Request property browser from backend"""
+        self.editor_backend.request_property_browser()
+
+
+    def _on_object_type_changed(self):
+        """Handle object type change - update UI context"""
+        current_object_type = self.object_type_combo.currentText()
+        
+        if current_object_type == "NodeShape":
+            # Update for NodeShape
+            self.browse_btn.setText("📚 Browse Classes")
+            self.browse_btn.setToolTip("Browse ontologies to select a target class")
+            self.target_class_edit.setPlaceholderText("e.g., schema:Student, schema:Product, brick:Equipment")
+            # Update label text
+            for i in range(self.target_class_edit.parent().layout().count()):
+                widget = self.target_class_edit.parent().layout().itemAt(i).widget()
+                if isinstance(widget, QLabel) and "Target" in widget.text():
+                    widget.setText("Target Class:")
+                    break
+        elif current_object_type == "PropertyShape":
+            # Update for PropertyShape
+            self.browse_btn.setText("📚 Browse Properties")
+            self.browse_btn.setToolTip("Browse ontologies to select a property path")
+            self.target_class_edit.setPlaceholderText("e.g., schema:name, schema:email, foaf:knows")
+            # Update label text
+            for i in range(self.target_class_edit.parent().layout().count()):
+                widget = self.target_class_edit.parent().layout().itemAt(i).widget()
+                if isinstance(widget, QLabel) and "Target" in widget.text():
+                    widget.setText("Property Path:")
+                    break
+
+
     def _show_add_property_dialog(self):
         """Show add property dialog with integrated constraints"""
         # Preserve current brick name
@@ -219,10 +266,10 @@ class CompleteGuidedGUI(QMainWindow):
         path_edit.setPlaceholderText("e.g., schema:firstName, ex:age, foaf:email")
         path_layout.addWidget(path_edit)
 
-        browse_btn = QPushButton("📚 Browse")
-        browse_btn.setToolTip("Browse ontologies to select property URI")
-        browse_btn.setMaximumWidth(80)
-        path_layout.addWidget(browse_btn)
+        self.browse_btn = QPushButton("📚 Browse")
+        self.browse_btn.setToolTip("Browse ontologies to select property URI")
+        self.browse_btn.setMaximumWidth(80)
+        path_layout.addWidget(self.browse_btn)
 
         layout.addRow("Property Path (URI):", path_layout)
 
@@ -422,7 +469,7 @@ class CompleteGuidedGUI(QMainWindow):
                     local_name = selected_item["name"]
                 name_edit.setText(local_name)
 
-        browse_btn.clicked.connect(browse_properties)
+        self.browse_btn.clicked.connect(browse_properties)
         buttons.accepted.connect(on_accept)
         buttons.rejected.connect(dialog.reject)
 
@@ -522,46 +569,6 @@ class CompleteGuidedGUI(QMainWindow):
         dialog.exec()
         return selected_item
 
-    def _show_load_brick_dialog(self):
-        """Show load brick dialog - backend controlled"""
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Load Brick")
-        dialog.setModal(True)
-        dialog.resize(400, 300)
-
-        layout = QVBoxLayout(dialog)
-
-        # Brick list
-        bricks_list = QListWidget()
-        layout.addWidget(bricks_list)
-
-        # Load available bricks
-        result = self.brick_api.get_all_bricks()
-        if result["status"] == "success":
-            for brick in result["data"]["bricks"]:
-                item = QListWidgetItem(f"{brick['name']} ({brick['object_type']})")
-                item.setData(Qt.ItemDataRole.UserRole, brick)
-                bricks_list.addItem(item)
-
-        # Buttons
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        layout.addWidget(buttons)
-
-        # Handle dialog result
-        def on_accept():
-            current_item = bricks_list.currentItem()
-            if current_item:
-                brick_data = current_item.data(Qt.ItemDataRole.UserRole)
-                loaded_brick = self.editor_backend.load_brick(brick_data["brick_id"])
-                if loaded_brick:
-                    self._update_ui_from_brick_data()
-                    self.statusBar().showMessage(f"Loaded brick: {brick_data['name']}")
-            dialog.accept()
-
-        buttons.accepted.connect(on_accept)
-        buttons.rejected.connect(dialog.reject)
-
-        dialog.exec()
 
     def _show_class_browser_dialog(self):
         """Show class browser dialog using unified popup interface"""
@@ -580,16 +587,37 @@ class CompleteGuidedGUI(QMainWindow):
             # Restore brick name in case it was overwritten
             self.brick_name_edit.setText(current_brick_name)
 
+    def _show_property_browser_dialog(self):
+        """Show property browser dialog using unified popup interface"""
+        # Preserve current brick name
+        current_brick_name = self.brick_name_edit.text()
+
+        selected_item = self._show_unified_ontology_browser(
+                title="Select Property Path from Ontology",
+                context="property",
+                instruction="Choose from available ontologies by clicking on them.<br>Double-click a property to use it as the property path."
+                )
+
+        if selected_item and selected_item.get("type") == "property":
+            # Trigger backend event - set the property path in the target class field
+            self.editor_backend.set_target_class(selected_item["uri"])
+            # Restore brick name in case it was overwritten
+            self.brick_name_edit.setText(current_brick_name)
+
+
     def _sync_ui_to_backend(self):
         """Sync UI values to backend"""
-        # Update backend's current brick directly
-        self.editor_backend.current_brick["name"] = self.brick_name_edit.text()
-        self.editor_backend.current_brick["target_class"] = self.target_class_edit.text()
-        self.editor_backend.current_brick["description"] = self.description_edit.toPlainText()
-        self.editor_backend.current_brick["object_type"] = self.object_type_combo.currentText()
+        # Update backend's current brick using SHACLBrick methods
+        self.editor_backend.current_brick.update_name(self.brick_name_edit.text())
+        self.editor_backend.current_brick.update_target_class(self.target_class_edit.text())
+        self.editor_backend.current_brick.update_description(self.description_edit.toPlainText())
+        
+        # For object_type, use direct attribute access since there's no update method
+        self.editor_backend.current_brick.object_type = self.object_type_combo.currentText()
+        self.editor_backend.current_brick._mark_modified()
 
         # Trigger backend update event
-        self.editor_backend.emit_event('brick_updated', self.editor_backend.current_brick)
+        self.editor_backend.emit_event('brick_updated', self.editor_backend.current_brick.to_dict())
 
     def create_new_brick(self):
         """Create new brick - trigger backend event"""
@@ -646,22 +674,23 @@ class CompleteGuidedGUI(QMainWindow):
         name_layout.addWidget(help_btn)
         info_layout.addRow(name_layout)
 
-        # Target class
+        # Object type
+        self.object_type_combo = QComboBox()
+        self.object_type_combo.addItems(["NodeShape", "PropertyShape"])
+        self.object_type_combo.currentTextChanged.connect(self._on_object_type_changed)
+        info_layout.addRow("Object Type:", self.object_type_combo)
+
+        # Target class/property (context-dependent)
         target_layout = QHBoxLayout()
         self.target_class_edit = QLineEdit()
         self.target_class_edit.setPlaceholderText("e.g., schema:Student, schema:Product, brick:Equipment")
         target_layout.addWidget(QLabel("Target Class:"))
         target_layout.addWidget(self.target_class_edit)
-        browse_btn = QPushButton("📚 Browse")
-        browse_btn.setToolTip("Browse ontologies to select a class")
-        browse_btn.clicked.connect(self._request_class_browser)
-        target_layout.addWidget(browse_btn)
+        self.browse_btn = QPushButton("📚 Browse")
+        self.browse_btn.setToolTip("Browse ontologies to select a class")
+        self.browse_btn.clicked.connect(self._request_context_browser)
+        target_layout.addWidget(self.browse_btn)
         info_layout.addRow(target_layout)
-
-        # Object type
-        self.object_type_combo = QComboBox()
-        self.object_type_combo.addItems(["NodeShape", "PropertyShape"])
-        info_layout.addRow("Object Type:", self.object_type_combo)
 
         # Description
         self.description_edit = QTextEdit()
@@ -701,6 +730,8 @@ class CompleteGuidedGUI(QMainWindow):
 
         editor_layout.addWidget(props_group)
 
+
+
         # Constraints are now handled in the property editor area only
 
         # Action buttons
@@ -714,9 +745,6 @@ class CompleteGuidedGUI(QMainWindow):
         save_btn.clicked.connect(self.save_brick)
         action_layout.addWidget(save_btn)
 
-        load_btn = QPushButton("📁 Load Brick")
-        load_btn.clicked.connect(self.load_brick)
-        action_layout.addWidget(load_btn)
 
         export_btn = QPushButton("📤 Export SHACL")
         export_btn.clicked.connect(self.export_shacl)
@@ -795,8 +823,8 @@ class CompleteGuidedGUI(QMainWindow):
         self.property_brick_list.itemDoubleClicked.connect(self.on_property_brick_double_clicked)
         right_layout.addWidget(self.property_brick_list)
         
-        # Composition button
-        compose_button = QPushButton("Compose Node Brick with Properties")
+        # Add properties button
+        compose_button = QPushButton("Add Selected Properties to Loaded Brick")
         compose_button.clicked.connect(self.compose_brick_with_properties)
         right_layout.addWidget(compose_button)
 
@@ -823,7 +851,18 @@ class CompleteGuidedGUI(QMainWindow):
         if current_item:
             # Preserve current brick name
             current_brick_name = self.brick_name_edit.text()
-            prop_name = current_item.text()
+            display_text = current_item.text()
+            
+            # Extract property name from display text
+            # Handle both formats: "propertyName" and "propertyName (constraints)"
+            if " (" in display_text:
+                prop_name = display_text.split(" (")[0]
+            elif ": " in display_text:
+                # Handle simple properties like "nodeKind: IRI"
+                prop_name = display_text.split(": ")[0]
+            else:
+                prop_name = display_text
+            
             # Trigger backend event
             self.editor_backend.remove_property_from_current_brick(prop_name)
             # Restore brick name in case it was overwritten during property removal
@@ -1011,10 +1050,10 @@ class CompleteGuidedGUI(QMainWindow):
         path_edit.setText(property_data.get("path", "") if isinstance(property_data, dict) else prop_name)
         path_layout.addWidget(path_edit)
 
-        browse_btn = QPushButton("📚 Browse")
-        browse_btn.setToolTip("Browse ontologies to select property URI")
-        browse_btn.setMaximumWidth(80)
-        path_layout.addWidget(browse_btn)
+        self.browse_btn = QPushButton("📚 Browse")
+        self.browse_btn.setToolTip("Browse ontologies to select property URI")
+        self.browse_btn.setMaximumWidth(80)
+        path_layout.addWidget(self.browse_btn)
 
         layout.addRow("Property Path (URI):", path_layout)
 
@@ -1214,7 +1253,7 @@ class CompleteGuidedGUI(QMainWindow):
                     local_name = selected_item["name"]
                 name_edit.setText(local_name)
 
-        browse_btn.clicked.connect(browse_properties)
+        self.browse_btn.clicked.connect(browse_properties)
         buttons.accepted.connect(on_accept)
         buttons.rejected.connect(dialog.reject)
 
@@ -1305,9 +1344,6 @@ class CompleteGuidedGUI(QMainWindow):
         # Use backend-controlled save operation
         self.editor_backend.request_save_brick()
 
-    def load_brick(self):
-        """Load existing brick - use backend-controlled dialog"""
-        self.editor_backend.request_load_brick_dialog()
 
     def edit_brick_from_library(self):
         """Edit brick from library"""
@@ -1475,29 +1511,50 @@ class CompleteGuidedGUI(QMainWindow):
             self.statusBar().showMessage(f"Node brick '{brick_data['name']}' loaded for editing")
     
     def on_property_brick_double_clicked(self, item):
-        """Handle property brick double-click - add to current node brick"""
+        """Handle property brick double-click - load into editor"""
         brick_data = item.data(Qt.ItemDataRole.UserRole)
         if brick_data:
-            current_brick = self.editor_backend.get_current_brick()
-            if not current_brick:
-                QMessageBox.warning(self, "No Node Brick", "Please load a node brick first before adding properties")
-                return
-            
-            if current_brick.get("object_type") != "NodeShape":
-                QMessageBox.warning(self, "Not a Node Brick", "Current brick is not a node brick. Please load a node brick first")
-                return
-            
-            # Add property to current node brick
-            prop_name = brick_data["name"]
-            # Property bricks have different structure - check for path in properties
-            prop_path = brick_data.get("path", brick_data.get("properties", {}).get("path", ""))
-            prop_datatype = brick_data.get("datatype", brick_data.get("properties", {}).get("datatype", ""))
-            prop_constraints = brick_data.get("constraints", [])
+            self.editor_backend.set_current_brick(brick_data)
+            self.display_current_brick()
+            self.statusBar().showMessage(f"Property brick '{brick_data['name']}' loaded for editing")
+    
+    def compose_brick_with_properties(self):
+        """Add selected property bricks to currently loaded node brick"""
+        # Check if a node brick is currently loaded in editor
+        current_brick = self.editor_backend.get_current_brick()
+        if not current_brick:
+            QMessageBox.warning(self, "No Brick Loaded", "Please load a node brick into the editor first")
+            return
+        
+        if current_brick.get("object_type") != "NodeShape":
+            QMessageBox.warning(self, "Not a Node Brick", "Current brick is not a node brick. Please load a node brick first")
+            return
+        
+        # Get selected property bricks
+        selected_properties = []
+        for item in self.property_brick_list.selectedItems():
+            selected_properties.append(item.data(Qt.ItemDataRole.UserRole))
+        
+        if not selected_properties:
+            QMessageBox.warning(self, "No Properties", "Please select at least one property brick to add")
+            return
+        
+        # Add each selected property to the current node brick
+        added_count = 0
+        skipped_count = 0
+        
+        for prop_brick in selected_properties:
+            prop_name = prop_brick["name"]
             
             # Check if property already exists
             if prop_name in current_brick.get("properties", {}):
-                QMessageBox.warning(self, "Property Exists", f"Property '{prop_name}' already exists in the current brick")
-                return
+                skipped_count += 1
+                continue
+            
+            # Extract property data from property brick
+            prop_path = prop_brick.get("path", prop_brick.get("properties", {}).get("path", prop_name))
+            prop_datatype = prop_brick.get("datatype", prop_brick.get("properties", {}).get("datatype", "xsd:string"))
+            prop_constraints = prop_brick.get("constraints", [])
             
             # Add property to current brick
             self.editor_backend.add_property_to_current_brick({
@@ -1507,84 +1564,19 @@ class CompleteGuidedGUI(QMainWindow):
                 "constraints": prop_constraints
             })
             
-            self.display_current_brick()
-            self.statusBar().showMessage(f"Property '{prop_name}' added to node brick '{current_brick['name']}'")
-    
-    def compose_brick_with_properties(self):
-        """Compose a node brick with selected property bricks"""
-        # Get selected node brick
-        node_item = self.node_brick_list.currentItem()
-        if not node_item:
-            QMessageBox.warning(self, "No Node Brick", "Please select a node brick first")
-            return
+            added_count += 1
         
-        node_brick = node_item.data(Qt.ItemDataRole.UserRole)
+        # Update display
+        self.display_current_brick()
         
-        # Get selected property bricks
-        selected_properties = []
-        for item in self.property_brick_list.selectedItems():
-            selected_properties.append(item.data(Qt.ItemDataRole.UserRole))
-        
-        if not selected_properties:
-            QMessageBox.warning(self, "No Properties", "Please select at least one property brick")
-            return
-        
-        # Create composition dialog
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Compose Brick")
-        dialog.setModal(True)
-        dialog.resize(400, 200)
-        
-        layout = QVBoxLayout(dialog)
-        
-        # Show composition info
-        info_label = QLabel(f"Node: {node_brick['name']}")
-        layout.addWidget(info_label)
-        
-        props_label = QLabel(f"Properties: {', '.join([p['name'] for p in selected_properties])}")
-        layout.addWidget(props_label)
-        
-        # Name and description inputs
-        layout.addWidget(QLabel("Composed Brick Name:"))
-        name_edit = QLineEdit(f"{node_brick['name']}_composed")
-        layout.addWidget(name_edit)
-        
-        layout.addWidget(QLabel("Description:"))
-        desc_edit = QLineEdit(f"Composed brick with {len(selected_properties)} properties")
-        layout.addWidget(desc_edit)
-        
-        # Buttons
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        buttons.accepted.connect(dialog.accept)
-        buttons.rejected.connect(dialog.reject)
-        layout.addWidget(buttons)
-        
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            composed_name = name_edit.text().strip()
-            composed_description = desc_edit.text().strip()
-            
-            if not composed_name:
-                QMessageBox.warning(self, "Invalid Name", "Please enter a name")
-                return
-            
-            # Get property brick IDs
-            property_brick_ids = [p['brick_id'] for p in selected_properties]
-            
-            # Call backend composition method
-            result = self.editor_backend.brick_api.compose_brick_with_properties(
-                node_brick['brick_id'],
-                property_brick_ids,
-                composed_name,
-                composed_description,
-                node_brick.get('target_class')
-            )
-            
-            if result["status"] == "success":
-                QMessageBox.information(self, "Success", result["message"])
-                self.statusBar().showMessage(f"Composed brick '{composed_name}' created")
-                self.refresh_brick_library()
-            else:
-                QMessageBox.critical(self, "Error", result["message"])
+        # Show result message
+        if added_count > 0:
+            message = f"Added {added_count} properties to '{current_brick['name']}'"
+            if skipped_count > 0:
+                message += f" (skipped {skipped_count} duplicates)"
+            self.statusBar().showMessage(message)
+        else:
+            self.statusBar().showMessage("No new properties added (all were duplicates)")
 
     def import_ontology(self):
         """Import ontology file"""

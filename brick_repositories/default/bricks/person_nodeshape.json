@@ -9,9 +9,7 @@
       "value": "foaf:Person"
     }
   ],
-  "properties": {
-    "nodeKind": "IRI"
-  },
+  "properties": {},
   "constraints": [],
   "tags": [
     "person",
@@ -19,5 +17,8 @@
     "basic",
     "common"
   ],
-  "metadata": {}
+  "metadata": {},
+  "created_at": "2026-04-16T08:05:40.666958",
+  "updated_at": "2026-04-16T08:05:40.666959",
+  "target_class": "foaf:Person"
 }

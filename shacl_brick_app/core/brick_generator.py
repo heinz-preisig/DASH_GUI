@@ -11,6 +11,7 @@ from typing import Dict, List, Any, Optional, Union
 from dataclasses import dataclass, asdict, field
 from pathlib import Path
 from enum import Enum
+from datetime import datetime
 from rdflib import Graph, Namespace, Literal, URIRef, RDF
 from rdflib.namespace import SH, XSD, RDFS, OWL
 
@@ -74,7 +75,7 @@ class SHACLTarget:
 
 @dataclass
 class SHACLBrick:
-    """Represents a reusable SHACL brick"""
+    """Represents a reusable SHACL brick with modification tracking"""
     brick_id: str
     name: str
     description: str
@@ -84,12 +85,81 @@ class SHACLBrick:
     constraints: List[SHACLConstraint] = field(default_factory=list)
     tags: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
+    created_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    
+    def __post_init__(self):
+        """Post-initialization to ensure timestamps are set"""
+        if not self.created_at:
+            self.created_at = datetime.now().isoformat()
+        if not self.updated_at:
+            self.updated_at = datetime.now().isoformat()
+    
+    def _mark_modified(self):
+        """Mark the brick as modified by updating the updated_at timestamp"""
+        self.updated_at = datetime.now().isoformat()
+    
+    def update_name(self, name: str):
+        """Update brick name and mark as modified"""
+        self.name = name
+        self._mark_modified()
+    
+    def update_description(self, description: str):
+        """Update brick description and mark as modified"""
+        self.description = description
+        self._mark_modified()
+    
+    def update_target_class(self, target_class: str):
+        """Update target class and mark as modified"""
+        # For NodeShape, target_class should be in the first target
+        if self.object_type == "NodeShape":
+            if self.targets:
+                self.targets[0].value = target_class
+            else:
+                self.targets.append(SHACLTarget("targetClass", target_class))
+        self._mark_modified()
+    
+    def get_target_class(self) -> str:
+        """Get the target class for this brick"""
+        if self.object_type == "NodeShape" and self.targets:
+            return self.targets[0].value
+        return ""
+    
+    def add_property(self, prop_name: str, prop_data: Dict[str, Any]):
+        """Add a property and mark as modified"""
+        self.properties[prop_name] = prop_data
+        self._mark_modified()
+    
+    def remove_property(self, prop_name: str):
+        """Remove a property and mark as modified"""
+        if prop_name in self.properties:
+            del self.properties[prop_name]
+            self._mark_modified()
+    
+    def add_constraint(self, constraint: SHACLConstraint):
+        """Add a constraint and mark as modified"""
+        self.constraints.append(constraint)
+        self._mark_modified()
+    
+    def remove_constraint(self, index: int):
+        """Remove constraint by index and mark as modified"""
+        if 0 <= index < len(self.constraints):
+            del self.constraints[index]
+            self._mark_modified()
+    
+    def is_modified_since(self, timestamp: str) -> bool:
+        """Check if brick has been modified since given timestamp"""
+        return self.updated_at > timestamp
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert brick to dictionary for serialization"""
         data = asdict(self)
         data['targets'] = [target.to_dict() for target in self.targets]
         data['constraints'] = [constraint.to_dict() for constraint in self.constraints]
+        
+        # Add flat target_class field for compatibility with validation logic
+        data['target_class'] = self.get_target_class()
+        
         return data
     
     @classmethod
@@ -110,7 +180,9 @@ class SHACLBrick:
             properties=data.get('properties', {}),
             constraints=constraints,
             tags=data.get('tags', []),
-            metadata=data.get('metadata', {})
+            metadata=data.get('metadata', {}),
+            created_at=data.get('created_at', datetime.now().isoformat()),
+            updated_at=data.get('updated_at', datetime.now().isoformat())
         )
 
 class BrickRepository:
@@ -190,14 +262,24 @@ class BrickLibrary:
         self.description = description
         self.author = author
         self.bricks: Dict[str, SHACLBrick] = {}
+        now = datetime.now().isoformat()
+        self.created_at = now
+        self.updated_at = now
         self.metadata = {
             "name": name,
             "description": description,
             "author": author,
             "created": "2026-04-13",
-            "version": "1.0"
+            "version": "1.0",
+            "created_at": now,
+            "updated_at": now
         }
         self._load_default_bricks()
+    
+    def _mark_modified(self):
+        """Mark library as modified by updating updated_at timestamp"""
+        self.updated_at = datetime.now().isoformat()
+        self.metadata["updated_at"] = self.updated_at
     
     def _load_default_bricks(self):
         """Load default commonly used bricks"""
@@ -270,6 +352,7 @@ class BrickLibrary:
     def add_brick(self, brick: SHACLBrick):
         """Add a brick to the library"""
         self.bricks[brick.brick_id] = brick
+        self._mark_modified()
     
     def get_brick(self, brick_id: str) -> Optional[SHACLBrick]:
         """Get a brick by ID"""
@@ -279,6 +362,7 @@ class BrickLibrary:
         """Remove a brick from the library"""
         if brick_id in self.bricks:
             del self.bricks[brick_id]
+            self._mark_modified()
             return True
         return False
     
@@ -381,6 +465,9 @@ class BrickLibrary:
             metadata.get("author", "Unknown")
         )
         library.metadata = metadata
+        # Restore timestamps from metadata if available
+        library.created_at = metadata.get("created_at", library.created_at)
+        library.updated_at = metadata.get("updated_at", library.updated_at)
         
         # Load bricks
         bricks_dir = dir_path / "bricks"
