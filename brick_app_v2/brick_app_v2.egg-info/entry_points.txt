@@ -1,0 +1,2 @@
+[console_scripts]
+brick-app-v2 = interfaces.simple_gui_launcher:main

@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ConstraintEditorDialog</class>
+ <widget class="QDialog" name="ConstraintEditorDialog">
+  <property name="geometry">
+   <rect>
+    <x>200</x>
+    <y>200</y>
+    <width>600</width>
+    <height>500</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Constraint Editor</string>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>20</y>
+     <width>560</width>
+     <height>460</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="mainLayout">
+    <item>
+     <widget class="QGroupBox" name="constraintTypeGroup">
+      <property name="title">
+       <string>Constraint Type</string>
+      </property>
+      <layout class="QHBoxLayout" name="constraintTypeLayout">
+       <item>
+        <widget class="QLabel" name="constraintTypeLabel">
+         <property name="text">
+          <string>Type:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="constraintTypeCombo">
+         <property name="minimumSize">
+          <size>
+           <width>200</width>
+           <height>0</height>
+          </size>
+         </property>
+         <item>
+          <property name="text">
+           <string>minCount</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>maxCount</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>minLength</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>maxLength</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>pattern</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>datatype</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>in</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>notIn</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item>
+        <spacer name="constraintTypeSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="valueConfigGroup">
+      <property name="title">
+       <string>Value Configuration</string>
+      </property>
+      <layout class="QVBoxLayout" name="valueConfigLayout">
+       
+       <!-- Numeric Value Field (for minCount, maxCount, minLength, maxLength) -->
+       <item>
+        <widget class="QWidget" name="numericValueWidget">
+         <layout class="QHBoxLayout" name="numericValueLayout">
+          <item>
+           <widget class="QLabel" name="numericValueLabel">
+            <property name="text">
+             <string>Value:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="numericValueSpinBox">
+            <property name="minimum">
+             <number>0</number>
+            </property>
+            <property name="maximum">
+             <number>999999</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="numericValueSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       
+       <!-- Pattern Value Field (for pattern constraints) -->
+       <item>
+        <widget class="QWidget" name="patternValueWidget">
+         <layout class="QVBoxLayout" name="patternValueLayout">
+          <item>
+           <widget class="QLabel" name="patternValueLabel">
+            <property name="text">
+             <string>Regular Expression Pattern:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="patternValueEdit">
+            <property name="placeholderText">
+             <string>Enter regex pattern (e.g., ^[A-Za-z0-9]+$)</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       
+       <!-- Datatype Field (for datatype constraints) -->
+       <item>
+        <widget class="QWidget" name="datatypeValueWidget">
+         <layout class="QHBoxLayout" name="datatypeValueLayout">
+          <item>
+           <widget class="QLabel" name="datatypeValueLabel">
+            <property name="text">
+             <string>Datatype:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="datatypeCombo">
+            <property name="minimumSize">
+             <size>
+              <width>200</width>
+              <height>0</height>
+             </size>
+            </property>
+            <item>
+             <property name="text">
+              <string>xsd:string</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>xsd:integer</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>xsd:float</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>xsd:boolean</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>xsd:date</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>xsd:dateTime</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>xsd:anyURI</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>xsd:decimal</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item>
+           <spacer name="datatypeValueSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       
+       <!-- List Value Field (for 'in' and 'notIn' constraints) -->
+       <item>
+        <widget class="QWidget" name="listValueWidget">
+         <layout class="QVBoxLayout" name="listValueLayout">
+          <item>
+           <widget class="QLabel" name="listValueLabel">
+            <property name="text">
+             <string>Allowed/Forbidden Values:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QListWidget" name="valueListWidget">
+            <property name="minimumHeight">
+             <number>100</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="listButtonLayout">
+            <item>
+             <widget class="QLineEdit" name="newValueEdit">
+              <property name="placeholderText">
+               <string>Enter new value</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="addValueButton">
+              <property name="text">
+               <string>Add</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="removeValueButton">
+              <property name="text">
+               <string>Remove</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="helpGroup">
+      <property name="title">
+       <string>Help</string>
+      </property>
+      <layout class="QVBoxLayout" name="helpLayout">
+       <item>
+        <widget class="QLabel" name="helpTextLabel">
+         <property name="text">
+          <string>Select a constraint type to see help information.</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="buttonLayout">
+      <item>
+       <spacer name="buttonSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="cancelButton">
+        <property name="text">
+         <string>Cancel</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="okButton">
+        <property name="text">
+         <string>OK</string>
+        </property>
+        <property name="default">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,7 @@
+PyQt6
+rdflib
+
+[dev]
+pytest
+black
+flake8

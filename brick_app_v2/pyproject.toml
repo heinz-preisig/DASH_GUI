@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "brick-app-v2"
+version = "2.0.0"
+description = "A clean, modular SHACL brick editor"
+authors = [
+    {name = "DASH GUI Team", email = "team@dash-gui.org"}
+]
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+    "PyQt6",
+    "rdflib",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "flake8",
+]
+
+[project.urls]
+Homepage = "https://github.com/dash-gui/brick-app"
+Repository = "https://github.com/dash-gui/brick-app.git"
+Issues = "https://github.com/dash-gui/brick-app/issues"
+
+[project.scripts]
+brick-app-v2 = "interfaces.simple_gui_launcher:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["core*", "interfaces*"]
+
+[tool.setuptools.package-data]
+core = ["*.py"]
+interfaces = ["*.py"]

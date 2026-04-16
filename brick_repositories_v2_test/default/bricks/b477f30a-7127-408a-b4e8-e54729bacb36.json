@@ -1,0 +1,13 @@
+{
+  "brick_id": "b477f30a-7127-408a-b4e8-e54729bacb36",
+  "name": "Test Node Brick",
+  "description": "",
+  "object_type": "NodeShape",
+  "target_class": "schema:Person",
+  "property_path": "",
+  "properties": {},
+  "constraints": [],
+  "tags": [],
+  "created_at": "2026-04-16T10:47:52.982057",
+  "updated_at": "2026-04-16T10:47:52.982070"
+}

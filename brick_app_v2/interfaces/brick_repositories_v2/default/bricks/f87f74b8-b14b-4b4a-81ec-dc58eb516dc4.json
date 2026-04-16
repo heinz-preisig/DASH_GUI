@@ -1,0 +1,13 @@
+{
+  "brick_id": "f87f74b8-b14b-4b4a-81ec-dc58eb516dc4",
+  "name": "New NodeShape",
+  "description": "",
+  "object_type": "NodeShape",
+  "target_class": "https://brickschema.org/schema/Brick#Ablutions_Room",
+  "property_path": "",
+  "properties": {},
+  "constraints": [],
+  "tags": [],
+  "created_at": "2026-04-16T10:50:33.300795",
+  "updated_at": "2026-04-16T10:51:03.970741"
+}

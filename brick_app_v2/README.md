@@ -1,0 +1,141 @@
+# SHACL Brick Editor v2 - Modular Architecture
+
+A clean, modular SHACL brick editor with support for multiple interfaces.
+
+## Architecture
+
+### Core Module (`core/`)
+- **brick_core.py**: Essential brick management functionality
+- **ontology_manager.py**: Ontology loading and browsing
+
+### Interface Modules (`interfaces/`)
+- **simple_gui.py**: Clean Qt desktop interface
+- **simple_gui_launcher.py**: Launcher script
+
+### Benefits of This Architecture
+
+1. **Separation of Concerns**: Core logic separated from UI
+2. **Multiple Interfaces**: Easy to add web, CLI, or mobile interfaces
+3. **Maintainable**: Each module has a single responsibility
+4. **Testable**: Core logic can be tested independently
+5. **Extensible**: New features can be added without affecting existing code
+
+## Comparison with Original
+
+| Aspect | Original (v1) | Modular (v2) |
+|--------|---------------|--------------|
+| Lines of Code | ~15,000 lines | ~800 lines (core + GUI) |
+| Architecture | Multi-layered, event-driven | Simple, direct calls |
+| Files | 82+ files across modules | 4 core files |
+| Complexity | High - multiple backends | Low - straightforward |
+| Maintenance | Difficult - scattered logic | Easy - centralized logic |
+| Extensibility | Complex - requires understanding layers | Simple - plug new interfaces |
+
+## Features
+
+### Core Functionality
+- Create/edit SHACL bricks (NodeShape and PropertyShape)
+- Save/load bricks from libraries
+- Ontology browsing for classes and properties
+- Property and constraint management
+- Library management
+
+### GUI Features
+- Clean, intuitive interface
+- Context-dependent ontology browsing
+- Real-time updates
+- Library browser
+- Simple property management
+
+## Usage
+
+### Running the Simple GUI
+```bash
+cd /home/heinz/1_Gits/DASH_GUI
+python brick_app_v2/interfaces/simple_gui_launcher.py
+```
+
+### Using the Core Directly
+```python
+from brick_app_v2.core.brick_core import BrickCore
+from brick_app_v2.core.ontology_manager import OntologyManager
+
+# Create core instance
+core = BrickCore()
+
+# Create a new brick
+brick = core.create_brick("NodeShape", "My Brick")
+brick.target_class = "schema:Person"
+
+# Save the brick
+core.save_brick()
+
+# Load all bricks
+bricks = core.get_all_bricks()
+```
+
+## Future Extensions
+
+### Web Interface
+```python
+# interfaces/web_interface.py
+from flask import Flask
+from ..core.brick_core import BrickCore
+
+app = Flask(__name__)
+core = BrickCore()
+
+@app.route('/api/bricks')
+def get_bricks():
+    bricks = core.get_all_bricks()
+    return [brick.to_dict() for brick in bricks]
+```
+
+### CLI Interface
+```python
+# interfaces/cli_interface.py
+import click
+from ..core.brick_core import BrickCore
+
+@click.group()
+def cli():
+    pass
+
+@cli.command()
+def list_bricks():
+    core = BrickCore()
+    bricks = core.get_all_bricks()
+    for brick in bricks:
+        print(f"{brick.name} ({brick.object_type})")
+```
+
+## Testing
+
+```bash
+# Run basic tests
+python -m pytest brick_app_v2/tests/
+```
+
+## Migration from v1
+
+The modular version provides the same core functionality but with a much simpler architecture. Key differences:
+
+1. **Direct API calls** instead of event-driven communication
+2. **Single BrickCore class** instead of multiple backend layers
+3. **Simple data structures** instead of complex object hierarchies
+4. **Clean separation** between core logic and interfaces
+
+## Development
+
+### Adding New Interfaces
+1. Create new file in `interfaces/`
+2. Import and use `BrickCore` and `OntologyManager`
+3. Implement your UI logic
+4. Add launcher script if needed
+
+### Extending Core Functionality
+1. Modify `brick_core.py` for new brick features
+2. Modify `ontology_manager.py` for ontology features
+3. All interfaces automatically get new functionality
+
+This architecture provides the simplicity you wanted while maintaining the flexibility to add new interfaces in the future.
