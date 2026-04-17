@@ -1,8 +1,30 @@
 """
-Core functionality for SHACL Brick Editor v2
+Core components for SHACL Brick Generator
 """
 
-from .brick_core import BrickCore, SHACLBrick
-from .ontology_manager import OntologyManager
+from .brick_generator import (
+    SHACLBrick,
+    BrickLibrary,
+    BrickRepository,
+    SHACLBrickGenerator,
+    SHACLObjectType,
+    SHACLConstraint,
+    SHACLTarget
+)
 
-__all__ = ['BrickCore', 'SHACLBrick', 'OntologyManager']
+from .brick_backend import (
+    BrickBackendAPI,
+    BrickEventProcessor
+)
+
+__all__ = [
+    "SHACLBrick",
+    "BrickLibrary",
+    "BrickRepository", 
+    "SHACLBrickGenerator",
+    "SHACLObjectType",
+    "SHACLConstraint",
+    "SHACLTarget",
+    "BrickBackendAPI",
+    "BrickEventProcessor"
+]
