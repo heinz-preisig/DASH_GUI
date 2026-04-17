@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>FlowEditorDialog</class>
+ <widget class="QDialog" name="FlowEditorDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Flow Editor</string>
+  </property>
+  <layout class="QVBoxLayout" name="dialogLayout">
+   <item>
+    <widget class="QGroupBox" name="flowInfoGroupBox">
+     <property name="title">
+      <string>Flow Information</string>
+     </property>
+     <layout class="QVBoxLayout" name="flowInfoLayout">
+      <item>
+       <layout class="QHBoxLayout" name="flowNameLayout">
+        <item>
+         <widget class="QLabel" name="flowNameLabel">
+          <property name="text">
+           <string>Flow Name:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="flowNameLineEdit">
+          <property name="placeholderText">
+           <string>Enter flow name</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="flowTypeLayout">
+        <item>
+         <widget class="QLabel" name="flowTypeLabel">
+          <property name="text">
+           <string>Flow Type:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="flowTypeComboBox">
+          <item>
+           <property name="text">
+            <string>Sequential</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Conditional</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Parallel</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Dynamic</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="flowDescriptionLineEdit">
+        <property name="placeholderText">
+         <string>Flow description (optional)</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QSplitter" name="editorSplitter">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <widget class="QWidget" name="stepsPanel" native="true">
+      <layout class="QVBoxLayout" name="stepsPanelLayout">
+       <item>
+        <widget class="QGroupBox" name="stepsGroupBox">
+         <property name="title">
+          <string>Flow Steps</string>
+         </property>
+         <layout class="QVBoxLayout" name="stepsLayout">
+          <item>
+           <widget class="QListWidget" name="stepsListWidget">
+            <property name="toolTip">
+             <string>Flow steps in order</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="stepButtonsLayout">
+            <item>
+             <widget class="QPushButton" name="addStepButton">
+              <property name="text">
+               <string>Add Step</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="removeStepButton">
+              <property name="text">
+               <string>Remove</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="moveUpButton">
+              <property name="text">
+               <string>Up</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="moveDownButton">
+              <property name="text">
+               <string>Down</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="stepDetailsPanel" native="true">
+      <layout class="QVBoxLayout" name="stepDetailsPanelLayout">
+       <item>
+        <widget class="QGroupBox" name="stepDetailsGroupBox">
+         <property name="title">
+          <string>Step Details</string>
+         </property>
+         <layout class="QVBoxLayout" name="stepDetailsLayout">
+          <item>
+           <layout class="QHBoxLayout" name="stepNameLayout">
+            <item>
+             <widget class="QLabel" name="stepNameLabel">
+              <property name="text">
+               <string>Step Name:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="stepNameLineEdit">
+              <property name="placeholderText">
+               <string>Enter step name</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="stepDescriptionLineEdit">
+            <property name="placeholderText">
+             <string>Step description (optional)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="availableBricksLabel">
+            <property name="text">
+             <string>Available Bricks:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QListWidget" name="availableBricksListWidget">
+            <property name="toolTip">
+             <string>Bricks available for this step</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="stepBricksLabel">
+            <property name="text">
+             <string>Bricks in this Step:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QListWidget" name="stepBricksListWidget">
+            <property name="toolTip">
+             <string>Bricks assigned to this step</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="brickButtonsLayout">
+            <item>
+             <widget class="QPushButton" name="addBrickToStepButton">
+              <property name="text">
+               <string>Add to Step</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="removeBrickFromStepButton">
+              <property name="text">
+               <string>Remove</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="navigationGroupBox">
+         <property name="title">
+          <string>Navigation</string>
+         </property>
+         <layout class="QVBoxLayout" name="navigationLayout">
+          <item>
+           <widget class="QLabel" name="nextStepsLabel">
+            <property name="text">
+             <string>Next Steps:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QListWidget" name="nextStepsListWidget">
+            <property name="toolTip">
+             <string>Possible next steps</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="conditionsLabel">
+            <property name="text">
+             <string>Conditions (for conditional flows):</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTextEdit" name="conditionsTextEdit">
+            <property name="maximumHeight">
+             <number>100</number>
+            </property>
+            <property name="placeholderText">
+             <string>Enter conditions in JSON format
+Example: {"field_equals:status": "active", "next_step": "step2_id"}</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="dialogButtonsLayout">
+     <item>
+      <widget class="QPushButton" name="validateFlowButton">
+       <property name="text">
+        <string>Validate Flow</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="okButton">
+       <property name="text">
+        <string>OK</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="cancelButton">
+       <property name="text">
+        <string>Cancel</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
