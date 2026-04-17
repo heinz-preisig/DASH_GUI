@@ -254,6 +254,42 @@ class SchemaConstructor:
         """Get all daisy chains"""
         return list(self.daisy_chains.values())
     
+    def add_component_to_schema(self, schema_id: str, brick_id: str) -> SchemaComposition:
+        """Add a component brick to an existing schema"""
+        if schema_id not in self.schemas:
+            raise ValueError(f"Schema '{schema_id}' not found")
+        
+        # Validate brick exists
+        if not self._validate_bricks_exist([brick_id]):
+            raise ValueError(f"Brick '{brick_id}' does not exist")
+        
+        schema = self.schemas[schema_id]
+        
+        # Check if brick is already a component
+        if brick_id in schema.component_brick_ids:
+            raise ValueError(f"Brick '{brick_id}' is already a component of schema '{schema_id}'")
+        
+        # Add brick to components
+        schema.component_brick_ids.append(brick_id)
+        
+        # Update relationships
+        schema.relationships = self._analyze_brick_relationships(schema.root_brick_id, schema.component_brick_ids)
+        
+        # Update interface steps
+        new_step = InterfaceStep(
+            step_id=f"step_{len(schema.interface_steps) + 1}",
+            name=f"Component {len(schema.interface_steps) + 1}",
+            description=f"Added component: {brick_id}",
+            brick_ids=[brick_id],
+            next_steps=[]
+        )
+        schema.interface_steps.append(new_step)
+        
+        # Update modified timestamp
+        schema.modified_at = datetime.now().isoformat()
+        
+        return schema
+    
     def export_schema_shacl(self, schema_id: str) -> Dict[str, Any]:
         """Export schema as SHACL"""
         if schema_id not in self.schemas:

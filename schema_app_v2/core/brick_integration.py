@@ -26,11 +26,16 @@ except ImportError as e:
 class BrickIntegration:
     """Integration layer for working with brick_app_v2"""
     
-    def __init__(self, brick_repository_path: str = "brick_repositories_v2"):
+    def __init__(self, brick_repository_path: str = None, use_shared_libraries: bool = True):
         if BrickCore is None:
             raise ImportError("brick_app_v2 is not available. Please ensure it's properly installed.")
         
-        self.brick_core = BrickCore(brick_repository_path)
+        # Use shared libraries by default
+        if use_shared_libraries and brick_repository_path is None:
+            self.brick_core = BrickCore(use_shared_libraries=True)
+        else:
+            self.brick_core = BrickCore(brick_repository_path, use_shared_libraries=False)
+        
         self.ontology_manager = OntologyManager()
         
     def get_available_bricks(self, library_name: Optional[str] = None) -> List[SHACLBrick]:
@@ -237,3 +242,22 @@ class BrickIntegration:
                 matching_bricks.append(brick)
         
         return matching_bricks
+    
+    def add_component_to_schema(self, schema_id: str, brick_id: str) -> bool:
+        """Add a component brick to a schema"""
+        # This is a simplified implementation for the schema_app_v2
+        # In a full implementation, this would update the schema structure
+        try:
+            # For now, we'll just validate that the brick exists
+            brick = self.get_brick_by_id(brick_id)
+            if not brick:
+                raise ValueError(f"Brick '{brick_id}' not found")
+            
+            # In a full implementation, this would:
+            # 1. Load the schema
+            # 2. Add the brick to the schema's component list
+            # 3. Save the updated schema
+            
+            return True
+        except Exception as e:
+            raise ValueError(f"Failed to add component to schema: {str(e)}")

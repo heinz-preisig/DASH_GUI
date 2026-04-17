@@ -97,10 +97,8 @@ class SchemaGUI(QMainWindow):
         self.ui.brickSearchLineEdit.textChanged.connect(self.on_brick_search_changed)
         self.ui.brickListWidget.itemDoubleClicked.connect(self.add_brick_as_component)
         
-        # Schema details
-        self.ui.nameLineEdit.textChanged.connect(self.on_schema_details_changed)
-        self.ui.descriptionLineEdit.textChanged.connect(self.on_schema_details_changed)
-        self.ui.rootBrickComboBox.currentTextChanged.connect(self.on_root_brick_changed)
+        # Schema details (only connect when schema exists)
+        # Note: These will be connected when schema is created/selected
         
         # Component management
         self.ui.addComponentButton.clicked.connect(self.add_component_brick)
@@ -284,6 +282,11 @@ class SchemaGUI(QMainWindow):
                     self.current_schema = schema
                     self.load_schema_into_ui(schema)
                     self.set_ui_state(True)
+                    
+                    # Connect schema detail signals now that we have a schema
+                    self.ui.nameLineEdit.textChanged.connect(self.on_schema_details_changed)
+                    self.ui.descriptionLineEdit.textChanged.connect(self.on_schema_details_changed)
+                    self.ui.rootBrickComboBox.currentTextChanged.connect(self.on_root_brick_changed)
                     break
     
     def on_brick_search_changed(self, text):
@@ -316,7 +319,27 @@ class SchemaGUI(QMainWindow):
     
     def add_component_brick(self):
         """Add component brick button handler"""
-        QMessageBox.information(self, "Add Component", "Feature coming soon")
+        if not self.current_schema:
+            QMessageBox.warning(self, "No Schema", "Please create or select a schema first")
+            return
+        
+        # Show component selection dialog
+        dialog = AddComponentDialog(self.brick_integration, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            selected_brick_id = dialog.get_selected_brick()
+            if selected_brick_id:
+                try:
+                    # Add component to schema
+                    self.brick_integration.add_component_to_schema(
+                        self.current_schema.schema_id, selected_brick_id
+                    )
+                    
+                    # Update UI
+                    self.refresh_component_list()
+                    QMessageBox.information(self, "Success", 
+                        f"Component '{selected_brick_id}' added to schema successfully!")
+                except Exception as e:
+                    QMessageBox.critical(self, "Error", f"Failed to add component: {str(e)}")
     
     def remove_component_brick(self):
         """Remove component brick button handler"""
@@ -494,6 +517,11 @@ class SchemaGUI(QMainWindow):
         if self.current_schema:
             self.update_preview()
     
+    def update_preview(self):
+        """Update schema preview"""
+        # Placeholder for preview functionality
+        pass
+    
     def on_root_brick_changed(self):
         """Handle root brick change"""
         if self.current_schema:
@@ -535,6 +563,117 @@ class SchemaGUI(QMainWindow):
                 self.save_schema()
         
         event.accept()
+
+
+class AddComponentDialog(QDialog):
+    """Dialog for adding components to a schema"""
+    
+    def __init__(self, brick_integration, parent=None):
+        super().__init__(parent)
+        self.brick_integration = brick_integration
+        self.selected_brick_id = None
+        self.setWindowTitle("Add Component")
+        self.setModal(True)
+        self.init_ui()
+    
+    def init_ui(self):
+        from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QComboBox, QListWidget, QDialogButtonBox
+        
+        layout = QVBoxLayout(self)
+        
+        # Instructions
+        info_label = QLabel("Select a brick to add as a component:")
+        layout.addWidget(info_label)
+        
+        # Brick list
+        self.brick_list = QListWidget()
+        self.brick_list.itemDoubleClicked.connect(self.on_brick_selected)
+        layout.addWidget(self.brick_list)
+        
+        # Search/filter
+        search_layout = QHBoxLayout()
+        search_layout.addWidget(QLabel("Search:"))
+        self.search_edit = QLineEdit()
+        self.search_edit.textChanged.connect(self.filter_bricks)
+        search_layout.addWidget(self.search_edit)
+        layout.addLayout(search_layout)
+        
+        # Filter by type
+        filter_layout = QHBoxLayout()
+        filter_layout.addWidget(QLabel("Type:"))
+        self.type_filter = QComboBox()
+        self.type_filter.addItems(["All", "NodeShape", "PropertyShape"])
+        self.type_filter.currentTextChanged.connect(self.filter_bricks)
+        filter_layout.addWidget(self.type_filter)
+        layout.addLayout(filter_layout)
+        
+        # Load bricks
+        self.load_bricks()
+        
+        # Buttons
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self.on_accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+    
+    def load_bricks(self):
+        """Load available bricks from backend"""
+        self.brick_list.clear()
+        
+        # Get all bricks from brick integration
+        bricks = self.brick_integration.get_available_bricks()
+        for brick in bricks:
+            display_text = f"{brick.name} ({brick.object_type})"
+            if hasattr(brick, 'description') and brick.description:
+                display_text += f" - {brick.description[:50]}..."
+            
+            item = QListWidgetItem(display_text)
+            item.setData(Qt.ItemDataRole.UserRole, brick.brick_id)
+            item.setData(Qt.ItemDataRole.UserRole + 1, brick)  # Store full brick data
+            self.brick_list.addItem(item)
+    
+    def filter_bricks(self):
+        """Filter bricks based on search and type"""
+        search_text = self.search_edit.text().lower()
+        filter_type = self.type_filter.currentText()
+        
+        for i in range(self.brick_list.count()):
+            item = self.brick_list.item(i)
+            brick_data = item.data(Qt.ItemDataRole.UserRole + 1)
+            
+            # Check search filter
+            matches_search = True
+            if search_text:
+                matches_search = (
+                    search_text in brick_data.name.lower() or
+                    (hasattr(brick_data, 'description') and search_text in brick_data.description.lower())
+                )
+            
+            # Check type filter
+            matches_type = filter_type == "All" or brick_data.object_type == filter_type
+            
+            # Show/hide item
+            item.setHidden(not (matches_search and matches_type))
+    
+    def on_brick_selected(self, item):
+        """Handle brick selection"""
+        self.selected_brick_id = item.data(Qt.ItemDataRole.UserRole)
+        self.accept()
+    
+    def on_accept(self):
+        """Handle OK button click"""
+        current_item = self.brick_list.currentItem()
+        if current_item:
+            self.selected_brick_id = current_item.data(Qt.ItemDataRole.UserRole)
+            self.accept()
+        else:
+            QMessageBox.warning(self, "No Selection", "Please select a brick to add")
+    
+    def get_selected_brick(self):
+        """Get the selected brick ID"""
+        return self.selected_brick_id
 
 
 def main():

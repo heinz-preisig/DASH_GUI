@@ -1,0 +1,27 @@
+{
+  "version": "2.0",
+  "libraries": {
+    "bricks": {
+      "default_path": "shared_libraries/bricks",
+      "libraries": [
+        {
+          "name": "default",
+          "path": "shared_libraries/bricks/default",
+          "description": "Default brick library",
+          "type": "bricks"
+        }
+      ]
+    },
+    "schemas": {
+      "default_path": "shared_libraries/schemas",
+      "libraries": [
+        {
+          "name": "default",
+          "path": "shared_libraries/schemas/default",
+          "description": "Default schema library",
+          "type": "schemas"
+        }
+      ]
+    }
+  }
+}
