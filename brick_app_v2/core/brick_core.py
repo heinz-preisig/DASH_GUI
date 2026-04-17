@@ -36,7 +36,15 @@ class SHACLBrick:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'SHACLBrick':
         """Create from dictionary"""
-        return cls(**data)
+        # Extract only the fields that SHACLBrick expects
+        valid_fields = {
+            'brick_id', 'name', 'description', 'object_type', 
+            'target_class', 'property_path', 'properties', 
+            'constraints', 'tags', 'created_at', 'updated_at'
+        }
+        
+        filtered_data = {k: v for k, v in data.items() if k in valid_fields}
+        return cls(**filtered_data)
     
     def update_timestamp(self):
         """Update the modification timestamp"""
