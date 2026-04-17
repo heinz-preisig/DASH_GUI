@@ -139,8 +139,8 @@
     </configuration>
     <list>
       <item itemvalue="Python.run_brick_app_v2" />
-      <item itemvalue="Python.run_schema_app_v2" />
       <item itemvalue="Python.run_tasks" />
+      <item itemvalue="Python.run_schema_app_v2" />
       <item itemvalue="Python.simple_gui_launcher" />
     </list>
     <recent_temporary>
