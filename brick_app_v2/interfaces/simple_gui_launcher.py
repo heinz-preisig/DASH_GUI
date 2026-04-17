@@ -10,12 +10,12 @@ from pathlib import Path
 app_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(app_dir))
 
-try:
-    from interfaces.simple_gui import main
-except ImportError:
-    # Fallback for when running directly
-    sys.path.insert(0, str(app_dir / 'interfaces'))
-    from simple_gui import main
+# Import main function from the parent directory's simple_gui module
+import importlib.util
+spec = importlib.util.spec_from_file_location("simple_gui", app_dir / "simple_gui.py")
+simple_gui_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(simple_gui_module)
+main = simple_gui_module.main
 
 if __name__ == "__main__":
     main()

@@ -35,7 +35,7 @@ sys.path.insert(0, str(app_dir))
 sys.path.insert(0, str(app_dir / 'core'))
 
 from core.brick_core_simple import BrickCore, SHACLBrick
-from shacl_brick_app.core.editor_backend import OntologyManager
+from brick_app_v2.core.editor_backend import OntologyManager
 
 
 class CorrectedOntologyManager:
