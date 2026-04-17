@@ -8,7 +8,8 @@ brick_app_v2.egg-info/requires.txt
 brick_app_v2.egg-info/top_level.txt
 core/__init__.py
 core/brick_core.py
+core/brick_core_simple.py
 core/ontology_manager.py
+core/ontology_manager_broken.py
 interfaces/__init__.py
-interfaces/simple_gui.py
 interfaces/simple_gui_launcher.py

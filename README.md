@@ -1,86 +1,157 @@
-# DASH_GUI - Three-Step SHACL Knowledge Graph Authoring System
+# DASH GUI v2 - Schema Construction System
 
-A comprehensive system for creating SHACL knowledge graphs through a three-step approach:
-1. **Step 1**: SHACL Brick Generator - Create reusable SHACL bricks
-2. **Step 2**: Schema Construction - Build SHACL schemas using bricks
-3. **Step 3**: Form Generation - Generate web forms from SHACL schemas
+**Purpose**: Complete system for creating SHACL schemas using reusable bricks.
 
-## Current Status
+## 🚀 Quick Start
 
-### Step 1: SHACL Brick Generator - COMPLETED
-Located in `shacl_brick_app/` - A complete, production-ready SHACL brick generation system.
-
-**Features:**
-- Full SHACL specification support (25 object types, 8 constraint types)
-- Multiple brick libraries with repository system
-- PyQt6 GUI for visual brick creation and management
-- Clean backend API with frontend/backend separation
-- Export to SHACL Turtle format
-- Comprehensive test suite
-
-**Quick Start:**
+### 5-Minute Quick Start
 ```bash
-# Run the GUI
-python run_brick_app.py --gui
+# 1. System check
+python3 run_tasks.py setup
 
-# Run tests
-python run_brick_app.py --test
+# 2. Launch interface
+python3 run_tasks.py qt        # Desktop
+# OR
+python3 run_tasks.py dash       # Web
+
+# 3. Create first schema
+# Follow interface instructions or see: docs/QUICK_START.md
 ```
 
-### Step 2: Schema Construction - PENDING
-Will allow building complete SHACL schemas using bricks with reuse capability.
+## 📚 Complete Documentation
 
-### Step 3: Form Generation - PENDING  
-Will generate web forms from SHACL schemas created in Step 2.
+**All documentation is now centralized in the `docs/` directory:**
 
-## Project Structure
+### User Documentation
+- **📖 Quick Start**: `docs/QUICK_START.md` - Get started in 5 minutes
+- **📖 User Guide**: `docs/USER_GUIDE.md` - Complete manual for all features
+- **🔧 Troubleshooting**: `docs/TROUBLESHOOTING.md` - Solutions to common issues
+
+### System Documentation
+- **📊 System Status**: `docs/README_V2_STATUS.md` - Architecture and current status
+- **🚀 Task Management**: `docs/TASK_MANAGER.md` - Centralized operations guide
+
+### Developer Documentation
+- **🧱 Brick Building**: `BRICK_BUILDING_GUIDE.md` - Brick creation guide
+- **⚙️ Development Setup**: `PYCHARM_SETUP.md` - IDE configuration
+
+## 🎯 Task Management
+
+**All operations are centralized through the task manager:**
+```bash
+python3 run_tasks.py status    # System status
+python3 run_tasks.py qt        # PyQt6 desktop interface
+python3 run_tasks.py dash       # DASH web interface
+python3 run_tasks.py setup     # Environment check
+python3 run_tasks.py stop      # Stop all processes
+```
+
+## 🏗️ Architecture
+
+### Core Components
+- **brick_app_v2/**: Core brick management system
+- **schema_app_v2/**: Schema construction and management
+- **docs/**: Complete documentation suite
+- **run_tasks.py**: Centralized task runner
+
+### Interface Options
+- **🖥️ PyQt6 Desktop**: Native desktop application
+- **📊 DASH Web**: Interactive web interface
+- **🔄 Flask Web**: Basic web interface (future)
+
+### Repositories
+- **brick_repositories/**: Active brick library (7 bricks available)
+- **schema_repositories/**: Schema storage
+- **ontologies/**: Ontology cache for brick system
+
+## 📋 Current Status
+
+✅ **Ready for Testing**:
+- PyQt6 interface working
+- DASH web interface available
+- 7 bricks loading successfully
+- Task management centralized
+- Complete documentation suite
+
+✅ **Features Available**:
+- Schema creation and editing
+- Brick integration and management
+- SHACL export functionality
+- Flow configuration
+- Library management
+- Multi-interface support
+
+## 🔧 Development Setup
+
+### Virtual Environment
+```bash
+# Create and activate
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r pyproject.toml
+```
+
+### Quick Launch Commands
+```bash
+# Desktop interface
+python3 run_tasks.py qt
+
+# Web interface
+python3 run_tasks.py dash
+
+# System status
+python3 run_tasks.py status
+```
+
+## 📁 Project Structure
 
 ```
 DASH_GUI/
-|
-|__ shacl_brick_app/         # Step 1: Complete SHACL Brick Generator
-|   |__ bricks.py            # Main entry point
-|   |__ core/                # Backend components
-|   |__ gui/                 # PyQt6 frontend
-|   |__ tests/               # Test suite
-|   |__ examples/            # Usage examples
-|   |__ README.md            # Detailed documentation
-|
-|__ run_brick_app.py         # Easy launcher for Step 1
-|__ project_memory.md        # Main project documentation
-|__ archive/                 # Archived old files
-|
-|__ .venv/                   # Virtual environment
-|__ pyproject.toml           # Python project configuration
-|__ uv.lock                  # Dependency lock file
+├── 📚 docs/                   # Complete documentation suite
+│   ├── README.md             # Documentation index
+│   ├── QUICK_START.md        # 5-minute quick start
+│   ├── USER_GUIDE.md         # Complete user manual
+│   ├── TROUBLESHOOTING.md    # Common issues & solutions
+│   ├── README_V2_STATUS.md  # System status & architecture
+│   └── TASK_MANAGER.md       # Task management guide
+├── brick_app_v2/              # Core brick management system
+├── schema_app_v2/             # Schema construction system
+├── brick_repositories/          # Active brick library
+├── schema_repositories/        # Schema storage
+├── ontologies/               # Ontology cache
+├── run_tasks.py              # Centralized task runner
+├── run_schema_app_v2.py       # Main launcher
+└── archive/                  # Legacy components
 ```
 
-## Documentation
+## 🎯 Getting Help
 
-- **Main Project**: `project_memory.md` - Complete development history and architecture
-- **Step 1 Guide**: `shacl_brick_app/README.md` - Detailed usage instructions
-- **Examples**: `shacl_brick_app/examples/` - Usage examples
+### Documentation
+```bash
+# Quick start
+cat docs/QUICK_START.md
 
-## Development History
+# Complete guide
+cat docs/USER_GUIDE.md
 
-This project evolved from initial SHACL experiments to a complete three-step system:
-1. Started with basic SHACL form generation
-2. Developed comprehensive brick generation system
-3. Created clean package structure with GUI
-4. Ready for Step 2 schema construction
+# Troubleshooting
+cat docs/TROUBLESHOOTING.md
+```
 
-## Next Steps
+### System Commands
+```bash
+# All available commands
+python3 run_tasks.py --help
 
-1. **Step 2 Implementation**: Build schema construction system using bricks
-2. **Step 3 Implementation**: Create form generation from schemas
-3. **Integration**: Connect all three steps into complete workflow
+# Current status
+python3 run_tasks.py status
 
-## Dependencies
+# Environment check
+python3 run_tasks.py setup
+```
 
-- PyQt6 - GUI framework
-- RDFLib - RDF/SHACL processing
-- Python 3.8+
+---
 
-## License
-
-Part of the Three-Step SHACL Knowledge Graph Authoring System.
+**Complete system for SHACL schema construction with reusable bricks, multiple interface options, and centralized documentation.**

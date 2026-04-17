@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1400</width>
+    <height>900</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Schema App v2 - Schema Constructor</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QSplitter" name="mainSplitter">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <widget class="QWidget" name="leftPanel" native="true">
+       <layout class="QVBoxLayout" name="leftPanelLayout">
+        <item>
+         <widget class="QGroupBox" name="libraryGroupBox">
+          <property name="title">
+           <string>Schema Library</string>
+          </property>
+          <layout class="QVBoxLayout" name="libraryLayout">
+           <item>
+            <widget class="QComboBox" name="libraryComboBox">
+             <property name="toolTip">
+              <string>Select active library</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QListWidget" name="schemaListWidget">
+             <property name="toolTip">
+              <string>Available schemas</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="libraryButtonsLayout">
+             <item>
+              <widget class="QPushButton" name="newSchemaButton">
+               <property name="text">
+                <string>New Schema</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="deleteSchemaButton">
+               <property name="text">
+                <string>Delete</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="bricksGroupBox">
+          <property name="title">
+           <string>Available Bricks</string>
+          </property>
+          <layout class="QVBoxLayout" name="bricksLayout">
+           <item>
+            <widget class="QComboBox" name="brickLibraryComboBox">
+             <property name="toolTip">
+              <string>Select brick library</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="brickSearchLineEdit">
+             <property name="placeholderText">
+              <string>Search bricks...</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QListWidget" name="brickListWidget">
+             <property name="toolTip">
+              <string>Available bricks for schema construction</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="centerPanel" native="true">
+       <layout class="QVBoxLayout" name="centerPanelLayout">
+        <item>
+         <widget class="QGroupBox" name="schemaDetailsGroupBox">
+          <property name="title">
+           <string>Schema Details</string>
+          </property>
+          <layout class="QVBoxLayout" name="schemaDetailsLayout">
+           <item>
+            <layout class="QHBoxLayout" name="nameLayout">
+             <item>
+              <widget class="QLabel" name="nameLabel">
+               <property name="text">
+                <string>Name:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="nameLineEdit">
+               <property name="placeholderText">
+                <string>Schema name</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="descriptionLayout">
+             <item>
+              <widget class="QLabel" name="descriptionLabel">
+               <property name="text">
+                <string>Description:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="descriptionLineEdit">
+               <property name="placeholderText">
+                <string>Schema description</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="rootBrickLayout">
+             <item>
+              <widget class="QLabel" name="rootBrickLabel">
+               <property name="text">
+                <string>Root Brick:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="rootBrickComboBox">
+               <property name="toolTip">
+                <string>Select root brick (NodeShape)</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTabWidget" name="schemaTabWidget">
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="componentsTab">
+           <attribute name="title">
+            <string>Components</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="componentsLayout">
+            <item>
+             <widget class="QLabel" name="componentsLabel">
+              <property name="text">
+               <string>Component Bricks:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QListWidget" name="componentBricksListWidget">
+              <property name="toolTip">
+               <string>Bricks included in this schema</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="componentButtonsLayout">
+              <item>
+               <widget class="QPushButton" name="addComponentButton">
+                <property name="text">
+                 <string>Add Component</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="removeComponentButton">
+                <property name="text">
+                 <string>Remove</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="flowTab">
+           <attribute name="title">
+            <string>Flow Configuration</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="flowLayout">
+            <item>
+             <layout class="QHBoxLayout" name="flowTypeLayout">
+              <item>
+               <widget class="QLabel" name="flowTypeLabel">
+                <property name="text">
+                 <string>Flow Type:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="flowTypeComboBox">
+                <item>
+                 <property name="text">
+                  <string>Sequential</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Conditional</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Parallel</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Dynamic</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="editFlowButton">
+                <property name="text">
+                 <string>Edit Flow</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QListWidget" name="flowStepsListWidget">
+              <property name="toolTip">
+               <string>Flow steps configuration</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="previewTab">
+           <attribute name="title">
+            <string>Preview</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="previewLayout">
+            <item>
+             <widget class="QTextEdit" name="previewTextEdit">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+              <property name="placeholderText">
+               <string>Schema preview will appear here</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="actionButtonsLayout">
+          <item>
+           <widget class="QPushButton" name="saveButton">
+            <property name="text">
+             <string>Save Schema</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="exportShaclButton">
+            <property name="text">
+             <string>Export SHACL</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1400</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="fileMenu">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="newSchemaAction"/>
+    <addaction name="openSchemaAction"/>
+    <addaction name="saveSchemaAction"/>
+    <addaction name="separator"/>
+    <addaction name="exportShaclAction"/>
+    <addaction name="separator"/>
+    <addaction name="exitAction"/>
+   </widget>
+   <widget class="QMenu" name="toolsMenu">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="manageLibrariesAction"/>
+    <addaction name="validateSchemaAction"/>
+   </widget>
+   <widget class="QMenu" name="helpMenu">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="aboutAction"/>
+   </widget>
+   <addaction name="fileMenu"/>
+   <addaction name="toolsMenu"/>
+   <addaction name="helpMenu"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="newSchemaAction">
+   <property name="text">
+    <string>New Schema</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="openSchemaAction">
+   <property name="text">
+    <string>Open Schema</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="saveSchemaAction">
+   <property name="text">
+    <string>Save Schema</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="exportShaclAction">
+   <property name="text">
+    <string>Export SHACL</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+E</string>
+   </property>
+  </action>
+  <action name="exitAction">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="manageLibrariesAction">
+   <property name="text">
+    <string>Manage Libraries</string>
+   </property>
+  </action>
+  <action name="validateSchemaAction">
+   <property name="text">
+    <string>Validate Schema</string>
+   </property>
+  </action>
+  <action name="aboutAction">
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
