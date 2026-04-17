@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="0d705841-a14e-4cf0-90e8-7295f5c1750c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/DASH_GUI.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/DASH_GUI.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GUI_LAUNCH_GUIDE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/IMPLEMENTATION_STATUS.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/LIBRARY_MANAGEMENT.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/MULTI_TENANT_ARCHITECTURE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/brick_app_v2/core/brick_core.py" beforeDir="false" afterPath="$PROJECT_DIR$/brick_app_v2/core/brick_core.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brick_repositories_v2_test/default/bricks/39587e18-ae5d-4a42-8815-e51e20b6dec6.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/brick_repositories_v2_test/default/bricks/b477f30a-7127-408a-b4e8-e54729bacb36.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/brick_repositories_v2_test/default/bricks/c93b1d40-9e9e-4d07-ac50-aa0562af040a.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/brick_repositories_v2_test/default/bricks/d4bfe1fa-1821-4539-a1d9-e7605812fe6c.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/default_brick_repository/default/bricks/date_property.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/default_brick_repository/default/bricks/email_property.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/default_brick_repository/default/bricks/name_property.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/default_brick_repository/default/bricks/organization_nodeshape.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/default_brick_repository/default/bricks/person_nodeshape.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/default_brick_repository/default/metadata.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/guided_brick_gui.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/guided_brick_gui/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/guided_brick_gui/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/guided_brick_gui/backend/brick_manager.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/guided_brick_gui/main.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/guided_brick_gui/ui/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/guided_brick_gui/ui/main_window.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/guided_brick_gui/ui/panels/actions_panel.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/guided_brick_gui/ui/panels/brick_list.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/guided_brick_gui/ui/panels/guide_panel.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/launch_brick_generator.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ontology_browser_fix_history.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project_memory.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/run_brick_app.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/run_schema_app.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/schema_app_v2/interfaces/qt/schema_gui.py" beforeDir="false" afterPath="$PROJECT_DIR$/schema_app_v2/interfaces/qt/schema_gui.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/api/web_api.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/bricks.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/core/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/core/abstract_events.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/core/brick_backend.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/core/brick_generator.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/core/dialog_controller.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/core/editor_backend.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/core/editor_controller.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/core/main_backend.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/core/multi_tenant_backend.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/core/session_manager.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/examples/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/examples/basic_usage.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/gui/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/gui/brick_gui.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/gui/combined_gui.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/gui/simple_editor.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/gui/topbraid_inspired_gui.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/gui/user_friendly_gui.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/interfaces/editor_frontend.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/schema/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/schema/core/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/schema/core/schema_backend.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/schema/core/schema_constructor.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/schema/examples/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/schema/examples/schema_construction_example.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/schema/gui/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/schema/gui/brick_editor.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/schema/gui/library_manager.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/schema/gui/ontology_browser.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/schema/gui/schema_constructor_gui.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/schema/gui/schema_gui.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/schema/gui/workflow_state.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/schema/main.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/schema/tests/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/setup.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/tests/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/tests/test_brick_generator.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shacl_brick_app/tests/test_export_fix.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test_imports.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/topbraid_repositories/default/bricks/date_property.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/topbraid_repositories/default/bricks/email_property.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/topbraid_repositories/default/bricks/name_property.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/topbraid_repositories/default/bricks/organization_nodeshape.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/topbraid_repositories/default/bricks/person_nodeshape.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/topbraid_repositories/default/metadata.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/working_shacl_form_with_help.html" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;heinz-preisig&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/heinz-preisig/DASH_GUI.git&quot;,
+    &quot;accountId&quot;: &quot;e5b26c33-ae4e-478f-a79f-a6711a01262e&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4
+}</component>
+  <component name="ProjectId" id="3CTaU5KJb150e2l8jQAwXP6vV32" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.run_schema_app_v2.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.simple_gui_launcher.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;feature/schema-app-v2&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/heinz/1_Gits/DASH_GUI/schema_app_v2/interfaces&quot;
+  }
+}</component>
+  <component name="RunManager" selected="Python.run_schema_app_v2">
+    <configuration name="run_schema_app_v2" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="DASH_GUI" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/schema_app_v2/interfaces" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="RUN_TOOL" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run_schema_app_v2.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="simple_gui_launcher" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="DASH_GUI" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/brick_app_v2/interfaces" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="RUN_TOOL" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/brick_app_v2/interfaces/simple_gui_launcher.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Python.run_schema_app_v2" />
+      <item itemvalue="Python.simple_gui_launcher" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.run_schema_app_v2" />
+        <item itemvalue="Python.simple_gui_launcher" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-2653e85de345-6d6dccd035ac-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-253.31033.139" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="0d705841-a14e-4cf0-90e8-7295f5c1750c" name="Changes" comment="" />
+      <created>1776412025698</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1776412025698</updated>
+    </task>
+    <servers />
+  </component>
+</project>

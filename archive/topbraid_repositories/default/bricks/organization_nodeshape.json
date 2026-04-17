@@ -1,0 +1,22 @@
+{
+  "brick_id": "organization_nodeshape",
+  "name": "Organization NodeShape",
+  "description": "Basic organization shape",
+  "object_type": "NodeShape",
+  "targets": [
+    {
+      "target_type": "TargetClass",
+      "value": "foaf:Organization"
+    }
+  ],
+  "properties": {
+    "nodeKind": "IRI"
+  },
+  "constraints": [],
+  "tags": [
+    "organization",
+    "foaf",
+    "basic"
+  ],
+  "metadata": {}
+}
