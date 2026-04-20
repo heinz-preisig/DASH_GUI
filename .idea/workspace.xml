@@ -1,20 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="0d705841-a14e-4cf0-90e8-7295f5c1750c" name="Changes" comment="[Version 2] new .run directory">
+    <list default="true" id="0d705841-a14e-4cf0-90e8-7295f5c1750c" name="Changes" comment="[Version 2] gitignore">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/archive/shacl_brick_app/schema/core/schema_constructor.py" beforeDir="false" afterPath="$PROJECT_DIR$/archive/shacl_brick_app/schema/core/schema_constructor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/archive/shacl_brick_app/schema/gui/schema_constructor_gui.py" beforeDir="false" afterPath="$PROJECT_DIR$/archive/shacl_brick_app/schema/gui/schema_constructor_gui.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/brick_app_v2/brick_repositories_v2/default/bricks/0c7245c7-581c-41a8-907d-d6c4771ce265.json" beforeDir="false" afterPath="$PROJECT_DIR$/brick_app_v2/brick_repositories_v2/default/bricks/0c7245c7-581c-41a8-907d-d6c4771ce265.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/brick_app_v2/core/brick_core.py" beforeDir="false" afterPath="$PROJECT_DIR$/brick_app_v2/core/brick_core.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/brick_app_v2/schema/core/schema_constructor.py" beforeDir="false" afterPath="$PROJECT_DIR$/brick_app_v2/schema/core/schema_constructor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/brick_app_v2/schema/gui/schema_constructor_gui.py" beforeDir="false" afterPath="$PROJECT_DIR$/brick_app_v2/schema/gui/schema_constructor_gui.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/brick_app_v2/schema/gui/schema_gui.py" beforeDir="false" afterPath="$PROJECT_DIR$/brick_app_v2/schema/gui/schema_gui.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/schema_app_v2/core/brick_integration.py" beforeDir="false" afterPath="$PROJECT_DIR$/schema_app_v2/core/brick_integration.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/schema_app_v2/core/schema_core.py" beforeDir="false" afterPath="$PROJECT_DIR$/schema_app_v2/core/schema_core.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/schema_app_v2/interfaces/qt/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/schema_app_v2/interfaces/qt/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/schema_app_v2/interfaces/qt/schema_gui.py" beforeDir="false" afterPath="$PROJECT_DIR$/schema_app_v2/interfaces/qt/schema_gui.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/schema_app_v2/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/schema_app_v2/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -153,8 +141,8 @@
     </configuration>
     <list>
       <item itemvalue="Python.run_brick_app_v2" />
-      <item itemvalue="Python.run_tasks" />
       <item itemvalue="Python.run_schema_app_v2" />
+      <item itemvalue="Python.run_tasks" />
       <item itemvalue="Python.simple_gui_launcher" />
     </list>
     <recent_temporary>
@@ -229,14 +217,40 @@
       <option name="project" value="LOCAL" />
       <updated>1776433223913</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="[Version 2] new .run directory">
+      <option name="closed" value="true" />
+      <created>1776439450752</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1776439450752</updated>
+    </task>
+    <task id="LOCAL-00008" summary="[Version 2] new .run directory">
+      <option name="closed" value="true" />
+      <created>1776439642592</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1776439642592</updated>
+    </task>
+    <task id="LOCAL-00009" summary="[Version 2] gitignore">
+      <option name="closed" value="true" />
+      <created>1776440077495</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1776440077495</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="[Version 2] clean up" />
     <MESSAGE value="[Version 2] clean up documents" />
     <MESSAGE value="[Version 2] after consolidation some problems showed up. Also the two &quot;runners&quot; were added to the root." />
+    <MESSAGE value="[Version 2] new schema version." />
     <MESSAGE value="[Version 2] new .run directory" />
-    <option name="LAST_COMMIT_MESSAGE" value="[Version 2] new .run directory" />
+    <MESSAGE value="[Version 2] gitignore" />
+    <option name="LAST_COMMIT_MESSAGE" value="[Version 2] gitignore" />
   </component>
 </project>
