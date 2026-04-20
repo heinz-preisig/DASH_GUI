@@ -23,7 +23,7 @@ from .schema_controller import SchemaController
 # Import UI components
 from .ui_components import UiLoader, ComponentManager
 from .help_dialog import HelpDialog
-from .ui_state_manager import UIStateManager
+from .ui_state_manager import UIStateManager, SchemaState
 
 
 class CleanSchemaGUI(QMainWindow):
@@ -93,9 +93,9 @@ class CleanSchemaGUI(QMainWindow):
         self.ui.brickListWidget.itemDoubleClicked.connect(self.add_brick_as_component)
         
         # Component management
-        self.ui.addComponentButton.clicked.connect(self.add_component_brick)
         self.ui.removeComponentButton.clicked.connect(self.remove_component_brick)
         self.ui.componentBricksListWidget.itemSelectionChanged.connect(self.on_component_selection_changed)
+        # Note: addComponentButton and popup removed - double-click adds components directly
         
         # Schema details
         self.ui.rootBrickComboBox.currentTextChanged.connect(self.on_root_brick_changed)
@@ -110,10 +110,39 @@ class CleanSchemaGUI(QMainWindow):
     
     def load_initial_data(self):
         """Load initial data into UI"""
+        self.refresh_library_list()
+        self.refresh_brick_library_list()
         self.refresh_schema_list()
         self.refresh_brick_list()
         self.refresh_root_bricks()
-        self.set_ui_state(False)
+        # Set initial state to INITIAL
+        self.state_manager.set_state(SchemaState.INITIAL)
+    
+    def refresh_library_list(self):
+        """Refresh library list"""
+        self.ui.libraryComboBox.clear()
+        libraries = self.controller.get_libraries()
+        if libraries:
+            self.ui.libraryComboBox.addItems(libraries)
+            # Set current library if available
+            current_library = getattr(self.controller.schema_core, 'active_library', 'default')
+            if current_library in libraries:
+                index = self.ui.libraryComboBox.findText(current_library)
+                if index >= 0:
+                    self.ui.libraryComboBox.setCurrentIndex(index)
+    
+    def refresh_brick_library_list(self):
+        """Refresh brick library list"""
+        self.ui.brickLibraryComboBox.clear()
+        brick_libraries = self.controller.get_brick_libraries()
+        if brick_libraries:
+            self.ui.brickLibraryComboBox.addItems(brick_libraries)
+            # Set current brick library if available
+            current_brick_library = getattr(self.controller.brick_integration.brick_core, 'active_library', 'default')
+            if current_brick_library in brick_libraries:
+                index = self.ui.brickLibraryComboBox.findText(current_brick_library)
+                if index >= 0:
+                    self.ui.brickLibraryComboBox.setCurrentIndex(index)
     
     # Schema Management Methods
     def new_schema(self):
@@ -123,10 +152,12 @@ class CleanSchemaGUI(QMainWindow):
             schema = self.controller.create_new_schema(name.strip())
             if schema:
                 self.refresh_schema_list()
+                # Load schema into UI and enable details for editing
                 self.load_schema_into_ui(schema)
                 self.connect_schema_detail_signals()
-                self.set_ui_state(True)  # Enable UI controls
-                self.ui.statusbar.showMessage(f"Created new schema: {name}")
+                # Set state to SCHEMA_SELECTED to enable schema details
+                self.state_manager.set_current_schema(schema, False)
+                self.ui.statusbar.showMessage(f"Created new schema: {name} - Ready for editing")
     
     def open_schema(self):
         """Open existing schema"""
@@ -142,15 +173,26 @@ class CleanSchemaGUI(QMainWindow):
                 self.refresh_schema_list()
                 self.load_schema_into_ui(self.controller.current_schema)
                 self.connect_schema_detail_signals()
-                self.set_ui_state(True)  # Enable UI controls
+                # Use state manager for UI state
+                self.state_manager.set_current_schema(self.controller.current_schema, False)
                 self.ui.statusbar.showMessage(f"Opened schema: {name}")
     
     def save_schema(self):
         """Save current schema"""
-        if self.controller.save_current_schema():
-            self.ui.statusbar.showMessage("Schema saved successfully!")
-        else:
-            QMessageBox.warning(self, "Error", "Failed to save schema")
+        if self.controller.current_schema:
+            # Use state manager for save process
+            self.state_manager.start_saving()
+            try:
+                if self.controller.save_current_schema():
+                    self.state_manager.mark_schema_saved()
+                else:
+                    # Revert to modified state on failure
+                    self.state_manager.set_state(SchemaState.SCHEMA_MODIFIED)
+                    QMessageBox.warning(self, "Error", "Failed to save schema")
+            except Exception as e:
+                # Revert to modified state on error
+                self.state_manager.set_state(SchemaState.SCHEMA_MODIFIED)
+                QMessageBox.critical(self, "Error", f"Save failed: {str(e)}")
     
     def delete_schema(self):
         """Delete current schema"""
@@ -164,8 +206,8 @@ class CleanSchemaGUI(QMainWindow):
             if reply == QMessageBox.StandardButton.Yes:
                 if self.controller.delete_current_schema():
                     self.refresh_schema_list()
-                    self.set_ui_state(False)
-                    # Clear schema details using state manager
+                    # Use state manager for UI state
+                    self.state_manager.set_current_schema(None, False)
                     self.state_manager.clear_form_fields()
                     self.refresh_component_list()
                     self.ui.statusbar.showMessage("Schema deleted successfully!")
@@ -173,6 +215,9 @@ class CleanSchemaGUI(QMainWindow):
     # Component Management Methods
     def add_component_brick(self):
         """Add component brick to current schema"""
+        # Use state manager for component addition process
+        self.state_manager.start_component_adding()
+        
         # Show component selection dialog
         from .add_component_dialog import AddComponentDialog
         dialog = AddComponentDialog(self.controller, self)
@@ -181,8 +226,13 @@ class CleanSchemaGUI(QMainWindow):
             if selected_brick_id:
                 if self.controller.add_component_to_schema(selected_brick_id):
                     self.refresh_component_list()
+                    # Mark schema as modified
+                    self.state_manager.mark_schema_modified()
                     QMessageBox.information(self, "Success", 
                         f"Component '{selected_brick_id}' added to schema successfully!")
+        
+        # Always finish component adding process
+        self.state_manager.finish_component_adding(was_modified=True)
     
     def remove_component_brick(self):
         """Remove component brick from current schema"""
@@ -192,6 +242,8 @@ class CleanSchemaGUI(QMainWindow):
             if brick_id:
                 if self.controller.remove_component_from_schema(brick_id):
                     self.refresh_component_list()
+                    # Mark schema as modified
+                    self.state_manager.mark_schema_modified()
                     QMessageBox.information(self, "Success", 
                         f"Component '{brick_id}' removed from schema successfully!")
     
@@ -203,6 +255,8 @@ class CleanSchemaGUI(QMainWindow):
             if brick.name == brick_name:
                 if self.controller.add_component_to_schema(brick.brick_id):
                     self.refresh_component_list()
+                    # Mark schema as modified
+                    self.state_manager.mark_schema_modified()
                     QMessageBox.information(self, "Success", 
                         f"Component '{brick_name}' added to schema successfully!")
                 break
@@ -211,15 +265,22 @@ class CleanSchemaGUI(QMainWindow):
     def on_schema_selection_changed(self):
         """Handle schema selection change"""
         items = self.ui.schemaListWidget.selectedItems()
+        print(f"DEBUG: Schema selection changed, items: {len(items)}")
         if items:
             schema_name = items[0].text()
+            print(f"DEBUG: Selected schema: {schema_name}")
             if self.controller.select_schema(schema_name):
+                print(f"DEBUG: Schema selected successfully")
                 self.load_schema_into_ui(self.controller.current_schema)
                 self.connect_schema_detail_signals()
-                self.set_ui_state(True)  # Enable UI controls
+                # Use state manager for UI state
+                self.state_manager.set_current_schema(self.controller.current_schema, False)
+            else:
+                print(f"DEBUG: Failed to select schema")
         else:
-            # No selection, disable UI controls
-            self.set_ui_state(False)
+            print(f"DEBUG: No schema selected")
+            # No selection, use state manager
+            self.state_manager.set_current_schema(None, False)
     
     def on_brick_search_changed(self, text):
         """Handle brick search"""
@@ -232,6 +293,8 @@ class CleanSchemaGUI(QMainWindow):
             for brick in all_bricks:
                 if brick.name == brick_name:
                     self.controller.update_schema_details(root_brick_id=brick.brick_id)
+                    # Mark schema as modified
+                    self.state_manager.mark_schema_modified()
                     break
     
     def on_flow_type_changed(self, flow_type):
@@ -242,7 +305,14 @@ class CleanSchemaGUI(QMainWindow):
     
     def edit_flow(self):
         """Edit flow configuration"""
+        # Use state manager for flow editing process
+        self.state_manager.start_flow_editing()
+        
+        # Show flow editor dialog (placeholder)
         QMessageBox.information(self, "Edit Flow", "Flow editor coming soon")
+        
+        # Finish flow editing process
+        self.state_manager.finish_flow_editing(was_modified=False)
     
     def preview_schema(self):
         """Preview schema"""
@@ -254,7 +324,10 @@ class CleanSchemaGUI(QMainWindow):
     
     def on_component_selection_changed(self):
         """Handle component selection change"""
-        pass  # Could show component details here
+        current_item = self.ui.componentBricksListWidget.currentItem()
+        has_selection = current_item is not None
+        # Update remove button state based on selection
+        self.state_manager.update_remove_button_state(has_selection)
     
     # UI State Management
     def connect_schema_detail_signals(self):
@@ -268,6 +341,8 @@ class CleanSchemaGUI(QMainWindow):
             name = self.ui.nameLineEdit.text().strip()
             description = self.ui.descriptionLineEdit.text().strip()
             self.controller.update_schema_details(name=name, description=description)
+            # Mark schema as modified
+            self.state_manager.mark_schema_modified()
     
     def load_schema_into_ui(self, schema):
         """Load schema data into UI"""
@@ -315,6 +390,8 @@ class CleanSchemaGUI(QMainWindow):
                     item = QListWidgetItem(brick.name)
                     item.setData(Qt.ItemDataRole.UserRole, brick_id)
                     self.ui.componentBricksListWidget.addItem(item)
+        # Reset remove button state (no selection initially)
+        self.state_manager.update_remove_button_state(False)
     
     def refresh_root_bricks(self):
         """Refresh root brick options"""
@@ -331,7 +408,11 @@ class CleanSchemaGUI(QMainWindow):
         widgets_to_register = [
             "nameLineEdit", "descriptionLineEdit", "rootBrickComboBox",
             "addComponentButton", "removeComponentButton", "componentBricksListWidget",
-            "flowTypeComboBox", "editFlowButton", "saveButton", "exportShaclButton"
+            "flowTypeComboBox", "editFlowButton", "saveButton", "exportShaclButton",
+            "schemaListWidget", "newSchemaButton", "deleteSchemaButton",
+            "brickListWidget", "brickSearchLineEdit", "libraryComboBox", "brickLibraryComboBox",
+            # Group containers
+            "bricksGroupBox", "schemaDetailsGroupBox"
         ]
         
         for widget_name in widgets_to_register:
@@ -341,8 +422,39 @@ class CleanSchemaGUI(QMainWindow):
     
     def connect_state_signals(self):
         """Connect state manager signals"""
+        self.state_manager.state_changed.connect(self.on_state_changed)
+        self.state_manager.schema_modified.connect(self.on_schema_modified)
+        self.state_manager.schema_saved.connect(self.on_schema_saved)
         self.state_manager.schema_selected.connect(self.on_schema_selected)
         self.state_manager.schema_deselected.connect(self.on_schema_deselected)
+    
+    def on_state_changed(self, old_state: SchemaState, new_state: SchemaState):
+        """Handle state changes with visual feedback"""
+        # Update status bar with current state
+        state_messages = {
+            SchemaState.INITIAL: "Ready - No schema selected",
+            SchemaState.SCHEMA_SELECTED: "Schema loaded - Ready for editing",
+            SchemaState.SCHEMA_MODIFIED: "Schema modified - Unsaved changes",
+            SchemaState.SCHEMA_SAVING: "Saving schema...",
+            SchemaState.COMPONENT_ADDING: "Adding component...",
+            SchemaState.FLOW_EDITING: "Editing flow configuration..."
+        }
+        message = state_messages.get(new_state, "Unknown state")
+        self.ui.statusbar.showMessage(message)
+        
+        # Add visual indicators for modified state
+        if new_state == SchemaState.SCHEMA_MODIFIED:
+            self.ui.saveButton.setStyleSheet("QPushButton { background-color: #ffeb3b; font-weight: bold; }")
+        else:
+            self.ui.saveButton.setStyleSheet("")
+    
+    def on_schema_modified(self):
+        """Handle schema modification"""
+        self.ui.statusbar.showMessage("Schema modified - Click save to preserve changes")
+    
+    def on_schema_saved(self):
+        """Handle successful save"""
+        self.ui.statusbar.showMessage("Schema saved successfully!")
     
     def on_schema_selected(self, schema):
         """Handle schema selection via state manager"""
@@ -354,14 +466,11 @@ class CleanSchemaGUI(QMainWindow):
     
     def set_ui_state(self, has_schema: bool):
         """Enable/disable UI based on schema state (deprecated - use state manager)"""
-        # Use centralized state manager
-        self.state_manager.set_schema_state(has_schema)
-        
-        # Update current schema in state manager
+        # Use enhanced state manager instead
         if has_schema:
-            self.state_manager.set_current_schema(self.controller.current_schema)
+            self.state_manager.set_current_schema(self.controller.current_schema, False)
         else:
-            self.state_manager.set_current_schema(None)
+            self.state_manager.set_current_schema(None, False)
     
     # Menu Actions
     def manage_libraries(self):

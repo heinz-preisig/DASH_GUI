@@ -3,6 +3,9 @@
   <component name="ChangeListManager">
     <list default="true" id="0d705841-a14e-4cf0-90e8-7295f5c1750c" name="Changes" comment="[Version 2] gitignore">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/schema_app_v2/interfaces/qt/schema_controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/schema_app_v2/interfaces/qt/schema_controller.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/schema_app_v2/interfaces/qt/schema_gui_clean.py" beforeDir="false" afterPath="$PROJECT_DIR$/schema_app_v2/interfaces/qt/schema_gui_clean.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/schema_app_v2/interfaces/qt/ui_state_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/schema_app_v2/interfaces/qt/ui_state_manager.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -241,8 +244,35 @@
       <option name="project" value="LOCAL" />
       <updated>1776440077495</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="[Version 2] gitignore">
+      <option name="closed" value="true" />
+      <created>1776692572055</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1776692572055</updated>
+    </task>
+    <task id="LOCAL-00011" summary="[Version 2] gitignore">
+      <option name="closed" value="true" />
+      <created>1776692626928</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1776692626928</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="[Version 2] clean up" />

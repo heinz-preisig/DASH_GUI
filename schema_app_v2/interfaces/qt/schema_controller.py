@@ -137,3 +137,11 @@ class SchemaController:
     def get_node_shape_bricks(self):
         """Get bricks that can be used as root bricks"""
         return self.brick_integration.get_node_shape_bricks()
+    
+    def get_libraries(self):
+        """Get all available schema libraries"""
+        return self.schema_core.get_libraries()
+    
+    def get_brick_libraries(self):
+        """Get all available brick libraries"""
+        return self.brick_integration.get_brick_libraries()
