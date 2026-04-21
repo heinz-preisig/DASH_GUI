@@ -1,0 +1,59 @@
+{
+  "brick_id": "13c4eb91-f21e-4297-b842-f3fb6c411cb0",
+  "name": "myFirstTest",
+  "description": "",
+  "object_type": "NodeShape",
+  "targets": [
+    {
+      "target_type": "TargetClass",
+      "value": "http://xmlns.com/foaf/0.1/Person"
+    }
+  ],
+  "properties": {
+    "Date Property": {
+      "constraints": [],
+      "datatype": {
+        "constraints": [
+          {
+            "constraint_type": "minLength",
+            "parameters": {},
+            "value": "10"
+          },
+          {
+            "constraint_type": "maxLength",
+            "parameters": {},
+            "value": "100"
+          }
+        ],
+        "value": "xsd:date"
+      },
+      "name": "Date Property",
+      "path": "schema:date"
+    },
+    "firstName": {
+      "constraints": [
+        {
+          "constraint_type": "minLength",
+          "value": "2"
+        },
+        {
+          "constraint_type": "maxLength",
+          "value": "100"
+        },
+        {
+          "constraint_type": "minCount",
+          "value": "1"
+        }
+      ],
+      "datatype": "xsd:string",
+      "name": "firstName",
+      "path": "http://xmlns.com/foaf/0.1/firstName"
+    }
+  },
+  "constraints": [],
+  "tags": [],
+  "metadata": {},
+  "created_at": "2026-04-16T08:05:40.666832",
+  "updated_at": "2026-04-16T08:05:40.666834",
+  "target_class": "http://xmlns.com/foaf/0.1/Person"
+}

@@ -1,0 +1,25 @@
+{
+  "brick_id": "all_persons_shape",
+  "name": "All_Persons_Shape",
+  "description": "Shape for all instances of Person type",
+  "object_type": "NodeShape",
+  "targets": [
+    {
+      "target_type": "TargetClass",
+      "value": "http://schema.org/Person"
+    }
+  ],
+  "properties": {
+    "phone": {
+      "path": "",
+      "datatype": "xsd:string",
+      "constraints": []
+    }
+  },
+  "constraints": [],
+  "tags": [],
+  "metadata": {},
+  "created_at": "2026-04-16T08:05:40.666895",
+  "updated_at": "2026-04-16T08:05:40.666897",
+  "target_class": "http://schema.org/Person"
+}

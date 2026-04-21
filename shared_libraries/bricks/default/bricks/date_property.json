@@ -1,0 +1,35 @@
+{
+  "brick_id": "date_property",
+  "name": "Date Property",
+  "description": "Date property for various date fields",
+  "object_type": "PropertyShape",
+  "targets": [],
+  "properties": {
+    "datatype": {
+      "constraints": [
+        {
+          "constraint_type": "minLength",
+          "parameters": {},
+          "value": "10"
+        },
+        {
+          "constraint_type": "maxLength",
+          "value": "100",
+          "parameters": {}
+        }
+      ],
+      "value": "xsd:date"
+    },
+    "path": "schema:date"
+  },
+  "constraints": [],
+  "tags": [
+    "date",
+    "temporal",
+    "common"
+  ],
+  "metadata": {},
+  "created_at": "2026-04-16T08:05:40.666859",
+  "updated_at": "2026-04-16T08:05:40.666860",
+  "target_class": ""
+}
