@@ -14,6 +14,7 @@ from typing import Dict, List, Any, Optional, Union
 from dataclasses import dataclass, field, asdict
 
 
+
 @dataclass
 class SHACLBrick:
     """Simple SHACL brick representation"""
