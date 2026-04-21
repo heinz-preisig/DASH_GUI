@@ -20,7 +20,7 @@ class UserFriendlyBrickGUI(QMainWindow):
         self.setGeometry(100, 100, 1200, 800)
         
         # Initialize backend
-        self.backend = BrickBackendAPI("default_brick_repository")
+        self.backend = BrickBackendAPI("interfaces/brick_repositories_v2")
         self.processor = BrickEventProcessor(self.backend)
         
         # Editing state

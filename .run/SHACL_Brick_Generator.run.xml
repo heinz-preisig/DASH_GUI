@@ -10,8 +10,8 @@
   <option name="IS_MODULE_SDK" value="false" />
   <option name="ADD_CONTENT_ROOTS" value="true" />
   <module name="run_brick_app" />
-  <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run_brick_app.py" />
-  <option name="PARAMETERS" value="--gui --repository ./default_brick_repository" />
+  <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run_brick_app_v2.py" />
+  <option name="PARAMETERS" value="" />
   <RunnerSettings RunnerId="PythonRunner">
     <option name="runWithPythonConsole" value="false" />
   </RunnerSettings>

@@ -1,9 +1,0 @@
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix sh: <http://www.w3.org/ns/shacl#> .
-
-<http://example.org/date_property> a sh:PropertyShape ;
-    rdfs:label "Date Property" ;
-    rdfs:comment "Date property for various date fields" ;
-    sh:datatype "{'constraints': [{'constraint_type': 'minLength', 'parameters': {}, 'value': '10'}, {'constraint_type': 'maxLength', 'value': '100', 'parameters': {}}], 'value': 'xsd:date'}" ;
-    sh:path "schema:date" .
-

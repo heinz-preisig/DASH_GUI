@@ -10,6 +10,8 @@ from PyQt6.QtWidgets import (
     QFileDialog, QSplitter, QProgressBar
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, pyqtSlot
+from PyQt6.uic import loadUi
+from pathlib import Path
 from typing import Dict, List, Any, Optional
 from rdflib import Graph, Namespace, URIRef, RDF, RDFS, OWL
 import os
@@ -90,85 +92,28 @@ class OntologyBrowserDialog(QDialog):
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Ontology Browser")
-        self.setGeometry(200, 200, 800, 600)
         self.loaded_ontologies = {}
         self.cache_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "ontologies", "cache")
         self.download_threads = {}
-        self.init_ui()
+        
+        # Load UI from file
+        ui_path = Path(__file__).parent.parent.parent / "ui" / "ontology_browser.ui"
+        loadUi(str(ui_path), self)
+        
+        # Set up connections
+        self.import_btn.clicked.connect(self.import_ontology)
+        self.search_edit.textChanged.connect(self.filter_ontologies)
+        self.ontology_tree.itemClicked.connect(self.on_ontology_clicked)
+        self.terms_tree.itemDoubleClicked.connect(self.on_term_selected)
+        self.use_btn.clicked.connect(self.use_selected_term)
+        self.cancel_btn.clicked.connect(self.reject)
+        
+        # Set splitter sizes
+        self.mainSplitter.setSizes([300, 500])
+        
         self.load_default_ontologies()
     
-    def init_ui(self):
-        """Initialize the UI"""
-        layout = QVBoxLayout(self)
         
-        # Header with import button
-        header_layout = QHBoxLayout()
-        header_layout.addWidget(QLabel("Ontology Browser"))
-        header_layout.addStretch()
-        
-        import_btn = QPushButton("Import Ontology")
-        import_btn.clicked.connect(self.import_ontology)
-        header_layout.addWidget(import_btn)
-        
-        layout.addLayout(header_layout)
-        
-        # Search bar
-        self.search_edit = QLineEdit()
-        self.search_edit.setPlaceholderText("Search ontologies...")
-        self.search_edit.textChanged.connect(self.filter_ontologies)
-        layout.addWidget(self.search_edit)
-        
-        # Main content with splitter
-        splitter = QSplitter(Qt.Orientation.Horizontal)
-        
-        # Left: Ontology tree
-        self.ontology_tree = QTreeWidget()
-        self.ontology_tree.setHeaderLabels(["Ontology", "Classes", "Properties"])
-        self.ontology_tree.itemClicked.connect(self.on_ontology_clicked)
-        splitter.addWidget(self.ontology_tree)
-        
-        # Right: Terms browser
-        self.terms_widget = QWidget()
-        terms_layout = QVBoxLayout(self.terms_widget)
-        
-        terms_header = QLabel("Classes and Properties")
-        terms_header.setStyleSheet("font-weight: bold;")
-        terms_layout.addWidget(terms_header)
-        
-        self.terms_tree = QTreeWidget()
-        self.terms_tree.setHeaderLabels(["Type", "Name", "URI"])
-        self.terms_tree.itemDoubleClicked.connect(self.on_term_selected)
-        terms_layout.addWidget(self.terms_tree)
-        
-        splitter.addWidget(self.terms_widget)
-        splitter.setSizes([300, 500])
-        layout.addWidget(splitter)
-        
-        # Buttons
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-        
-        use_btn = QPushButton("Use Selected")
-        use_btn.clicked.connect(self.use_selected_term)
-        button_layout.addWidget(use_btn)
-        
-        cancel_btn = QPushButton("Cancel")
-        cancel_btn.clicked.connect(self.reject)
-        button_layout.addWidget(cancel_btn)
-        
-        layout.addLayout(button_layout)
-        
-        # Progress bar for downloads
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setVisible(False)
-        layout.addWidget(self.progress_bar)
-        
-        # Status label
-        self.status_label = QLabel("")
-        self.status_label.setVisible(False)
-        layout.addWidget(self.status_label)
-    
     def load_default_ontologies(self):
         """Load default ontologies from cache or download if needed"""
         default_ontologies = {

@@ -47,17 +47,19 @@ def check_status():
     print(f"Virtual Environment: {'✅' if venv_exists else '❌'} .venv/")
     
     # Check repositories
-    brick_repo = os.path.exists('brick_repositories')
-    schema_repo = os.path.exists('schema_repositories')
-    print(f"Brick Repository: {'✅' if brick_repo else '❌'} brick_repositories/")
-    print(f"Schema Repository: {'✅' if schema_repo else '❌'} schema_repositories/")
+    shared_libs = os.path.exists('shared_libraries')
+    brick_repo = os.path.exists('shared_libraries/bricks')
+    schema_repo = os.path.exists('shared_libraries/schemas')
+    print(f"Shared Libraries: {'✅' if shared_libs else '❌'} shared_libraries/")
+    print(f"Brick Library: {'✅' if brick_repo else '❌'} shared_libraries/bricks/")
+    print(f"Schema Library: {'✅' if schema_repo else '❌'} shared_libraries/schemas/")
     
     # Check dependencies
     try:
         from schema_app_v2.core.brick_integration import BrickIntegration
         from schema_app_v2.core.schema_core import SchemaCore
-        bi = BrickIntegration('brick_repositories')
-        sc = SchemaCore('schema_repositories')
+        bi = BrickIntegration()  # Uses shared libraries by default
+        sc = SchemaCore()  # Uses shared libraries by default
         bricks = bi.get_available_bricks()
         schemas = sc.get_all_schemas()
         print(f"Available Bricks: ✅ {len(bricks)} bricks")
@@ -120,8 +122,8 @@ def run_tests():
     command = f"{activate_cmd} && python3 -c "
     from schema_app_v2.core.brick_integration import BrickIntegration
     from schema_app_v2.core.schema_core import SchemaCore
-    bi = BrickIntegration('brick_repositories')
-    sc = SchemaCore('schema_repositories')
+    bi = BrickIntegration()  # Uses shared libraries by default
+    sc = SchemaCore()  # Uses shared libraries by default
     print(f'Bricks: {len(bi.get_available_bricks())}')
     print(f'Schemas: {len(sc.get_all_schemas())}')
     ""
@@ -136,8 +138,9 @@ def setup_environment():
         ("echo 'Checking dependencies...'", "Dependencies Check"),
         (f"{activate_venv()} && pip list", "Installed Packages"),
         ("echo 'Checking repositories...'", "Repository Check"),
-        ("ls -la brick_repositories/", "Brick Repository"),
-        ("ls -la schema_repositories/", "Schema Repository")
+        ("ls -la shared_libraries/", "Shared Libraries"),
+        ("ls -la shared_libraries/bricks/", "Brick Library"),
+        ("ls -la shared_libraries/schemas/", "Schema Library")
     ]
     
     for cmd, desc in commands:

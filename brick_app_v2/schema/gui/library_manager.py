@@ -10,6 +10,7 @@ from PyQt6.QtGui import *
 from typing import Dict, List, Any, Optional
 import os
 from pathlib import Path
+from PyQt6.uic import loadUi
 
 class LibraryManagerDialog(QDialog):
     """Dialog for managing libraries"""
@@ -18,10 +19,20 @@ class LibraryManagerDialog(QDialog):
         super().__init__(parent)
         self.processor = processor
         self.workflow = workflow
-        self.setWindowTitle("Library Manager")
-        self.setModal(True)
-        self.resize(600, 400)
-        self.init_ui()
+        
+        # Load UI from file
+        ui_path = Path(__file__).parent.parent.parent / "ui" / "library_manager.ui"
+        loadUi(str(ui_path), self)
+        
+        # Set up connections
+        self.library_type_combo.currentTextChanged.connect(self.on_library_type_changed)
+        self.library_list.itemSelectionChanged.connect(self.on_library_selected)
+        self.create_btn.clicked.connect(self.create_library)
+        self.set_active_btn.clicked.connect(self.set_active_library)
+        self.delete_btn.clicked.connect(self.delete_library)
+        self.dialogButtons.accepted.connect(self.accept)
+        self.dialogButtons.rejected.connect(self.reject)
+        
         self.register_widgets()
         self.load_libraries()
         
@@ -36,73 +47,7 @@ class LibraryManagerDialog(QDialog):
             self.workflow.interface_manager.register_widget("library_manager_set_active", self.set_active_btn)
             self.workflow.interface_manager.register_widget("library_manager_delete", self.delete_btn)
     
-    def init_ui(self):
-        layout = QVBoxLayout(self)
         
-        # Library type selector
-        type_layout = QHBoxLayout()
-        type_layout.addWidget(QLabel("Library Type:"))
-        
-        self.library_type_combo = QComboBox()
-        self.library_type_combo.addItems(["Brick Libraries", "Schema Libraries"])
-        self.library_type_combo.currentTextChanged.connect(self.on_library_type_changed)
-        type_layout.addWidget(self.library_type_combo)
-        type_layout.addStretch()
-        
-        layout.addLayout(type_layout)
-        
-        # Library list
-        self.library_list = QListWidget()
-        self.library_list.itemSelectionChanged.connect(self.on_library_selected)
-        layout.addWidget(self.library_list)
-        
-        # Library details
-        details_group = QGroupBox("Library Details")
-        details_layout = QFormLayout(details_group)
-        
-        self.name_edit = QLineEdit()
-        details_layout.addRow("Name:", self.name_edit)
-        
-        self.description_edit = QTextEdit()
-        self.description_edit.setMaximumHeight(60)
-        details_layout.addRow("Description:", self.description_edit)
-        
-        self.author_edit = QLineEdit()
-        details_layout.addRow("Author:", self.author_edit)
-        
-        self.path_edit = QLineEdit()
-        self.path_edit.setReadOnly(True)
-        details_layout.addRow("Path:", self.path_edit)
-        
-        layout.addWidget(details_group)
-        
-        # Buttons
-        button_layout = QHBoxLayout()
-        
-        self.create_btn = QPushButton("Create New Library")
-        self.create_btn.clicked.connect(self.create_library)
-        button_layout.addWidget(self.create_btn)
-        
-        self.set_active_btn = QPushButton("Set Active")
-        self.set_active_btn.clicked.connect(self.set_active_library)
-        button_layout.addWidget(self.set_active_btn)
-        
-        self.delete_btn = QPushButton("Delete")
-        self.delete_btn.clicked.connect(self.delete_library)
-        button_layout.addWidget(self.delete_btn)
-        
-        button_layout.addStretch()
-        
-        layout.addLayout(button_layout)
-        
-        # Dialog buttons
-        dialog_buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
-        dialog_buttons.accepted.connect(self.accept)
-        dialog_buttons.rejected.connect(self.reject)
-        layout.addWidget(dialog_buttons)
-    
     def on_library_type_changed(self, library_type: str):
         """Handle library type change"""
         self.load_libraries()

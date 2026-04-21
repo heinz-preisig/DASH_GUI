@@ -180,11 +180,11 @@ cython_debug/
 # Virtual environment
 .venv/
 
-# Repository data (user content)
-*_repositories/
-*_repositories_v2/
-shared_libraries/*/default/bricks/*.json
-shared_libraries/*/default/schemas/*.json
+# Repository data (user content - keep structure but allow tracking)
+# *_repositories/  # Removed - these are project directories
+# *_repositories_v2/  # Removed - these are project directories
+# shared_libraries/*/default/bricks/*.json  # Removed - need to track some bricks
+# shared_libraries/*/default/schemas/*.json  # Removed - need to track some schemas
 
 # Log files
 *.log
@@ -211,8 +211,7 @@ Thumbs.db
 *.ui.bak
 
 # Application specific
-run_*.py
-test_*.py
+# test_*.py  # Test scripts can be ignored
 
 # Configuration files with local settings
 config_local.json

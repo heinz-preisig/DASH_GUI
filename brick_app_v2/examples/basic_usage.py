@@ -3,7 +3,7 @@
 Basic usage example for SHACL Brick Generator
 """
 
-from shacl_brick_app import create_brick_system
+from brick_app_v2 import create_brick_system
 
 def main():
     """Demonstrate basic brick generator usage"""

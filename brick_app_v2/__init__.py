@@ -84,13 +84,13 @@ __all__ = [
     "run_schema_gui"
 ]
 
-def create_brick_system(repository_path="brick_repositories"):
+def create_brick_system(repository_path=None):
     """Create a complete brick system with backend and event processor"""
     backend = BrickBackendAPI(repository_path)
     processor = BrickEventProcessor(backend)
     return backend, processor
 
-def run_gui(repository_path="brick_repositories"):
+def run_gui(repository_path=None):
     """Run the PyQt6 GUI for brick management"""
     import sys
     from PyQt6.QtWidgets import QApplication
@@ -100,13 +100,13 @@ def run_gui(repository_path="brick_repositories"):
     gui.show()
     return app.exec()
 
-def create_schema_system(repository_path="schema_repositories"):
+def create_schema_system(repository_path=None):
     """Create a complete schema system with backend and event processor"""
     backend = SchemaBackendAPI(repository_path)
     processor = SchemaEventProcessor(backend)
     return backend, processor
 
-def run_schema_gui(repository_path="schema_repositories"):
+def run_schema_gui(repository_path=None):
     """Run the PyQt6 GUI for schema construction"""
     import sys
     from PyQt6.QtWidgets import QApplication

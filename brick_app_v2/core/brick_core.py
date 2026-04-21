@@ -67,8 +67,10 @@ class BrickCore:
             self.repository_path = os.path.abspath(shared_library_manager.get_brick_library_path())
             self.shared_library_manager = shared_library_manager
         else:
-            # Legacy behavior
-            self.repository_path = os.path.abspath(repository_path or "brick_repositories_v2")
+            # Use provided repository path or default to local directory
+            if repository_path is None:
+                raise ValueError("Repository path must be provided when not using shared libraries")
+            self.repository_path = os.path.abspath(repository_path)
             self.shared_library_manager = None
         
         os.makedirs(self.repository_path, exist_ok=True)

@@ -11,9 +11,9 @@ import json
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from shacl_brick_app.core.brick_backend import BrickBackendAPI, BrickEventProcessor
-from shacl_brick_app.schema.core.schema_backend import SchemaBackendAPI, SchemaEventProcessor
-from shacl_brick_app.schema.core.schema_constructor import InterfaceFlowType
+from brick_app_v2.core.brick_backend import BrickBackendAPI, BrickEventProcessor
+from brick_app_v2.schema.core.schema_backend import SchemaBackendAPI, SchemaEventProcessor
+from brick_app_v2.schema.core.schema_constructor import InterfaceFlowType
 
 def create_sample_bricks(backend, processor):
     """Create sample bricks for demonstration"""
@@ -259,7 +259,7 @@ def demonstrate_daisy_chaining(schema_backend, schema_processor):
         "name": "Contact Information", 
         "description": "Contact details",
         "root_brick_id": "person_entity",
-        "component_brick_ids=["person_phone"]
+        "component_brick_ids": ["person_phone"]
     })
     
     address_info_result = schema_processor.process_event({

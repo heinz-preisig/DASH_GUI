@@ -10,8 +10,8 @@ from PyQt6.QtWidgets import QApplication
 
 
 
-def run_gui(schema_repository: str = "schema_repositories", 
-           brick_repository: str = "brick_repositories_v2"):
+def run_gui(schema_repository: str = None, 
+           brick_repository: str = None):
     """Run the PyQt GUI interface"""
     app = QApplication(sys.argv)
     
@@ -22,8 +22,8 @@ def run_gui(schema_repository: str = "schema_repositories",
     return app.exec()
 
 
-def run_web(schema_repository: str = "schema_repositories", 
-           brick_repository: str = "brick_repositories_v2",
+def run_web(schema_repository: str = None, 
+           brick_repository: str = None,
            port: int = 5000, debug: bool = False):
     """Run the web interface"""
     from schema_app_v2.interfaces.web.flask_app import create_app
@@ -37,10 +37,10 @@ def main():
     parser = argparse.ArgumentParser(description="Schema App v2 - Schema Constructor")
     parser.add_argument("--gui", action="store_true", help="Launch PyQt GUI interface")
     parser.add_argument("--web", action="store_true", help="Launch web interface")
-    parser.add_argument("--schema-repo", type=str, default="schema_repositories", 
-                       help="Schema repository path")
-    parser.add_argument("--brick-repo", type=str, default="brick_repositories_v2", 
-                       help="Brick repository path")
+    parser.add_argument("--schema-repo", type=str, default=None, 
+                       help="Schema repository path (uses shared libraries if None)")
+    parser.add_argument("--brick-repo", type=str, default=None, 
+                       help="Brick repository path (uses shared libraries if None)")
     parser.add_argument("--port", type=int, default=5000, help="Web interface port")
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
     
