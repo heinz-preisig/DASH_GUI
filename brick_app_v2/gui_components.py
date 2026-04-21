@@ -131,51 +131,21 @@ class SimpleOntologyBrowser(QDialog):
         self.mode = mode  # "classes" or "properties"
         self.selected_item = None
         self.all_items = []  # Store all items for filtering
-        
+
+        # Load UI from file
+        ui_path = Path(__file__).parent / "ui" / "ontology_browser_simple.ui"
+        from PyQt6.uic import loadUi
+        loadUi(str(ui_path), self)
+
         self.setWindowTitle(f"Browse Ontology {mode.capitalize()}")
         self.setGeometry(200, 200, 600, 500)
-        
-        self.setup_ui()
-        self.load_data()
-    
-    def setup_ui(self):
-        """Setup the dialog UI"""
-        layout = QVBoxLayout()
-        
-        # Ontology selector
-        onto_layout = QHBoxLayout()
-        onto_layout.addWidget(QLabel("Ontology:"))
-        
-        self.ontology_combo = QComboBox()
+
+        # Connect signals
         self.ontology_combo.currentTextChanged.connect(self.on_ontology_changed)
-        onto_layout.addWidget(self.ontology_combo)
-        
-        layout.addLayout(onto_layout)
-        
-        # Search field
-        search_layout = QHBoxLayout()
-        search_layout.addWidget(QLabel("Search:"))
-        
-        self.search_edit = QLineEdit()
-        self.search_edit.setPlaceholderText("Type to filter...")
         self.search_edit.textChanged.connect(self.on_search_changed)
-        search_layout.addWidget(self.search_edit)
-        
-        layout.addLayout(search_layout)
-        
-        # Results list
-        self.results_list = QListWidget()
         self.results_list.itemDoubleClicked.connect(self.on_item_selected)
-        layout.addWidget(self.results_list)
-        
-        # Buttons
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-        button_layout.addWidget(QPushButton("Cancel", clicked=self.reject))
-        layout.addLayout(button_layout)
-        
-        self.setLayout(layout)
-    
+        self.cancelButton.clicked.connect(self.reject)
+
     def load_data(self):
         """Load ontology data"""
         self.ontology_combo.clear()
@@ -241,50 +211,16 @@ class PropertyEditorDialog(QDialog):
         super().__init__(parent)
         self.ontology_manager = ontology_manager
         self.property_data = {}
-        
-        self.setWindowTitle("Property Editor")
-        self.setGeometry(200, 200, 500, 400)
-        
-        self.setup_ui()
-    
-    def setup_ui(self):
-        """Setup the dialog UI"""
-        layout = QVBoxLayout()
-        
-        # Property name
-        layout.addWidget(QLabel("Property Name:"))
-        self.name_edit = QLineEdit()
-        layout.addWidget(self.name_edit)
-        
-        # Property path
-        path_layout = QHBoxLayout()
-        path_layout.addWidget(QLabel("Property Path:"))
-        self.path_edit = QLineEdit()
-        path_layout.addWidget(self.path_edit)
-        
-        browse_btn = QPushButton("Browse")
-        browse_btn.clicked.connect(self.browse_ontology)
-        path_layout.addWidget(browse_btn)
-        
-        layout.addLayout(path_layout)
-        
-        # Datatype
-        layout.addWidget(QLabel("Datatype:"))
-        self.datatype_combo = QComboBox()
-        self.datatype_combo.addItems([
-            "xsd:string", "xsd:integer", "xsd:float", "xsd:boolean", 
-            "xsd:date", "xsd:dateTime", "xsd:anyURI"
-        ])
-        layout.addWidget(self.datatype_combo)
-        
-        # Buttons
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-        button_layout.addWidget(QPushButton("Cancel", clicked=self.reject))
-        button_layout.addWidget(QPushButton("OK", clicked=self.accept))
-        layout.addLayout(button_layout)
-        
-        self.setLayout(layout)
+
+        # Load UI from file
+        ui_path = Path(__file__).parent / "ui" / "property_editor.ui"
+        from PyQt6.uic import loadUi
+        loadUi(str(ui_path), self)
+
+        # Connect signals
+        self.browse_btn.clicked.connect(self.browse_ontology)
+        self.cancelButton.clicked.connect(self.reject)
+        self.okButton.clicked.connect(self.accept)
     
     def browse_ontology(self):
         """Browse ontology for properties"""
@@ -530,35 +466,26 @@ class ConstraintEditorDialog(QDialog):
 
 class PropertyBrickBrowser(QDialog):
     """Dialog for browsing property bricks"""
-    
+
     def __init__(self, parent=None, brick_core=None):
         super().__init__(parent)
         self.brick_core = brick_core
         self.selected_brick = None
-        
+
+        # Load UI from file
+        ui_path = Path(__file__).parent / "ui" / "property_brick_browser.ui"
+        from PyQt6.uic import loadUi
+        loadUi(str(ui_path), self)
+
         self.setWindowTitle("Property Brick Browser")
         self.setGeometry(200, 200, 600, 500)
-        
-        self.setup_ui()
-        self.load_property_bricks()
-    
-    def setup_ui(self):
-        """Setup the dialog UI"""
-        layout = QVBoxLayout()
-        
-        # Brick list
-        self.brick_list = QListWidget()
+
+        # Connect signals
         self.brick_list.itemDoubleClicked.connect(self.on_brick_selected)
-        layout.addWidget(self.brick_list)
-        
-        # Buttons
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-        button_layout.addWidget(QPushButton("Cancel", clicked=self.reject))
-        layout.addLayout(button_layout)
-        
-        self.setLayout(layout)
-    
+        self.cancelButton.clicked.connect(self.reject)
+
+        self.load_property_bricks()
+
     def load_property_bricks(self):
         """Load property bricks from library"""
         try:

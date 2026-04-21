@@ -19,53 +19,37 @@ class ConstraintEditor(QWidget):
     def __init__(self, constraint_data: Dict[str, Any] = None):
         super().__init__()
         self.constraint_data = constraint_data or {}
-        self.init_ui()
-    
-    def init_ui(self):
-        layout = QFormLayout(self)
-        
-        # Constraint type
-        self.constraint_type_combo = QComboBox()
-        self.constraint_type_combo.addItems([
-            "datatype", "minCount", "maxCount", "minLength", "maxLength",
-            "pattern", "minInclusive", "maxInclusive", "description", "example"
-        ])
-        self.constraint_type_combo.currentTextChanged.connect(self.on_constraint_type_changed)
-        layout.addRow("Type:", self.constraint_type_combo)
-        
-        # Value input
-        self.value_stack = QStackedWidget()
-        
-        # String input (for most constraints)
+
+        # Load UI from file
+        from pathlib import Path
+        ui_path = Path(__file__).parent.parent.parent / "ui" / "constraint_editor_widget.ui"
+        from PyQt6.uic import loadUi
+        loadUi(str(ui_path), self)
+
+        # Populate value stack with dynamic widgets
         self.string_input = QLineEdit()
         self.string_input.textChanged.connect(self.emit_constraint_changed)
         self.value_stack.addWidget(self.string_input)
-        
-        # Number input (for numeric constraints)
+
         self.number_input = QSpinBox()
         self.number_input.setRange(0, 999999)
         self.number_input.valueChanged.connect(self.emit_constraint_changed)
         self.value_stack.addWidget(self.number_input)
-        
-        # Text area (for descriptions/examples)
+
         self.text_input = QTextEdit()
         self.text_input.setMaximumHeight(80)
         self.text_input.textChanged.connect(self.emit_constraint_changed)
         self.value_stack.addWidget(self.text_input)
-        
-        # Date input (for date constraints)
+
         self.date_input = QDateEdit()
         self.date_input.setCalendarPopup(True)
         self.date_input.dateChanged.connect(self.emit_constraint_changed)
         self.value_stack.addWidget(self.date_input)
-        
-        layout.addRow("Value:", self.value_stack)
-        
-        # Remove button
-        remove_btn = QPushButton("Remove Constraint")
-        remove_btn.clicked.connect(self.remove_constraint)
-        layout.addRow(remove_btn)
-        
+
+        # Connect signals
+        self.constraint_type_combo.currentTextChanged.connect(self.on_constraint_type_changed)
+        self.remove_btn.clicked.connect(self.remove_constraint)
+
         # Load existing data
         if self.constraint_data:
             self.load_constraint_data()
@@ -137,68 +121,23 @@ class PropertyEditor(QWidget):
         self.init_ui()
     
     def init_ui(self):
-        layout = QVBoxLayout(self)
-        
-        # Property basic info
-        basic_group = QGroupBox("Property Information")
-        basic_layout = QFormLayout(basic_group)
-        
-        self.name_edit = QLineEdit()
+        # Load UI from file
+        from pathlib import Path
+        ui_path = Path(__file__).parent.parent.parent / "ui" / "property_editor_widget.ui"
+        from PyQt6.uic import loadUi
+        loadUi(str(ui_path), self)
+
+        # Connect signals
         self.name_edit.textChanged.connect(self.emit_property_changed)
-        basic_layout.addRow("Name:", self.name_edit)
-        
-        # Property path with dropdown for common options
-        path_layout = QHBoxLayout()
-        self.path_edit = QLineEdit()
         self.path_edit.textChanged.connect(self.emit_property_changed)
-        path_layout.addWidget(self.path_edit)
-        
-        # Add dropdown for common property paths
-        self.path_combo = QComboBox()
-        self.path_combo.setEditable(True)
-        self.populate_common_properties()
-        self.path_combo.currentTextChanged.connect(self.on_path_selected)
-        path_layout.addWidget(self.path_combo)
-        
-        # Add ontology browser button for properties
-        prop_ontology_btn = QPushButton("📚 Browse")
-        prop_ontology_btn.setToolTip("Browse ontologies for properties")
-        prop_ontology_btn.setMaximumWidth(80)
-        prop_ontology_btn.clicked.connect(self.browse_ontologies_for_property)
-        path_layout.addWidget(prop_ontology_btn)
-        
-        basic_layout.addRow("Property:", path_layout)
-        
-        self.datatype_combo = QComboBox()
-        self.datatype_combo.addItems([
-            "xsd:string", "xsd:integer", "xsd:decimal", "xsd:boolean",
-            "xsd:date", "xsd:anyURI", "xsd:email"
-        ])
         self.datatype_combo.currentTextChanged.connect(self.emit_property_changed)
-        basic_layout.addRow("Data Type:", self.datatype_combo)
-        
-        layout.addWidget(basic_group)
-        
-        # Constraints section
-        constraints_group = QGroupBox("Constraints")
-        constraints_layout = QVBoxLayout(constraints_group)
-        
-        # Add constraint button
-        add_constraint_btn = QPushButton("Add Constraint")
-        add_constraint_btn.clicked.connect(self.add_constraint)
-        constraints_layout.addWidget(add_constraint_btn)
-        
-        # Constraints scroll area
-        self.constraints_scroll = QScrollArea()
-        self.constraints_widget = QWidget()
-        self.constraints_layout = QVBoxLayout(self.constraints_widget)
-        self.constraints_scroll.setWidget(self.constraints_widget)
-        self.constraints_scroll.setWidgetResizable(True)
-        self.constraints_scroll.setMaximumHeight(300)
-        constraints_layout.addWidget(self.constraints_scroll)
-        
-        layout.addWidget(constraints_group)
-        
+        self.path_combo.currentTextChanged.connect(self.on_path_selected)
+        self.browse_btn.clicked.connect(self.browse_ontologies_for_property)
+        self.add_constraint_btn.clicked.connect(self.add_constraint)
+
+        # Populate common properties
+        self.populate_common_properties()
+
         # Load existing data
         if self.property_data:
             self.load_property_data()
@@ -767,28 +706,21 @@ Think of a "Target Class" as telling the system: **"What kind of thing am I desc
 
 class HelpDialog(QDialog):
     """Dialog for displaying help information"""
-    
+
     def __init__(self, title: str, help_text: str, parent=None):
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setModal(True)
         self.resize(600, 500)
-        self.init_ui(help_text)
-    
-    def init_ui(self, help_text: str):
-        layout = QVBoxLayout(self)
-        
-        # Help text display
-        text_widget = QTextEdit()
-        text_widget.setPlainText(help_text)
-        text_widget.setReadOnly(True)
-        text_widget.setFont(QFont("Courier", 10))
-        layout.addWidget(text_widget)
-        
-        # Close button
-        close_btn = QPushButton("Close")
-        close_btn.clicked.connect(self.accept)
-        layout.addWidget(close_btn)
+
+        # Load UI from file
+        ui_path = Path(__file__).parent.parent.parent / "ui" / "help_dialog.ui"
+        from PyQt6.uic import loadUi
+        loadUi(str(ui_path), self)
+
+        # Set help text and connect close button
+        self.text_widget.setPlainText(help_text)
+        self.closeButton.clicked.connect(self.accept)
 
 # Template generators for Person and Address bricks
 def create_person_brick_template() -> Dict[str, Any]:

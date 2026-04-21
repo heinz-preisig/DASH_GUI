@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ConstraintEditor</class>
+ <widget class="QWidget" name="ConstraintEditor">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>200</height>
+   </rect>
+  </property>
+  <layout class="QFormLayout" name="formLayout">
+   <item row="0" column="0">
+    <widget class="QLabel" name="typeLabel">
+     <property name="text">
+      <string>Type:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QComboBox" name="constraint_type_combo">
+     <item>
+      <property name="text">
+       <string>datatype</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>minCount</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>maxCount</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>minLength</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>maxLength</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>pattern</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>minInclusive</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>maxInclusive</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>description</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>example</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="valueLabel">
+     <property name="text">
+      <string>Value:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QStackedWidget" name="value_stack">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QPushButton" name="remove_btn">
+     <property name="text">
+      <string>Remove Constraint</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
