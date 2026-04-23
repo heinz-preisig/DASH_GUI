@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>635</width>
-    <height>917</height>
+    <height>900</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,9 +17,9 @@
    <widget class="QGroupBox" name="libraryPanel">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>30</y>
-      <width>561</width>
+      <x>20</x>
+      <y>20</y>
+      <width>581</width>
       <height>281</height>
      </rect>
     </property>
@@ -30,7 +30,7 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>30</y>
+       <y>80</y>
        <width>241</width>
        <height>25</height>
       </rect>
@@ -39,8 +39,8 @@
     <widget class="QListWidget" name="propertyBrickList">
      <property name="geometry">
       <rect>
-       <x>300</x>
-       <y>80</y>
+       <x>310</x>
+       <y>120</y>
        <width>251</width>
        <height>151</height>
       </rect>
@@ -50,22 +50,22 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>80</y>
+       <y>120</y>
        <width>251</width>
        <height>151</height>
       </rect>
      </property>
     </widget>
-    <widget class="QWidget" name="horizontalLayoutWidget_4">
+    <widget class="QWidget" name="horizontalLayoutWidget_5">
      <property name="geometry">
       <rect>
-       <x>300</x>
-       <y>20</y>
+       <x>310</x>
+       <y>69</y>
        <width>176</width>
        <height>41</height>
       </rect>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_4">
+     <layout class="QHBoxLayout" name="horizontalLayout_5">
       <item>
        <widget class="QPushButton" name="newBrick">
         <property name="text">
@@ -82,13 +82,39 @@
       </item>
      </layout>
     </widget>
+    <widget class="QWidget" name="horizontalLayoutWidget_4">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>30</y>
+       <width>241</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <item>
+       <widget class="QPushButton" name="newLibrary">
+        <property name="text">
+         <string>new library</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="deleteLibrary">
+        <property name="text">
+         <string>delete library</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
    </widget>
    <widget class="QGroupBox" name="editorPanel">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>330</y>
-      <width>541</width>
+      <x>20</x>
+      <y>310</y>
+      <width>581</width>
       <height>541</height>
      </rect>
     </property>

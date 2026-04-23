@@ -9,6 +9,13 @@
           "path": "shared_libraries/bricks/default",
           "description": "Default brick library",
           "type": "bricks"
+        },
+        {
+          "name": "my first",
+          "path": "shared_libraries/bricks/my first",
+          "description": "Library created on 2026-04-23",
+          "type": "bricks",
+          "created_at": "2026-04-23T16:23:16.048043"
         }
       ]
     },
@@ -20,6 +27,13 @@
           "path": "shared_libraries/schemas/default",
           "description": "Default schema library",
           "type": "schemas"
+        },
+        {
+          "name": "test_schema_lib",
+          "path": "shared_libraries/schemas/test_schema_lib",
+          "description": "Test schema library",
+          "type": "schemas",
+          "created_at": "2026-04-23T16:05:59.204701"
         }
       ]
     }

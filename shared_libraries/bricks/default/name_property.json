@@ -3,7 +3,8 @@
   "name": "Name Property",
   "description": "Name property with constraints",
   "object_type": "PropertyShape",
-  "targets": [],
+  "target_class": "",
+  "property_path": "http://xmlns.com/foaf/0.1/name",
   "properties": {
     "path": "foaf:name",
     "datatype": "xsd:string"
@@ -26,8 +27,8 @@
     "text",
     "common"
   ],
-  "metadata": {},
   "created_at": "2026-04-16T08:05:40.666938",
-  "updated_at": "2026-04-16T08:05:40.666938",
-  "target_class": ""
+  "updated_at": "2026-04-23T16:41:56.253180",
+  "targets": [],
+  "metadata": {}
 }

@@ -5,10 +5,11 @@ Stateful SHACL Brick Editor using Qt Designer UI file
 
 import sys
 import os
+from datetime import datetime
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, 
-    QMessageBox, QDialog, QListWidgetItem
+    QMessageBox, QDialog, QListWidgetItem, QInputDialog
 )
 from PyQt6.QtCore import Qt
 from PyQt6.uic import loadUi
@@ -103,7 +104,8 @@ class UIStateController:
     def _apply_browse_visibility(self):
         """Apply browse state visibility"""
         self.ui.newBrick.show()
-        self.ui.editorPanel.hide()
+        self.ui.libraryPanel.show()  # Ensure library panel is visible
+        self.ui.editorPanel.hide()  # Hide editor panel in browse mode
         self.ui.radioNode.hide()
         self.ui.radioProperty.hide()
         # Delete button visibility handled by selection state
@@ -140,7 +142,8 @@ class StatefulBrickEditor(QMainWindow):
         
         # Setup window
         self.setWindowTitle("Stateful SHACL Brick Editor")
-        self.setGeometry(100, 100, 800, 700)
+        # Use dimensions that match the UI file (635x900) with some padding
+        self.setGeometry(100, 100, 650, 950)
         
         # Connect signals
         self._connect_signals()
@@ -162,6 +165,8 @@ class StatefulBrickEditor(QMainWindow):
         self.propertyBrickList.itemDoubleClicked.connect(self.on_property_brick_selected)
         self.newBrick.clicked.connect(self.on_new_brick)
         self.deleteBrick.clicked.connect(self.on_delete_brick)
+        self.newLibrary.clicked.connect(self.on_new_library)
+        self.deleteLibrary.clicked.connect(self.on_delete_library)
         
         # Brick selection signals for delete button visibility
         self.nodeBrickList.itemSelectionChanged.connect(self.on_brick_selection_changed)
@@ -244,6 +249,144 @@ class StatefulBrickEditor(QMainWindow):
     def on_brick_selection_changed(self):
         """Handle brick selection change"""
         self.update_delete_button_visibility()
+    
+    def on_new_library(self):
+        """Handle new library button click"""
+        from PyQt6.QtWidgets import QInputDialog
+        
+        library_name, ok = QInputDialog.getText(
+            self,
+            "New Library",
+            "Enter name for new library:",
+            text=""
+        )
+        
+        if ok and library_name.strip():
+            library_name = library_name.strip()
+            
+            # Check if library already exists
+            current_libraries = self.libraryComboBox.currentText()
+            if library_name in [self.libraryComboBox.itemText(i) for i in range(self.libraryComboBox.count())]:
+                QMessageBox.warning(self, "Warning", f"Library '{library_name}' already exists.")
+                return
+            
+            try:
+                # Import shared library manager
+                import sys
+                from pathlib import Path
+                project_root = Path(__file__).parent.parent.parent
+                shared_libs_path = project_root / 'shared_libraries'
+                sys.path.insert(0, str(shared_libs_path))
+                
+                from library_manager import shared_library_manager
+                
+                # Create the new library
+                shared_library_manager.create_library(
+                    lib_type='bricks',
+                    name=library_name,
+                    description=f"Library created on {datetime.now().strftime('%Y-%m-%d')}"
+                )
+                
+                QMessageBox.information(self, "Success", 
+                    f"Library '{library_name}' created successfully!")
+                
+                # Reload libraries
+                self.load_library()
+                
+                # Switch to the new library
+                self.libraryComboBox.setCurrentText(library_name)
+                
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to create library: {e}")
+    
+    def on_delete_library(self):
+        """Handle delete library button click"""
+        current_library = self.libraryComboBox.currentText()
+        if not current_library or current_library == "default":
+            QMessageBox.warning(self, "Warning", "Cannot delete the default library.")
+            return
+        
+        # Confirm deletion
+        reply = QMessageBox.question(
+            self,
+            "Delete Library",
+            f"Are you sure you want to delete library '{current_library}'?\n\n"
+            "This will archive the library and all its bricks. "
+            "You can restore it later if needed.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            try:
+                # Import shared library manager
+                import sys
+                from pathlib import Path
+                project_root = Path(__file__).parent.parent.parent
+                shared_libs_path = project_root / 'shared_libraries'
+                sys.path.insert(0, str(shared_libs_path))
+                
+                from library_manager import shared_library_manager
+                
+                # Use BrickCore's library names since that's what the UI shows
+                brick_core_libraries = self.brick_core.get_libraries()
+                if current_library not in brick_core_libraries:
+                    QMessageBox.warning(self, "Warning", 
+                        f"Library '{current_library}' not found. Available libraries: {brick_core_libraries}")
+                    return
+                
+                # For deletion, we need to remove the directory and update BrickCore
+                # SharedLibraryManager might not have this library in its config
+                try:
+                    # Get the library path from BrickCore
+                    lib_path = os.path.join(self.brick_core.repository_path, current_library)
+                    
+                    # Archive the library first
+                    if os.path.exists(lib_path):
+                        import shutil
+                        from datetime import datetime
+                        
+                        # Create archive directory
+                        archive_dir = Path(self.brick_core.repository_path).parent / 'archive' / 'bricks'
+                        archive_dir.mkdir(parents=True, exist_ok=True)
+                        
+                        # Create timestamped archive
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        archive_name = f"{current_library}_{timestamp}"
+                        archive_path = archive_dir / archive_name
+                        
+                        # Create archive
+                        shutil.make_archive(str(archive_path), 'zip', os.path.dirname(lib_path), os.path.basename(lib_path))
+                        
+                        # Create metadata
+                        metadata = {
+                            "original_name": current_library,
+                            "original_path": lib_path,
+                            "type": "bricks",
+                            "archived_at": datetime.now().isoformat(),
+                            "archive_file": f"{archive_name}.zip"
+                        }
+                        
+                        metadata_file = archive_dir / f"{archive_name}_metadata.json"
+                        import json
+                        with open(metadata_file, 'w') as f:
+                            json.dump(metadata, f, indent=2)
+                    
+                    # Remove the directory
+                    if os.path.exists(lib_path):
+                        shutil.rmtree(lib_path)
+                    
+                    QMessageBox.information(self, "Success", 
+                        f"Library '{current_library}' deleted and archived successfully!")
+                    
+                    # Reload libraries
+                    self.load_library()
+                    
+                except Exception as e:
+                    raise RuntimeError(f"Failed to delete library directory: {e}")
+                
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to delete library: {e}")
     
     def _get_selected_brick(self):
         """Get currently selected brick from either list"""
@@ -594,10 +737,21 @@ class StatefulBrickEditor(QMainWindow):
             self.nodeBrickList.blockSignals(True)
             self.propertyBrickList.blockSignals(True)
             
+            # Save current selection
+            current_library = self.libraryComboBox.currentText()
+            
+            # Update library list
             libraries = self.brick_core.get_libraries()
             self.libraryComboBox.clear()
             self.libraryComboBox.addItems(libraries)
             
+            # Restore current library selection if it still exists
+            if current_library and current_library in libraries:
+                self.libraryComboBox.setCurrentText(current_library)
+            elif libraries:
+                self.libraryComboBox.setCurrentIndex(0)
+            
+            # Load bricks from the active library
             bricks = self.brick_core.get_all_bricks()
             self.nodeBrickList.clear()
             self.propertyBrickList.clear()
@@ -657,10 +811,17 @@ class StatefulBrickEditor(QMainWindow):
         
         # Update properties list
         self.propertyList.clear()
+        added_properties = set()  # Track added properties to prevent duplicates
+        
         for prop_name, prop_data in brick.properties.items():
+            # Skip if this property was already added (prevent duplicates)
+            if prop_name in added_properties:
+                continue
+            added_properties.add(prop_name)
             # Create detailed display text
             display_parts = [prop_name]
             
+            # Handle different prop_data types
             if isinstance(prop_data, dict):
                 # Check if this is a property brick reference
                 if prop_data.get('is_property_brick'):
@@ -678,16 +839,30 @@ class StatefulBrickEditor(QMainWindow):
                     if 'constraints' in prop_data and prop_data['constraints']:
                         constraint_count = len(prop_data['constraints'])
                         display_parts.append(f"{constraint_count} constraints")
+            elif isinstance(prop_data, str):
+                # Handle string prop_data (likely a simple property path)
+                display_parts.append(f"path: {prop_data}")
+            else:
+                # Handle other types
+                display_parts.append(f"value: {str(prop_data)}")
             
             display_text = " | ".join(display_parts)
             
             # Create list item with full property data
             list_item = QListWidgetItem(display_text)
             # Store the complete property data for editing
-            full_prop_data = {
-                'name': prop_name,
-                **prop_data
-            }
+            if isinstance(prop_data, dict):
+                full_prop_data = {
+                    'name': prop_name,
+                    **prop_data
+                }
+            else:
+                # For non-dict prop_data, create a simple structure
+                full_prop_data = {
+                    'name': prop_name,
+                    'value': prop_data,
+                    'path': prop_data if isinstance(prop_data, str) else str(prop_data)
+                }
             list_item.setData(Qt.ItemDataRole.UserRole, full_prop_data)
             self.propertyList.addItem(list_item)
         

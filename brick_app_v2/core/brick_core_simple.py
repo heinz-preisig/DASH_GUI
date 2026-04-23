@@ -29,6 +29,8 @@ class SHACLBrick:
     tags: List[str] = field(default_factory=list)
     created_at: str = ""
     updated_at: str = ""
+    targets: List[Dict[str, Any]] = field(default_factory=list)  # For SHACL targets
+    metadata: Dict[str, Any] = field(default_factory=dict)  # Additional metadata
     
     def __post_init__(self):
         """Set timestamps after initialization"""
@@ -59,12 +61,19 @@ class BrickCore:
         if use_shared_libraries and repository_path is None:
             # Import shared library manager
             import sys
-            shared_libs_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'shared_libraries')
+            # Go up three levels from brick_app_v2/core to the project root, then to shared_libraries
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            shared_libs_path = os.path.join(project_root, 'shared_libraries')
+            shared_libs_path = os.path.abspath(shared_libs_path)
             if shared_libs_path not in sys.path:
                 sys.path.insert(0, shared_libs_path)
             
-            from library_manager import shared_library_manager
-            self.repository_path = os.path.abspath(shared_library_manager.get_brick_library_path())
+            # Import the shared library manager
+            exec(open(os.path.join(shared_libs_path, 'library_manager.py')).read(), globals())
+            # Use the absolute path to the shared libraries directory
+            from pathlib import Path
+            self.repository_path = Path(shared_libs_path) / 'bricks'
+            self.repository_path = str(self.repository_path.absolute())
             self.shared_library_manager = shared_library_manager
         else:
             # Use provided repository path
@@ -83,10 +92,9 @@ class BrickCore:
     def _ensure_library_exists(self, library_name: str):
         """Ensure a library directory exists"""
         library_path = os.path.join(self.repository_path, library_name)
-        bricks_path = os.path.join(library_path, "bricks")
+        # Bricks are stored directly in the library directory, no nested bricks subdirectory needed
         
         os.makedirs(library_path, exist_ok=True)
-        os.makedirs(bricks_path, exist_ok=True)
     
     def create_brick(self, brick_type: str = "NodeShape", name: str = "") -> SHACLBrick:
         """Create a new brick"""
@@ -102,7 +110,8 @@ class BrickCore:
     def load_brick(self, brick_id: str, library_name: Optional[str] = None) -> Optional[SHACLBrick]:
         """Load a brick from storage"""
         lib_name = library_name or self.active_library
-        brick_file = os.path.join(self.repository_path, lib_name, "bricks", f"{brick_id}.json")
+        # Bricks are stored directly in the library directory, not in a nested bricks subdirectory
+        brick_file = os.path.join(self.repository_path, lib_name, f"{brick_id}.json")
         
         if not os.path.exists(brick_file):
             return None
@@ -138,7 +147,8 @@ class BrickCore:
         
         # Save to file
         lib_name = self.active_library
-        library_path = os.path.join(self.repository_path, lib_name, "bricks")
+        # Bricks are stored directly in the library directory, not in a nested bricks subdirectory
+        library_path = os.path.join(self.repository_path, lib_name)
         brick_file = os.path.join(library_path, f"{brick_to_save.brick_id}.json")
         
         # Ensure directory exists
@@ -155,7 +165,8 @@ class BrickCore:
     def get_all_bricks(self, library_name: Optional[str] = None) -> List[SHACLBrick]:
         """Get all bricks from a library"""
         lib_name = library_name or self.active_library
-        bricks_dir = os.path.join(self.repository_path, lib_name, "bricks")
+        # Bricks are stored directly in the library directory, not in a nested bricks subdirectory
+        bricks_dir = os.path.join(self.repository_path, lib_name)
         
         if not os.path.exists(bricks_dir):
             return []
@@ -182,7 +193,8 @@ class BrickCore:
     def delete_brick(self, brick_id: str, library_name: Optional[str] = None) -> bool:
         """Delete a brick"""
         lib_name = library_name or self.active_library
-        brick_file = os.path.join(self.repository_path, lib_name, "bricks", f"{brick_id}.json")
+        # Bricks are stored directly in the library directory, not in a nested bricks subdirectory
+        brick_file = os.path.join(self.repository_path, lib_name, f"{brick_id}.json")
         
         try:
             os.remove(brick_file)
@@ -246,9 +258,8 @@ class BrickCore:
             for item_name in os.listdir(self.repository_path):
                 item_path = os.path.join(self.repository_path, item_name)
                 if os.path.isdir(item_path):
-                    bricks_path = os.path.join(item_path, "bricks")
-                    if os.path.exists(bricks_path):
-                        libraries.append(item_name)
+                    # Any directory in the repository path is considered a library
+                    libraries.append(item_name)
         except Exception as e:
             print(f"Error getting libraries: {e}")
             return ["default"]
@@ -260,7 +271,7 @@ class BrickCore:
     
     def set_active_library(self, library_name: str):
         """Set the active library"""
-        lib_path = os.path.join(self.repository_path, library_name, "bricks")
+        lib_path = os.path.join(self.repository_path, library_name)
         if os.path.exists(lib_path):
             self.active_library = library_name
             return True

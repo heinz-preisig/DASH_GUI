@@ -90,7 +90,36 @@ class OntologyManager:
                 }
         
         # Extract properties
-        for prop_uri in graph.subjects(RDF.type, [OWL.ObjectProperty, OWL.DatatypeProperty]):
+        for prop_uri in graph.subjects(RDF.type, OWL.ObjectProperty):
+            if isinstance(prop_uri, URIRef):
+                prop_name = str(prop_uri).split('#')[-1] if '#' in str(prop_uri) else str(prop_uri).split('/')[-1]
+                comment = ""
+                domain = ""
+                range_val = ""
+                
+                # Get comment
+                for comment_obj in graph.objects(prop_uri, URIRef("http://www.w3.org/2000/01/rdf-schema#comment")):
+                    comment = str(comment_obj)
+                    break
+                
+                # Get domain
+                for domain_obj in graph.objects(prop_uri, URIRef("http://www.w3.org/2000/01/rdf-schema#domain")):
+                    domain = str(domain_obj)
+                    break
+                
+                # Get range
+                for range_obj in graph.objects(prop_uri, URIRef("http://www.w3.org/2000/01/rdf-schema#range")):
+                    range_val = str(range_obj)
+                    break
+                
+                properties[str(prop_uri)] = {
+                    'name': prop_name,
+                    'comment': comment,
+                    'domain': domain,
+                    'range': range_val
+                }
+        
+        for prop_uri in graph.subjects(RDF.type, OWL.DatatypeProperty):
             if isinstance(prop_uri, URIRef):
                 prop_name = str(prop_uri).split('#')[-1] if '#' in str(prop_uri) else str(prop_uri).split('/')[-1]
                 comment = ""

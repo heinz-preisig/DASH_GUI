@@ -8,19 +8,51 @@ import sys
 from typing import List, Optional, Dict, Any
 from pathlib import Path
 
-# Add brick_app_v2 to path
-brick_app_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '..', 'brick_app_v2')
+# Calculate project root and add paths
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+brick_app_path = os.path.join(project_root, 'brick_app_v2')
+shared_libs_path = os.path.join(project_root, 'shared_libraries')
+
+# Add both paths to sys.path
 if brick_app_path not in sys.path:
     sys.path.insert(0, brick_app_path)
+if shared_libs_path not in sys.path:
+    sys.path.insert(0, shared_libs_path)
 
 try:
-    from brick_app_v2.core.brick_core import BrickCore, SHACLBrick
-    from brick_app_v2.core.ontology_manager import OntologyManager
-except ImportError as e:
-    print(f"Warning: Could not import brick_app_v2: {e}")
+    # Direct import using exec to avoid module path issues
+    brick_core_path = os.path.join(brick_app_path, 'core', 'brick_core_simple.py')
+    ontology_path = os.path.join(brick_app_path, 'core', 'ontology_manager.py')
+    library_manager_path = os.path.join(shared_libs_path, 'library_manager.py')
+    
+    # Import brick_core_simple
+    with open(brick_core_path, 'r') as f:
+        brick_core_code = f.read()
+    brick_core_namespace = {}
+    exec(brick_core_code, brick_core_namespace)
+    BrickCore = brick_core_namespace['BrickCore']
+    SHACLBrick = brick_core_namespace['SHACLBrick']
+    
+    # Import ontology_manager
+    with open(ontology_path, 'r') as f:
+        ontology_code = f.read()
+    ontology_namespace = {}
+    exec(ontology_code, ontology_namespace)
+    OntologyManager = ontology_namespace['OntologyManager']
+    
+    # Import library_manager
+    with open(library_manager_path, 'r') as f:
+        library_code = f.read()
+    library_namespace = {}
+    exec(library_code, library_namespace)
+    shared_library_manager = library_namespace['shared_library_manager']
+    
+except Exception as e:
+    print(f"Warning: Could not import brick_app_v2 modules: {e}")
     BrickCore = None
     SHACLBrick = None
     OntologyManager = None
+    shared_library_manager = None
 
 
 class BrickIntegration:
@@ -32,7 +64,13 @@ class BrickIntegration:
         
         # Use shared libraries by default
         if use_shared_libraries and brick_repository_path is None:
-            self.brick_core = BrickCore(use_shared_libraries=True)
+            # Use the shared library manager to get the correct path
+            if shared_library_manager:
+                brick_repository_path = shared_library_manager.get_brick_library_path()
+            else:
+                # Fallback if library manager not available
+                brick_repository_path = os.path.join(project_root, 'shared_libraries', 'bricks')
+            self.brick_core = BrickCore(repository_path=brick_repository_path, use_shared_libraries=False)
         else:
             self.brick_core = BrickCore(brick_repository_path, use_shared_libraries=False)
         

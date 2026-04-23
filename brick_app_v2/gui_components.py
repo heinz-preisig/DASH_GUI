@@ -145,6 +145,9 @@ class SimpleOntologyBrowser(QDialog):
         self.search_edit.textChanged.connect(self.on_search_changed)
         self.results_list.itemDoubleClicked.connect(self.on_item_selected)
         self.cancelButton.clicked.connect(self.reject)
+        
+        # Load ontology data automatically
+        self.load_data()
 
     def load_data(self):
         """Load ontology data"""
@@ -152,7 +155,19 @@ class SimpleOntologyBrowser(QDialog):
         self.ontology_combo.addItems(list(self.ontology_manager.ontologies.keys()))
         
         if self.ontology_combo.count() > 0:
-            self.load_ontology_data()
+            # Find an ontology with actual data
+            for i in range(self.ontology_combo.count()):
+                ontology_name = self.ontology_combo.itemText(i)
+                if ontology_name in self.ontology_manager.ontologies:
+                    data = self.ontology_manager.ontologies[ontology_name]
+                    if self.mode == "classes" and len(data.get('classes', {})) > 0:
+                        self.ontology_combo.setCurrentIndex(i)
+                        self.load_ontology_data()
+                        break
+                    elif self.mode == "properties" and len(data.get('properties', {})) > 0:
+                        self.ontology_combo.setCurrentIndex(i)
+                        self.load_ontology_data()
+                        break
     
     def on_ontology_changed(self):
         """Handle ontology selection change"""
@@ -188,9 +203,30 @@ class SimpleOntologyBrowser(QDialog):
         ontology_data = self.ontology_manager.ontologies[ontology_name]
         
         if self.mode == "classes":
-            items = ontology_data.get('classes', [])
+            # Handle both dict and list data structures
+            classes_data = ontology_data.get('classes', [])
+            if isinstance(classes_data, dict):
+                # Convert dict to list format expected by browser
+                items = [{'uri': uri, 'name': data['name'], 'comment': data.get('comment', ''), 'ontology': ontology_name} 
+                        for uri, data in classes_data.items()]
+            elif isinstance(classes_data, list):
+                # Already in list format, just ensure it has the right structure
+                items = classes_data  # Already in correct format
+            else:
+                items = []
         else:
-            items = ontology_data.get('properties', [])
+            # Handle both dict and list data structures for properties
+            properties_data = ontology_data.get('properties', [])
+            if isinstance(properties_data, dict):
+                # Convert dict to list format expected by browser
+                items = [{'uri': uri, 'name': data['name'], 'comment': data.get('comment', ''), 
+                        'domain': data.get('domain', ''), 'range': data.get('range', ''), 'ontology': ontology_name} 
+                        for uri, data in properties_data.items()]
+            elif isinstance(properties_data, list):
+                # Already in list format, just ensure it has the right structure
+                items = properties_data  # Already in correct format
+            else:
+                items = []
         
         # Sort items alphabetically by name
         sorted_items = sorted(items, key=lambda x: x['name'].lower())
