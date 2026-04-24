@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brick App v2 - Web Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 500;
+        }
+        
+        .container {
+            display: flex;
+            height: calc(100vh - 60px);
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: white;
+            border-right: 1px solid #ddd;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .toolbar {
+            background: white;
+            border-bottom: 1px solid #ddd;
+            padding: 1rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .content-area {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+        }
+        
+        .brick-list {
+            list-style: none;
+        }
+        
+        .brick-item {
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .brick-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .brick-item.selected {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .brick-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .brick-description {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .form-group textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .properties-list {
+            list-style: none;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .property-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .property-item:last-child {
+            border-bottom: none;
+        }
+        
+        .constraint-list {
+            list-style: none;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .constraint-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+        
+        .constraint-item:last-child {
+            border-bottom: none;
+        }
+        
+        .status-bar {
+            background: #ecf0f1;
+            padding: 0.5rem 1rem;
+            border-top: 1px solid #ddd;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #7f8c8d;
+        }
+        
+        .error {
+            background: #e74c3c;
+            color: white;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        
+        .success {
+            background: #27ae60;
+            color: white;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Brick App v2 - Web Interface</h1>
+    </div>
+    
+    <div class="container">
+        <div class="sidebar">
+            <div class="section">
+                <h2>Libraries</h2>
+                <div class="form-group">
+                    <select id="librarySelect">
+                        <option value="">All Libraries</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Brick Type</h2>
+                <div class="form-group">
+                    <select id="brickTypeSelect">
+                        <option value="">All Types</option>
+                        <option value="NodeShape">NodeShape</option>
+                        <option value="PropertyShape">PropertyShape</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Bricks</h2>
+                <ul id="brickList" class="brick-list">
+                    <li class="loading">Loading bricks...</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="toolbar">
+                <button class="btn btn-primary" onclick="createNewBrick()">New Brick</button>
+                <button class="btn btn-secondary" onclick="saveCurrentBrick()">Save</button>
+                <button class="btn btn-secondary" onclick="deleteCurrentBrick()">Delete</button>
+            </div>
+            
+            <div class="content-area">
+                <div id="messages"></div>
+                
+                <div class="section">
+                    <h2>Brick Details</h2>
+                    <div id="brickDetails">
+                        <p>Select a brick from the list to view details.</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2>Properties</h2>
+                    <div id="propertiesSection">
+                        <p>No brick selected.</p>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-primary" onclick="addProperty()">Add Property</button>
+                        <button class="btn btn-secondary" onclick="showPropertyBrowser()">Browse Properties</button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2>Constraints</h2>
+                    <div id="constraintsSection">
+                        <p>No brick selected.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="status-bar">
+        <span id="statusText">Ready</span>
+    </div>
+    
+    <script>
+        let currentBrick = null;
+        let libraries = [];
+        let bricks = [];
+        
+        // Initialize the application
+        async function init() {
+            await loadLibraries();
+            await loadBricks();
+            setupEventListeners();
+        }
+        
+        // Load libraries
+        async function loadLibraries() {
+            try {
+                const response = await fetch('/api/libraries');
+                const data = await response.json();
+                libraries = data.data.libraries || [];
+                
+                console.log('Loaded libraries:', libraries);
+                
+                const select = document.getElementById('librarySelect');
+                select.innerHTML = '<option value="">All Libraries</option>';
+                libraries.forEach(lib => {
+                    const option = document.createElement('option');
+                    option.value = lib.name; // Use library name, not library_id
+                    option.textContent = lib.name;
+                    select.appendChild(option);
+                    console.log(`Added library option: "${lib.name}" with value "${lib.name}"`);
+                });
+            } catch (error) {
+                showMessage('Error loading libraries: ' + error.message, 'error');
+            }
+        }
+        
+        // Load bricks
+        async function loadBricks() {
+            try {
+                const response = await fetch('/api/bricks');
+                const data = await response.json();
+                bricks = data.data.bricks || [];
+                displayBricks(bricks);
+            } catch (error) {
+                showMessage('Error loading bricks: ' + error.message, 'error');
+            }
+        }
+        
+        // Display bricks in the sidebar
+        function displayBricks(brickList) {
+            const brickListElement = document.getElementById('brickList');
+            brickListElement.innerHTML = '';
+            
+            brickList.forEach(brick => {
+                const li = document.createElement('li');
+                li.className = 'brick-item';
+                li.onclick = () => selectBrick(brick);
+                li.innerHTML = `
+                    <div class="brick-name">${brick.name}</div>
+                    <div class="brick-description">${brick.description}</div>
+                `;
+                brickListElement.appendChild(li);
+            });
+        }
+        
+        // Select a brick
+        function selectBrick(brick) {
+            currentBrick = brick;
+            
+            // Update selection in list
+            document.querySelectorAll('.brick-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.target.closest('.brick-item').classList.add('selected');
+            
+            // Display brick details
+            displayBrickDetails(brick);
+            displayProperties(brick);
+            displayConstraints(brick);
+            
+            updateStatus(`Selected: ${brick.name}`);
+        }
+        
+        // Display brick details
+        function displayBrickDetails(brick) {
+            const detailsElement = document.getElementById('brickDetails');
+            detailsElement.innerHTML = `
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="brickName" value="${brick.name}">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="brickDescription">${brick.description}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="brickType">
+                        <option value="NodeShape" ${brick.object_type === 'NodeShape' ? 'selected' : ''}>NodeShape</option>
+                        <option value="PropertyShape" ${brick.object_type === 'PropertyShape' ? 'selected' : ''}>PropertyShape</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Target Class</label>
+                    <input type="text" id="brickTarget" value="${brick.target_class || ''}">
+                </div>
+            `;
+        }
+        
+        // Display properties
+        function displayProperties(brick) {
+            const propertiesElement = document.getElementById('propertiesSection');
+            const properties = brick.properties || {};
+            
+            if (Object.keys(properties).length === 0) {
+                propertiesElement.innerHTML = '<p>No properties defined.</p>';
+                return;
+            }
+            
+            let html = '<ul class="properties-list">';
+            for (const [path, property] of Object.entries(properties)) {
+                // Handle SHACL property structure
+                const propPath = typeof property === 'object' ? property.path : path;
+                const propDatatype = typeof property === 'object' ? property.datatype : 'xsd:string';
+                const propDefaultValue = typeof property === 'object' ? property.defaultValue : '';
+                const propDescription = typeof property === 'object' ? property.description : '';
+                
+                html += `
+                    <li class="property-item">
+                        <div>
+                            <strong>${propPath}</strong>
+                            <span style="color: #7f8c8d; font-size: 0.8rem;"> (${propDatatype})</span>
+                            ${propDefaultValue ? `<br><small style="color: #3498db;">Default: ${propDefaultValue}</small>` : ''}
+                            ${propDescription ? `<br><small style="color: #95a5a6;">${propDescription}</small>` : ''}
+                        </div>
+                        <div>
+                            <button class="btn btn-secondary" onclick="editProperty('${path}')" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Edit</button>
+                            <button class="btn btn-secondary" onclick="deleteProperty('${path}')" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-left: 0.25rem;">Delete</button>
+                        </div>
+                    </li>
+                `;
+            }
+            html += '</ul>';
+            
+            propertiesElement.innerHTML = html;
+        }
+        
+        // Edit property
+        function editProperty(propertyPath) {
+            if (!currentBrick || !currentBrick.properties[propertyPath]) {
+                showMessage('Property not found', 'error');
+                return;
+            }
+            
+            const property = currentBrick.properties[propertyPath];
+            const propPath = typeof property === 'object' ? property.path : propertyPath;
+            const propDatatype = typeof property === 'object' ? property.datatype : 'xsd:string';
+            const propDefaultValue = typeof property === 'object' ? property.defaultValue : '';
+            const propDescription = typeof property === 'object' ? property.description : '';
+            
+            showPropertyEditor(propPath, propDefaultValue, propDatatype, propDescription);
+        }
+        
+        // Delete property
+        function deleteProperty(propertyKey) {
+            if (!currentBrick || !currentBrick.properties[propertyKey]) {
+                showMessage('Property not found', 'error');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to delete property "${propertyKey}"?`)) {
+                delete currentBrick.properties[propertyKey];
+                displayProperties(currentBrick);
+                showMessage(`Property deleted: ${propertyKey}`, 'success');
+                updateStatus(`Deleted property: ${propertyKey}`);
+            }
+        }
+        
+        // Display constraints
+        function displayConstraints(brick) {
+            const constraintsElement = document.getElementById('constraintsSection');
+            const constraints = brick.constraints || [];
+            
+            if (constraints.length === 0) {
+                constraintsElement.innerHTML = '<p>No constraints defined.</p>';
+                return;
+            }
+            
+            let html = '<ul class="constraint-list">';
+            constraints.forEach(constraint => {
+                html += `
+                    <li class="constraint-item">
+                        <strong>${constraint.constraint_type}:</strong> ${constraint.value}
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            
+            constraintsElement.innerHTML = html;
+        }
+        
+        // Create new brick
+        function createNewBrick() {
+            currentBrick = {
+                brick_id: 'new_' + Date.now(),
+                name: 'New Brick',
+                description: '',
+                object_type: 'NodeShape',
+                target_class: '',
+                properties: {},
+                constraints: [],
+                library: 'default'
+            };
+            
+            displayBrickDetails(currentBrick);
+            displayProperties(currentBrick);
+            displayConstraints(currentBrick);
+            
+            // Clear selection
+            document.querySelectorAll('.brick-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            updateStatus('Creating new brick');
+        }
+        
+        // Save current brick
+        async function saveCurrentBrick() {
+            if (!currentBrick) {
+                showMessage('No brick selected', 'error');
+                return;
+            }
+            
+            // Update brick data from form
+            currentBrick.name = document.getElementById('brickName').value;
+            currentBrick.description = document.getElementById('brickDescription').value;
+            currentBrick.object_type = document.getElementById('brickType').value;
+            currentBrick.target_class = document.getElementById('brickTarget').value;
+            
+            try {
+                const response = await fetch('/api/bricks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(currentBrick)
+                });
+                
+                if (response.ok) {
+                    showMessage('Brick saved successfully', 'success');
+                    await loadBricks(); // Reload bricks
+                    updateStatus(`Saved: ${currentBrick.name}`);
+                } else {
+                    showMessage('Error saving brick: ' + response.statusText, 'error');
+                }
+            } catch (error) {
+                showMessage('Error saving brick: ' + error.message, 'error');
+            }
+        }
+        
+        // Delete current brick
+        function deleteCurrentBrick() {
+            if (!currentBrick) {
+                showMessage('No brick selected', 'error');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to delete "${currentBrick.name}"?`)) {
+                showMessage('Delete functionality not yet implemented', 'error');
+                updateStatus('Delete not implemented');
+            }
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('librarySelect').addEventListener('change', filterBricks);
+            document.getElementById('brickTypeSelect').addEventListener('change', filterBricks);
+        }
+        
+        // Filter bricks based on library and type
+        function filterBricks() {
+            const selectedLibrary = document.getElementById('librarySelect').value;
+            const selectedType = document.getElementById('brickTypeSelect').value;
+            
+            let filteredBricks = bricks;
+            
+            // Debug logging
+            console.log('Selected library:', selectedLibrary);
+            console.log('Selected type:', selectedType);
+            console.log('All bricks:', bricks.map(b => ({name: b.name, library: b.library, type: b.object_type})));
+            
+            // Filter by library
+            if (selectedLibrary) {
+                filteredBricks = filteredBricks.filter(brick => {
+                    console.log(`Checking brick ${brick.name}: library="${brick.library}" vs selected="${selectedLibrary}"`);
+                    return brick.library === selectedLibrary;
+                });
+            }
+            
+            // Filter by type
+            if (selectedType) {
+                filteredBricks = filteredBricks.filter(brick => brick.object_type === selectedType);
+            }
+            
+            console.log('Filtered bricks:', filteredBricks);
+            displayBricks(filteredBricks);
+            
+            // Update status
+            const libText = selectedLibrary ? `Library: ${selectedLibrary}` : 'All Libraries';
+            const typeText = selectedType ? `Type: ${selectedType}` : 'All Types';
+            updateStatus(`Filtered: ${libText}, ${typeText} (${filteredBricks.length} bricks)`);
+        }
+        
+        // Show message
+        function showMessage(message, type = 'info') {
+            const messagesElement = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type;
+            messageDiv.textContent = message;
+            messagesElement.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+        
+        // Add property to current brick
+        function addProperty() {
+            if (!currentBrick) {
+                showMessage('No brick selected', 'error');
+                return;
+            }
+            
+            showPropertyEditor();
+        }
+        
+        // Show property editor dialog
+        function showPropertyEditor(propertyKey = '', propertyValue = '', propertyType = 'string') {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+                z-index: 1000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; padding: 2rem; border-radius: 8px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                    <h3 style="margin-bottom: 1.5rem; color: #2c3e50;">${propertyKey ? 'Edit Property' : 'Add Property'}</h3>
+                    
+                    <div class="form-group">
+                        <label for="propPath">Property Path</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" id="propPath" value="${propertyKey}" placeholder="e.g., foaf:name, schema:email, age" 
+                                   style="flex: 1; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                            <button class="btn btn-secondary" onclick="showPropertyPathBrowser()" style="padding: 0.5rem;">Browse</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="propDatatype">Datatype</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <select id="propDatatype" style="flex: 1; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="xsd:string" ${propertyType === 'xsd:string' ? 'selected' : ''}>xsd:string</option>
+                                <option value="xsd:integer" ${propertyType === 'xsd:integer' ? 'selected' : ''}>xsd:integer</option>
+                                <option value="xsd:decimal" ${propertyType === 'xsd:decimal' ? 'selected' : ''}>xsd:decimal</option>
+                                <option value="xsd:boolean" ${propertyType === 'xsd:boolean' ? 'selected' : ''}>xsd:boolean</option>
+                                <option value="xsd:date" ${propertyType === 'xsd:date' ? 'selected' : ''}>xsd:date</option>
+                                <option value="xsd:dateTime" ${propertyType === 'xsd:dateTime' ? 'selected' : ''}>xsd:dateTime</option>
+                                <option value="xsd:anyURI" ${propertyType === 'xsd:anyURI' ? 'selected' : ''}>xsd:anyURI</option>
+                                <option value="xsd:float" ${propertyType === 'xsd:float' ? 'selected' : ''}>xsd:float</option>
+                                <option value="xsd:double" ${propertyType === 'xsd:double' ? 'selected' : ''}>xsd:double</option>
+                                <option value="xsd:duration" ${propertyType === 'xsd:duration' ? 'selected' : ''}>xsd:duration</option>
+                            </select>
+                            <button class="btn btn-secondary" onclick="showDatatypeBrowser()" style="padding: 0.5rem;">Info</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="propValue">Default Value (optional)</label>
+                        <input type="text" id="propValue" value="${propertyValue}" placeholder="Enter default value (optional)" 
+                               style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="propDescription">Description (optional)</label>
+                        <textarea id="propDescription" placeholder="Describe this property" 
+                                  style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; height: 60px; resize: vertical;"></textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" onclick="saveProperty('${propertyKey}')">Save Property</button>
+                        <button class="btn btn-secondary" onclick="this.closest('div[style]').remove()">Cancel</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Focus on the path input
+            setTimeout(() => {
+                document.getElementById('propPath').focus();
+            }, 100);
+        }
+        
+        // Save property from editor
+        function saveProperty(originalKey = '') {
+            const path = document.getElementById('propPath').value.trim();
+            const datatype = document.getElementById('propDatatype').value;
+            const defaultValue = document.getElementById('propValue').value.trim();
+            const description = document.getElementById('propDescription').value.trim();
+            
+            if (!path) {
+                showMessage('Property path is required', 'error');
+                return;
+            }
+            
+            // Validate path format
+            if (!path.match(/^[a-zA-Z][a-zA-Z0-9_:-]*$/)) {
+                showMessage('Property path must be a valid identifier (e.g., foaf:name, schema:email)', 'error');
+                return;
+            }
+            
+            if (!currentBrick.properties) {
+                currentBrick.properties = {};
+            }
+            
+            // Remove old property if editing
+            if (originalKey && originalKey !== path) {
+                delete currentBrick.properties[originalKey];
+            }
+            
+            // Store property with SHACL structure
+            currentBrick.properties[path] = {
+                path: path,
+                datatype: datatype,
+                description: description,
+                created_at: new Date().toISOString()
+            };
+            
+            // Add default value if provided
+            if (defaultValue) {
+                // Validate default value based on datatype
+                if (datatype === 'xsd:integer' && !/^-?\d+$/.test(defaultValue)) {
+                    showMessage('Default value must be an integer', 'error');
+                    return;
+                }
+                
+                if (datatype === 'xsd:decimal' && !/^-?\d*\.?\d+$/.test(defaultValue)) {
+                    showMessage('Default value must be a decimal number', 'error');
+                    return;
+                }
+                
+                if (datatype === 'xsd:boolean' && !['true', 'false'].includes(defaultValue.toLowerCase())) {
+                    showMessage('Default value must be true or false', 'error');
+                    return;
+                }
+                
+                if (datatype === 'xsd:anyURI' && !defaultValue.match(/^https?:\/\/|^\w+:/)) {
+                    showMessage('Default value must be a valid URI', 'error');
+                    return;
+                }
+                
+                currentBrick.properties[path].defaultValue = defaultValue;
+            }
+            
+            displayProperties(currentBrick);
+            document.querySelector('div[style*="position: fixed"]').remove();
+            
+            const action = originalKey ? 'updated' : 'added';
+            showMessage(`Property ${action}: ${path}`, 'success');
+            updateStatus(`${action.charAt(0).toUpperCase() + action.slice(1)} property: ${path}`);
+        }
+        
+        // Show property browser
+        function showPropertyBrowser() {
+            if (!currentBrick) {
+                showMessage('No brick selected', 'error');
+                return;
+            }
+            
+            // Filter property bricks
+            const propertyBricks = bricks.filter(brick => brick.object_type === 'PropertyShape');
+            
+            let html = '<div style="max-height: 300px; overflow-y: auto;">';
+            html += '<h3>Available Property Bricks</h3>';
+            html += '<ul style="list-style: none; padding: 0;">';
+            
+            propertyBricks.forEach(brick => {
+                html += `
+                    <li style="padding: 0.5rem; border: 1px solid #ddd; margin-bottom: 0.5rem; cursor: pointer;" 
+                        onclick="addPropertyBrick('${brick.brick_id}')">
+                        <strong>${brick.name}</strong><br>
+                        <small>${brick.description}</small>
+                    </li>
+                `;
+            });
+            
+            html += '</ul></div>';
+            
+            // Show in a simple modal
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+                z-index: 1000;
+            `;
+            modal.innerHTML = `
+                <div style="background: white; padding: 2rem; border-radius: 8px; max-width: 500px; width: 90%;">
+                    ${html}
+                    <button class="btn btn-secondary" onclick="this.closest('div[style]').remove()" style="margin-top: 1rem;">Close</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        // Add property brick to current brick
+        function addPropertyBrick(propertyBrickId) {
+            const propertyBrick = bricks.find(b => b.brick_id === propertyBrickId);
+            if (!propertyBrick) return;
+            
+            if (!currentBrick.properties) {
+                currentBrick.properties = {};
+            }
+            
+            // Use the property brick's path as the property key
+            const propertyKey = propertyBrick.properties.path || propertyBrick.brick_id;
+            currentBrick.properties[propertyKey] = propertyBrick.properties.datatype || 'string';
+            
+            displayProperties(currentBrick);
+            document.querySelector('div[style*="position: fixed"]').remove();
+            showMessage(`Added property: ${propertyBrick.name}`, 'success');
+            updateStatus(`Added property brick: ${propertyBrick.name}`);
+        }
+        
+        // Show property path browser
+        function showPropertyPathBrowser() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+                z-index: 1000;
+            `;
+            
+            // Common ontology properties
+            const commonProperties = [
+                { prefix: 'foaf', uri: 'http://xmlns.com/foaf/0.1/', properties: ['name', 'mbox', 'homepage', 'knows', 'member'] },
+                { prefix: 'schema', uri: 'http://schema.org/', properties: ['name', 'email', 'url', 'description', 'image', 'birthDate'] },
+                { prefix: 'dc', uri: 'http://purl.org/dc/elements/1.1/', properties: ['title', 'creator', 'date', 'description', 'identifier'] },
+                { prefix: 'rdfs', uri: 'http://www.w3.org/2000/01/rdf-schema#', properties: ['label', 'comment', 'seeAlso'] },
+                { prefix: 'owl', uri: 'http://www.w3.org/2002/07/owl#', properties: ['sameAs', 'differentFrom', 'equivalentClass'] }
+            ];
+            
+            let html = `
+                <div style="background: white; padding: 2rem; border-radius: 8px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                    <h3 style="margin-bottom: 1.5rem; color: #2c3e50;">Property Path Browser</h3>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <input type="text" id="propertySearch" placeholder="Search properties..." 
+                               style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"
+                               onkeyup="filterProperties(this.value)">
+                    </div>
+            `;
+            
+            commonProperties.forEach(onto => {
+                html += `
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4 style="color: #3498db; margin-bottom: 0.5rem;">${onto.prefix} (${onto.uri})</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.5rem;" class="property-list">
+                `;
+                
+                onto.properties.forEach(prop => {
+                    const fullPath = `${onto.prefix}:${prop}`;
+                    html += `
+                        <div style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; background: white;"
+                             onmouseover="this.style.background='#f8f9fa'"
+                             onmouseout="this.style.background='white'"
+                             onclick="selectPropertyPath('${fullPath}')">
+                            <strong>${prop}</strong><br>
+                            <small style="color: #7f8c8d;">${fullPath}</small>
+                        </div>
+                    `;
+                });
+                
+                html += '</div></div>';
+            });
+            
+            html += `
+                    <div style="margin-top: 1.5rem;">
+                        <h4 style="color: #3498db; margin-bottom: 0.5rem;">Custom Property</h4>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" id="customPrefix" placeholder="prefix" 
+                                   style="flex: 1; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                            <input type="text" id="customProperty" placeholder="property" 
+                                   style="flex: 2; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                            <button class="btn btn-primary" onclick="selectCustomProperty()">Add</button>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button class="btn btn-secondary" onclick="this.closest('div[style]').remove()">Cancel</button>
+                    </div>
+                </div>
+            `;
+            
+            modal.innerHTML = html;
+            document.body.appendChild(modal);
+        }
+        
+        // Select property path from browser
+        function selectPropertyPath(path) {
+            document.getElementById('propPath').value = path;
+            document.querySelector('div[style*="position: fixed"]').remove();
+            showMessage(`Selected property path: ${path}`, 'success');
+        }
+        
+        // Select custom property
+        function selectCustomProperty() {
+            const prefix = document.getElementById('customPrefix').value.trim();
+            const property = document.getElementById('customProperty').value.trim();
+            
+            if (!prefix || !property) {
+                showMessage('Both prefix and property are required', 'error');
+                return;
+            }
+            
+            const fullPath = `${prefix}:${property}`;
+            selectPropertyPath(fullPath);
+        }
+        
+        // Filter properties in browser
+        function filterProperties(searchTerm) {
+            const items = document.querySelectorAll('.property-list > div');
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(searchTerm.toLowerCase())) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        // Show datatype browser
+        function showDatatypeBrowser() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+                z-index: 1000;
+            `;
+            
+            const datatypes = [
+                { type: 'xsd:string', description: 'Text strings', example: '"Hello World"' },
+                { type: 'xsd:integer', description: 'Whole numbers', example: '42' },
+                { type: 'xsd:decimal', description: 'Decimal numbers', example: '3.14' },
+                { type: 'xsd:float', description: '32-bit floating point', example: '3.14159' },
+                { type: 'xsd:double', description: '64-bit floating point', example: '3.14159265359' },
+                { type: 'xsd:boolean', description: 'True/false values', example: 'true' },
+                { type: 'xsd:date', description: 'Date (YYYY-MM-DD)', example: '2023-12-25' },
+                { type: 'xsd:dateTime', description: 'Date and time', example: '2023-12-25T10:30:00' },
+                { type: 'xsd:time', description: 'Time (HH:MM:SS)', example: '10:30:00' },
+                { type: 'xsd:duration', description: 'Time duration', example: 'P1Y2M3DT4H5M6S' },
+                { type: 'xsd:anyURI', description: 'URI/IRI values', example: 'http://example.com' },
+                { type: 'xsd:base64Binary', description: 'Base64 encoded binary', example: 'SGVsbG8gV29ybGQ=' }
+            ];
+            
+            let html = `
+                <div style="background: white; padding: 2rem; border-radius: 8px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                    <h3 style="margin-bottom: 1.5rem; color: #2c3e50;">XSD Datatype Reference</h3>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <input type="text" placeholder="Search datatypes..." 
+                               style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"
+                               onkeyup="filterDatatypes(this.value)">
+                    </div>
+                    
+                    <div style="display: grid; gap: 0.5rem;">
+            `;
+            
+            datatypes.forEach(dt => {
+                html += `
+                    <div style="padding: 1rem; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; background: white;"
+                         onmouseover="this.style.background='#f8f9fa'"
+                         onmouseout="this.style.background='white'"
+                         onclick="selectDatatype('${dt.type}')">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${dt.type}</strong>
+                                <p style="margin: 0.25rem 0; color: #7f8c8d; font-size: 0.9rem;">${dt.description}</p>
+                                <code style="background: #f8f9fa; padding: 0.25rem; border-radius: 3px; font-size: 0.8rem;">Example: ${dt.example}</code>
+                            </div>
+                            <button class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Select</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button class="btn btn-secondary" onclick="this.closest('div[style]').remove()">Close</button>
+                    </div>
+                </div>
+            `;
+            
+            modal.innerHTML = html;
+            document.body.appendChild(modal);
+        }
+        
+        // Select datatype from browser
+        function selectDatatype(datatype) {
+            document.getElementById('propDatatype').value = datatype;
+            document.querySelector('div[style*="position: fixed"]').remove();
+            showMessage(`Selected datatype: ${datatype}`, 'success');
+        }
+        
+        // Filter datatypes in browser
+        function filterDatatypes(searchTerm) {
+            const items = document.querySelectorAll('div[style*="cursor: pointer"]');
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(searchTerm.toLowerCase())) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        // Update status
+        function updateStatus(text) {
+            document.getElementById('statusText').textContent = text;
+        }
+        
+        // Test if JavaScript is working
+        console.log('JavaScript is loading!');
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brick App v2 - Web Interface</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="header">
+        <h1>Brick App v2 - Web Interface</h1>
+    </div>
+    
+    <div class="container">
+        <div class="sidebar">
+            <div class="section">
+                <h2>Libraries</h2>
+                <div class="form-group">
+                    <select id="librarySelect">
+                        <option value="">All Libraries</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Brick Type</h2>
+                <div class="form-group">
+                    <select id="brickTypeSelect">
+                        <option value="">All Types</option>
+                        <option value="NodeShape">NodeShape</option>
+                        <option value="PropertyShape">PropertyShape</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Bricks</h2>
+                <ul id="brickList" class="brick-list">
+                    <li class="loading">Loading bricks...</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="toolbar">
+                <button class="btn btn-primary" onclick="createNewBrick()">New Brick</button>
+                <button class="btn btn-secondary" onclick="saveCurrentBrick()">Save</button>
+                <button class="btn btn-secondary" onclick="deleteCurrentBrick()">Delete</button>
+            </div>
+            
+            <div class="content-area">
+                <div id="messages"></div>
+                
+                <div class="section">
+                    <h2>Brick Details</h2>
+                    <div id="brickDetails">
+                        <p>Select a brick from the list to view details.</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2>Properties</h2>
+                    <div id="propertiesSection">
+                        <p>No brick selected.</p>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-primary" onclick="addProperty()">Add Property</button>
+                        <button class="btn btn-secondary" onclick="showPropertyBrowser()">Browse Properties</button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2>Constraints</h2>
+                    <div id="constraintsSection">
+                        <p>No brick selected.</p>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-primary" onclick="addConstraint()">Add Constraint</button>
+                        <button class="btn btn-secondary" onclick="showConstraintBrowser()">Browse Constraints</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="status-bar">
+        <span id="statusText">Ready</span>
+    </div>
+    
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

@@ -11,6 +11,7 @@ import json
 from datetime import datetime
 from .brick_backend import BrickBackendAPI
 from .brick_generator import SHACLBrick, SHACLConstraint
+from .ontology_manager import OntologyManager
 from rdflib import Graph, Namespace, URIRef, RDF, RDFS, OWL
 
 class BrickEditorBackend:
@@ -436,83 +437,3 @@ class BrickEditorBackend:
         else:
             self.emit_event('error_occurred', message)
 
-# Real OntologyManager class that loads cached ontologies
-class OntologyManager:
-    def __init__(self):
-        self.ontologies = {}
-        self.cache_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'ontologies', 'cache')
-        self.load_cached_ontologies()
-    
-    def load_cached_ontologies(self):
-        """Load cached ontologies from the cache directory"""
-        if not os.path.exists(self.cache_dir):
-            print(f"Cache directory not found: {self.cache_dir}")
-            return
-        
-        try:
-            for filename in os.listdir(self.cache_dir):
-                if filename.endswith(('.ttl', '.rdf')):
-                    filepath = os.path.join(self.cache_dir, filename)
-                    ontology_name = filename.replace('.ttl', '').replace('.rdf', '')
-                    
-                    # Parse RDF/TTL file
-                    graph = Graph()
-                    graph.parse(filepath, format='turtle' if filename.endswith('.ttl') else 'xml')
-                    
-                    # Extract classes and properties
-                    classes = []
-                    properties = []
-                    
-                    # Get classes
-                    for class_uri in graph.subjects(RDF.type, OWL.Class):
-                        if isinstance(class_uri, URIRef):
-                            class_name = str(class_uri).split('/')[-1].split('#')[-1]
-                            classes.append({
-                                'name': class_name,
-                                'uri': str(class_uri)
-                            })
-                    
-                    # Get properties
-                    for prop_uri in graph.subjects(RDF.type, OWL.ObjectProperty):
-                        if isinstance(prop_uri, URIRef):
-                            prop_name = str(prop_uri).split('/')[-1].split('#')[-1]
-                            properties.append({
-                                'name': prop_name,
-                                'uri': str(prop_uri)
-                            })
-                    
-                    for prop_uri in graph.subjects(RDF.type, OWL.DatatypeProperty):
-                        if isinstance(prop_uri, URIRef):
-                            prop_name = str(prop_uri).split('/')[-1].split('#')[-1]
-                            properties.append({
-                                'name': prop_name,
-                                'uri': str(prop_uri)
-                            })
-                    
-                    self.ontologies[ontology_name] = {
-                        'classes': classes,
-                        'properties': properties,
-                        'name': ontology_name,
-                        'uri': filepath
-                    }
-                    
-                    print(f"Loaded ontology: {ontology_name} ({len(classes)} classes, {len(properties)} properties)")
-                    
-        except Exception as e:
-            print(f"Error loading cached ontologies: {e}")
-            import traceback
-            traceback.print_exc()
-    
-    def get_available_classes(self):
-        """Get all available classes from all ontologies"""
-        classes = []
-        for ontology_data in self.ontologies.values():
-            classes.extend(ontology_data.get('classes', []))
-        return classes
-    
-    def get_available_properties(self):
-        """Get all available properties from all ontologies"""
-        properties = []
-        for ontology_data in self.ontologies.values():
-            properties.extend(ontology_data.get('properties', []))
-        return properties

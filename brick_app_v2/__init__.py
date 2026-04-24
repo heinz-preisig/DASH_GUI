@@ -30,21 +30,7 @@ from .core.brick_backend import (
 
 from .gui.brick_gui import BrickGUI
 
-# Import schema components
-from .schema.core.schema_backend import (
-    SchemaBackendAPI,
-    SchemaEventProcessor
-)
-
-from .schema.core.schema_constructor import (
-    SchemaConstructor,
-    InterfaceFlowType,
-    SchemaComposition,
-    DaisyChain,
-    InterfaceStep
-)
-
-from .schema.gui.schema_gui import SchemaGUI
+# Schema components moved to separate schema_app_v2 module
 
 __all__ = [
     # Core classes

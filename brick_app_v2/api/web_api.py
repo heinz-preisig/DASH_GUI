@@ -19,8 +19,12 @@ except ImportError:
     Flask = None
     CORS = None
 
-from ..core.multi_tenant_backend import MultiTenantBackend
-from ..core.abstract_events import EventType, ClientType
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from core.multi_tenant_backend import MultiTenantBackend
+from core.abstract_events import EventType, ClientType
 
 
 class BrickWebAPI:
@@ -50,6 +54,13 @@ class BrickWebAPI:
     
     def _setup_routes(self):
         """Setup all API routes"""
+        
+        # Main page
+        @self.app.route('/')
+        def index():
+            """Main web interface page"""
+            from flask import render_template
+            return render_template('index.html')
         
         # Session management
         @self.app.route('/api/session', methods=['POST'])
@@ -205,10 +216,11 @@ class BrickWebAPI:
             data = request.get_json() or {}
             brick_data = data.get('brick_data')
             
-            if not brick_data:
-                brick_data = backend_session.editor_backend.get_current_brick()
+            if brick_data:
+                # Update the current brick with the new data
+                backend_session.editor_backend.set_current_brick(brick_data)
             
-            success, message = backend_session.editor_backend.save_brick(brick_data)
+            success, message = backend_session.editor_backend.save_current_brick()
             
             if success:
                 return jsonify({

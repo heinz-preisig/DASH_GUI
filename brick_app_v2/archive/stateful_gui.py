@@ -19,7 +19,7 @@ from core.brick_core_simple import BrickCore
 from core.ontology_manager import OntologyManager
 from gui_components import (
     PropertyEditorDialog, PropertyBrickBrowser, ConstraintEditorDialog,
-    SimpleOntologyBrowser, CorrectedOntologyManager
+    SimpleOntologyBrowser
 )
 
 
@@ -137,7 +137,7 @@ class StatefulBrickEditor(QMainWindow):
         
         # Initialize components
         self.brick_core = BrickCore()
-        self.ontology_manager = CorrectedOntologyManager()
+        self.ontology_manager = OntologyManager()
         self.state_controller = UIStateController(self)
         
         # Setup window

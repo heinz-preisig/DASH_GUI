@@ -19,6 +19,9 @@ def run_gui(schema_repository: str = None,
     from .interfaces.qt.schema_gui_clean import CleanSchemaGUI
     window = CleanSchemaGUI(schema_repository, brick_repository)
     
+    # Show the window!
+    window.show()
+    
     return app.exec()
 
 
