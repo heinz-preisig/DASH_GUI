@@ -22,9 +22,79 @@ Brick App v2 is a comprehensive SHACL brick generation system with dual frontend
 ```bash
 # Python 3.8+ required
 python --version
+```
 
-# Install dependencies
+### Installation Options
+
+#### Option 1: Modern Python (Recommended)
+
+**Using uv (fast Python package manager):**
+```bash
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install project in development mode
+cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
+uv sync
+
+# Run application
+uv run python main.py --gui
+uv run python main.py --web --port 5000
+```
+
+**Using pip with pyproject.toml:**
+```bash
+cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
+pip install -e .
+
+# Run application
+python main.py --gui
+python main.py --web --port 5000
+```
+
+#### Option 2: Traditional Installation
+
+```bash
+# Install dependencies manually
 pip install PyQt6 rdflib flask flask-cors
+
+# For development tools (optional)
+pip install pytest black flake8
+```
+
+### Environment Configuration
+
+#### Environment Variables (Optional)
+
+Create a `.env` file for configuration:
+```bash
+# Create .env file
+cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
+cat > .env << EOF
+# Brick App v2 Environment Configuration
+
+# Repository Settings
+BRICK_REPOSITORY_PATH=./shared_libraries
+
+# Web Interface Settings
+WEB_HOST=localhost
+WEB_PORT=5000
+WEB_DEBUG=false
+
+# Development Settings
+PYTHONPATH=/home/heinz/1_Gits/DASH_GUI/brick_app_v2
+LOG_LEVEL=INFO
+EOF
+```
+
+#### Using .env File
+```bash
+# Install python-dotenv for environment variable support
+pip install python-dotenv
+
+# Load environment variables before running
+export $(cat .env | xargs)
+python main.py --web --port $WEB_PORT
 ```
 
 ### Starting the Application
@@ -50,6 +120,12 @@ python main.py --gui
 python main.py --web --port 5001
 ```
 
+#### Option 4: Default (GUI)
+```bash
+cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
+python main.py
+```
+
 ## Frontend Options
 
 ### PyQt GUI Frontend
@@ -63,6 +139,7 @@ python main.py --web --port 5001
 
 **Startup:**
 ```bash
+cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
 python main.py --gui
 ```
 
@@ -83,6 +160,7 @@ python main.py --gui
 
 **Startup:**
 ```bash
+cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
 python main.py --web --port 5000
 ```
 
@@ -175,7 +253,7 @@ http://localhost:5000
 ### Creating Bricks
 
 #### PyQt GUI
-1. **Launch**: `python main.py --gui`
+1. **Launch**: `cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2 && python main.py --gui`
 2. **Library**: Select or create library
 3. **New Brick**: Click "New Brick"
 4. **Details**: Enter name, description, type
@@ -184,7 +262,7 @@ http://localhost:5000
 7. **Save**: Save brick to library
 
 #### Web Interface
-1. **Launch**: `python main.py --web`
+1. **Launch**: `cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2 && python main.py --web --port 5000`
 2. **Access**: Open `http://localhost:5000`
 3. **Select**: Choose brick from sidebar
 4. **Edit**: Modify details in main panel
@@ -277,13 +355,53 @@ DELETE /api/session/<id>/brick/properties/<name>  # Delete property
 
 ## Development
 
+### Modern Development Workflow
+
+#### Using uv for Development
+```bash
+# Install development dependencies
+uv sync --dev
+
+# Run tests with uv
+uv run pytest
+
+# Code formatting
+uv run black .
+
+# Linting
+uv run flake8 .
+
+# Run application in development mode
+uv run python main.py --web --debug
+```
+
+#### Using pip for Development
+```bash
+# Install in development mode
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Code formatting
+black .
+
+# Linting
+flake8 .
+
+# Run application in development mode
+python main.py --web --debug
+```
+
 ### Project Structure
 
 ```
 brick_app_v2/
 ├── main.py                    # Application entry point
+├── pyproject.toml             # Modern Python packaging
 ├── README.md                  # Basic documentation
 ├── DOCUMENTATION.md           # This file
+├── .env                      # Environment variables (optional)
 ├── shared_libraries/          # Shared brick libraries
 │   ├── config.json           # Library configuration
 │   ├── bricks/               # Brick storage
@@ -343,6 +461,7 @@ export PYTHONPATH=/home/heinz/1_Gits/DASH_GUI/brick_app_v2:$PYTHONPATH
 
 #### Port Conflicts
 ```bash
+cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
 # Use different port
 python main.py --web --port 5001
 ```
