@@ -17,22 +17,29 @@ from schema_app_v2.core.schema_core import SchemaCore, Schema
 from schema_app_v2.core.flow_engine import FlowEngine, FlowType, FlowStep, FlowConfig
 from schema_app_v2.core.brick_integration import BrickIntegration
 from schema_app_v2.core.schema_helper import SchemaHelper
+from schema_app_v2.core.multi_tenant_backend import MultiTenantBackend
+from schema_app_v2.core.abstract_events import EventType
 
 from .ui_components import UiLoader, ComponentManager
 from .help_dialog import HelpDialog
+from .add_component_dialog import AddComponentDialog
 
 
 class SchemaGUI(QMainWindow):
-    """Main schema construction GUI"""
+    """Main schema construction GUI with multi-tenant backend support"""
     
-    def __init__(self, schema_repository_path: str = "schema_repositories",
-                 brick_repository_path: str = "brick_repositories"):
+    def __init__(self, schema_repository_path: str = None,
+                 brick_repository_path: str = None):
         super().__init__()
         
-        # Initialize core components
-        self.schema_core = SchemaCore(schema_repository_path)
-        self.flow_engine = FlowEngine()
-        self.brick_integration = BrickIntegration(brick_repository_path)
+        # Initialize multi-tenant backend
+        self.backend = MultiTenantBackend(schema_repository_path, brick_repository_path)
+        self.qt_session = self.backend.get_qt_session()
+        
+        # Get core components from session
+        self.schema_core = self.qt_session.schema_core
+        self.flow_engine = self.qt_session.flow_engine
+        self.brick_integration = self.qt_session.brick_integration
         
         # Initialize helper for user-friendly features
         self.helper = SchemaHelper()
@@ -46,13 +53,16 @@ class SchemaGUI(QMainWindow):
         self.components = ComponentManager()
         
         # Current state
-        self.current_schema: Optional[Schema] = None
+        self.current_schema: Optional[Schema] = self.qt_session.current_schema
         self.current_flow: Optional[FlowConfig] = None
         
         # Setup UI
         self.setup_ui()
         self.connect_signals()
         self.load_initial_data()
+        
+        # Register Qt signals for event handling
+        self._setup_event_handlers()
         
         # Window setup
         self.setWindowTitle("Schema App v2 - Schema Constructor")
@@ -113,6 +123,12 @@ class SchemaGUI(QMainWindow):
         self.ui.saveButton.clicked.connect(self.save_schema)
         self.ui.exportShaclButton.clicked.connect(self.export_shacl)
     
+    def _setup_event_handlers(self):
+        """Setup Qt signal handlers for backend events"""
+        # Register Qt signals with backend event manager
+        # This allows the backend to emit events that trigger UI updates
+        pass  # Can be expanded later for real-time updates
+    
     def load_initial_data(self):
         """Load initial data into UI"""
         # Load available libraries
@@ -136,9 +152,13 @@ class SchemaGUI(QMainWindow):
         if not ok or not name.strip():
             return
         
-        # Create new schema
+        # Create new schema using backend
         schema = self.schema_core.create_schema(name.strip())
         self.current_schema = schema
+        self.qt_session.current_schema = schema  # Sync with backend session
+        
+        # Emit event
+        self.qt_session._emit_event('schema_created', schema.to_dict())
         
         # Update UI
         self.refresh_schema_list()
@@ -163,6 +183,8 @@ class SchemaGUI(QMainWindow):
         for schema in schemas:
             if schema.name == name:
                 self.current_schema = schema
+                self.qt_session.current_schema = schema  # Sync with backend session
+                self.qt_session._emit_event('schema_loaded', schema.to_dict())
                 self.load_schema_into_ui(schema)
                 self.set_ui_state(True)
                 self.ui.statusbar.showMessage(f"Opened schema: {name}")
@@ -175,8 +197,10 @@ class SchemaGUI(QMainWindow):
         
         try:
             self.schema_core.save_schema(self.current_schema)
+            self.qt_session._emit_event('schema_saved', self.current_schema.to_dict())
             self.ui.statusbar.showMessage(f"Saved schema: {self.current_schema.name}")
         except Exception as e:
+            self.qt_session._emit_event('error_occurred', {"message": f"Failed to save schema: {e}"})
             QMessageBox.critical(self, "Save Error", f"Failed to save schema: {e}")
     
     def export_shacl(self):
@@ -280,6 +304,8 @@ class SchemaGUI(QMainWindow):
             for schema in schemas:
                 if schema.name == schema_name:
                     self.current_schema = schema
+                    self.qt_session.current_schema = schema  # Sync with backend session
+                    self.qt_session._emit_event('schema_loaded', schema.to_dict())
                     self.load_schema_into_ui(schema)
                     self.set_ui_state(True)
                     
@@ -299,15 +325,21 @@ class SchemaGUI(QMainWindow):
         all_bricks = self.brick_integration.get_available_bricks()
         bricks = [brick for brick in all_bricks if brick.name == brick_name]
         if bricks and self.current_schema:
-            self.current_schema.component_brick_ids.append(bricks[0].brick_id)
-            self.refresh_component_list()
-            self.ui.statusbar.showMessage(f"Added component: {brick_name}")
+            brick_id = bricks[0].brick_id
+            if brick_id not in self.current_schema.component_brick_ids:
+                self.current_schema.component_brick_ids.append(brick_id)
+                self.current_schema.update_timestamp()
+                self.qt_session._emit_event('component_added', {"brick_id": brick_id})
+                self.refresh_component_list()
+                self.ui.statusbar.showMessage(f"Added component: {brick_name}")
     
     def on_schema_details_changed(self):
         """Handle schema detail changes"""
         if self.current_schema:
             self.current_schema.name = self.ui.nameLineEdit.text()
             self.current_schema.description = self.ui.descriptionLineEdit.text()
+            self.current_schema.update_timestamp()
+            self.qt_session._emit_event('schema_updated', self.current_schema.to_dict())
     
     def on_root_brick_changed(self, brick_name):
         """Handle root brick change"""
@@ -316,6 +348,8 @@ class SchemaGUI(QMainWindow):
             bricks = [brick for brick in all_bricks if brick.name == brick_name]
             if bricks:
                 self.current_schema.root_brick_id = bricks[0].brick_id
+                self.current_schema.update_timestamp()
+                self.qt_session._emit_event('root_brick_set', {"brick_id": bricks[0].brick_id})
     
     def add_component_brick(self):
         """Add component brick button handler"""
@@ -330,20 +364,41 @@ class SchemaGUI(QMainWindow):
             if selected_brick_id:
                 try:
                     # Add component to schema
-                    self.brick_integration.add_component_to_schema(
-                        self.current_schema.schema_id, selected_brick_id
-                    )
+                    if selected_brick_id not in self.current_schema.component_brick_ids:
+                        self.current_schema.component_brick_ids.append(selected_brick_id)
+                        self.current_schema.update_timestamp()
+                        self.qt_session._emit_event('component_added', {"brick_id": selected_brick_id})
                     
                     # Update UI
                     self.refresh_component_list()
                     QMessageBox.information(self, "Success", 
                         f"Component '{selected_brick_id}' added to schema successfully!")
                 except Exception as e:
+                    self.qt_session._emit_event('error_occurred', {"message": f"Failed to add component: {str(e)}"})
                     QMessageBox.critical(self, "Error", f"Failed to add component: {str(e)}")
     
     def remove_component_brick(self):
         """Remove component brick button handler"""
-        QMessageBox.information(self, "Remove Component", "Feature coming soon")
+        items = self.ui.componentBricksListWidget.selectedItems()
+        if not items:
+            QMessageBox.warning(self, "No Selection", "Please select a component to remove")
+            return
+        
+        if not self.current_schema:
+            return
+        
+        component_name = items[0].text()
+        all_bricks = self.brick_integration.get_available_bricks()
+        bricks = [brick for brick in all_bricks if brick.name == component_name]
+        
+        if bricks:
+            brick_id = bricks[0].brick_id
+            if brick_id in self.current_schema.component_brick_ids:
+                self.current_schema.component_brick_ids.remove(brick_id)
+                self.current_schema.update_timestamp()
+                self.qt_session._emit_event('component_removed', {"brick_id": brick_id})
+                self.refresh_component_list()
+                self.ui.statusbar.showMessage(f"Removed component: {component_name}")
     
     def on_component_selection_changed(self):
         """Handle component selection change"""
@@ -357,22 +412,53 @@ class SchemaGUI(QMainWindow):
                 self.current_schema.flow_config = self.flow_engine.create_flow(
                     f"Flow for {self.current_schema.name}", flow_enum
                 )
+                self.current_schema.update_timestamp()
+                self.qt_session._emit_event('flow_updated', self.current_schema.flow_config.to_dict())
             except ValueError:
                 pass
     
     def edit_flow(self):
         """Edit flow button handler"""
-        QMessageBox.information(self, "Edit Flow", "Flow editor coming soon")
+        if not self.current_schema:
+            QMessageBox.warning(self, "No Schema", "Please create or select a schema first")
+            return
+        
+        # Import flow editor dialog
+        from .flow_editor_dialog import FlowEditorDialog
+        
+        dialog = FlowEditorDialog(
+            self.flow_engine, 
+            self.brick_integration, 
+            self.current_schema.flow_config,
+            self
+        )
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.current_schema.flow_config = dialog.current_flow
+            self.current_schema.update_timestamp()
+            self.qt_session._emit_event('flow_updated', self.current_schema.flow_config.to_dict())
+            self.ui.statusbar.showMessage("Flow updated successfully")
     
     def refresh_schema_libraries(self):
         """Refresh schema library list"""
-        # Placeholder for library loading
-        pass
+        try:
+            libraries = self.schema_core.get_libraries()
+            self.ui.libraryComboBox.clear()
+            self.ui.libraryComboBox.addItems(libraries)
+            if libraries:
+                self.ui.libraryComboBox.setCurrentIndex(0)
+        except Exception as e:
+            print(f"Error loading schema libraries: {e}")
     
     def refresh_brick_libraries(self):
         """Refresh brick library list"""
-        # Placeholder for library loading
-        pass
+        try:
+            libraries = self.brick_integration.get_brick_libraries()
+            self.ui.brickLibraryComboBox.clear()
+            self.ui.brickLibraryComboBox.addItems(libraries)
+            if libraries:
+                self.ui.brickLibraryComboBox.setCurrentIndex(0)
+        except Exception as e:
+            print(f"Error loading brick libraries: {e}")
     
     def refresh_brick_list(self, search_term=""):
         """Refresh brick list"""

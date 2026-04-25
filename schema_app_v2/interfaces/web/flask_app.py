@@ -1,6 +1,6 @@
 """
 Flask Web Application
-Web interface for schema construction (future implementation)
+Web interface for schema construction with multi-tenant backend support
 """
 
 from flask import Flask, jsonify, request, render_template
@@ -14,23 +14,25 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'core'))
 from schema_core import SchemaCore, Schema
 from flow_engine import FlowEngine, FlowType
 from brick_integration import BrickIntegration
+from multi_tenant_backend import MultiTenantBackend
 
 
-def create_app(schema_repository_path: str = "schema_repositories",
-               brick_repository_path: str = "brick_repositories_v2"):
-    """Create Flask application"""
+def create_app(schema_repository_path: str = None,
+               brick_repository_path: str = None):
+    """Create Flask application with multi-tenant backend"""
     app = Flask(__name__)
     CORS(app)  # Enable CORS for web interface
     
-    # Initialize core components
-    schema_core = SchemaCore(schema_repository_path)
-    flow_engine = FlowEngine()
-    brick_integration = BrickIntegration(brick_repository_path)
+    # Initialize multi-tenant backend
+    backend = MultiTenantBackend(schema_repository_path, brick_repository_path)
     
-    # Store components in app context
-    app.config['SCHEMA_CORE'] = schema_core
-    app.config['FLOW_ENGINE'] = flow_engine
-    app.config['BRICK_INTEGRATION'] = brick_integration
+    # Create a session for web requests
+    web_session_id = backend.create_session("web", user_info={"client": "Web Interface"})
+    web_session = backend.get_session(web_session_id)
+    
+    # Store backend in app context
+    app.config['BACKEND'] = backend
+    app.config['WEB_SESSION_ID'] = web_session_id
     
     # API Routes
     
@@ -43,7 +45,7 @@ def create_app(schema_repository_path: str = "schema_repositories",
     def get_schemas():
         """Get all schemas"""
         library = request.args.get('library')
-        schemas = schema_core.get_all_schemas(library)
+        schemas = web_session.schema_core.get_all_schemas(library)
         return jsonify([schema.to_dict() for schema in schemas])
     
     @app.route('/api/schemas', methods=['POST'])
@@ -51,11 +53,13 @@ def create_app(schema_repository_path: str = "schema_repositories",
         """Create a new schema"""
         data = request.get_json()
         
-        schema = schema_core.create_schema(
+        schema = web_session.schema_core.create_schema(
             name=data.get('name', ''),
             description=data.get('description', ''),
             root_brick_id=data.get('root_brick_id', '')
         )
+        web_session.current_schema = schema
+        web_session._emit_event('schema_created', schema.to_dict())
         
         return jsonify(schema.to_dict()), 201
     
@@ -63,9 +67,11 @@ def create_app(schema_repository_path: str = "schema_repositories",
     def get_schema(schema_id):
         """Get a specific schema"""
         library = request.args.get('library')
-        schema = schema_core.load_schema(schema_id, library)
+        schema = web_session.schema_core.load_schema(schema_id, library)
         
         if schema:
+            web_session.current_schema = schema
+            web_session._emit_event('schema_loaded', schema.to_dict())
             return jsonify(schema.to_dict())
         else:
             return jsonify({'error': 'Schema not found'}), 404
@@ -74,7 +80,7 @@ def create_app(schema_repository_path: str = "schema_repositories",
     def update_schema(schema_id):
         """Update a schema"""
         library = request.args.get('library')
-        schema = schema_core.load_schema(schema_id, library)
+        schema = web_session.schema_core.load_schema(schema_id, library)
         
         if not schema:
             return jsonify({'error': 'Schema not found'}), 404
@@ -91,8 +97,12 @@ def create_app(schema_repository_path: str = "schema_repositories",
         if 'component_brick_ids' in data:
             schema.component_brick_ids = data['component_brick_ids']
         
+        schema.update_timestamp()
+        web_session._emit_event('schema_updated', schema.to_dict())
+        
         # Save schema
-        if schema_core.save_schema(schema):
+        if web_session.schema_core.save_schema(schema):
+            web_session._emit_event('schema_saved', schema.to_dict())
             return jsonify(schema.to_dict())
         else:
             return jsonify({'error': 'Failed to save schema'}), 500
@@ -102,7 +112,8 @@ def create_app(schema_repository_path: str = "schema_repositories",
         """Delete a schema"""
         library = request.args.get('library')
         
-        if schema_core.delete_schema(schema_id, library):
+        if web_session.schema_core.delete_schema(schema_id, library):
+            web_session._emit_event('schema_deleted', {'schema_id': schema_id})
             return jsonify({'message': 'Schema deleted'})
         else:
             return jsonify({'error': 'Failed to delete schema'}), 500
@@ -114,28 +125,36 @@ def create_app(schema_repository_path: str = "schema_repositories",
         data = request.get_json()
         brick_id = data.get('brick_id')
         
-        schema = schema_core.load_schema(schema_id, library)
+        schema = web_session.schema_core.load_schema(schema_id, library)
         if not schema:
             return jsonify({'error': 'Schema not found'}), 404
         
-        if schema_core.add_component_brick(brick_id):
+        if brick_id not in schema.component_brick_ids:
+            schema.component_brick_ids.append(brick_id)
+            schema.update_timestamp()
+            web_session._emit_event('component_added', {'brick_id': brick_id})
+            web_session.schema_core.save_schema(schema)
             return jsonify({'message': 'Component added'})
         else:
-            return jsonify({'error': 'Failed to add component'}), 500
+            return jsonify({'error': 'Component already exists'}), 400
     
     @app.route('/api/schemas/<schema_id>/components/<brick_id>', methods=['DELETE'])
     def remove_component(schema_id, brick_id):
         """Remove component brick from schema"""
         library = request.args.get('library')
         
-        schema = schema_core.load_schema(schema_id, library)
+        schema = web_session.schema_core.load_schema(schema_id, library)
         if not schema:
             return jsonify({'error': 'Schema not found'}), 404
         
-        if schema_core.remove_component_brick(brick_id):
+        if brick_id in schema.component_brick_ids:
+            schema.component_brick_ids.remove(brick_id)
+            schema.update_timestamp()
+            web_session._emit_event('component_removed', {'brick_id': brick_id})
+            web_session.schema_core.save_schema(schema)
             return jsonify({'message': 'Component removed'})
         else:
-            return jsonify({'error': 'Failed to remove component'}), 500
+            return jsonify({'error': 'Component not found'}), 404
     
     @app.route('/api/bricks', methods=['GET'])
     def get_bricks():
@@ -144,9 +163,9 @@ def create_app(schema_repository_path: str = "schema_repositories",
         search = request.args.get('search')
         
         if search:
-            bricks = brick_integration.search_bricks(search, library)
+            bricks = web_session.brick_integration.search_bricks(search, library)
         else:
-            bricks = brick_integration.get_available_bricks(library)
+            bricks = web_session.brick_integration.get_available_bricks(library)
         
         return jsonify([brick.to_dict() for brick in bricks])
     
@@ -154,7 +173,7 @@ def create_app(schema_repository_path: str = "schema_repositories",
     def get_brick(brick_id):
         """Get a specific brick"""
         library = request.args.get('library')
-        brick = brick_integration.get_brick_by_id(brick_id, library)
+        brick = web_session.brick_integration.get_brick_by_id(brick_id, library)
         
         if brick:
             return jsonify(brick.to_dict())
@@ -165,21 +184,21 @@ def create_app(schema_repository_path: str = "schema_repositories",
     def get_node_shapes():
         """Get NodeShape bricks (for root selection)"""
         library = request.args.get('library')
-        bricks = brick_integration.get_node_shape_bricks(library)
+        bricks = web_session.brick_integration.get_node_shape_bricks(library)
         return jsonify([brick.to_dict() for brick in bricks])
     
     @app.route('/api/bricks/property-shapes', methods=['GET'])
     def get_property_shapes():
         """Get PropertyShape bricks (for components)"""
         library = request.args.get('library')
-        bricks = brick_integration.get_property_shape_bricks(library)
+        bricks = web_session.brick_integration.get_property_shape_bricks(library)
         return jsonify([brick.to_dict() for brick in bricks])
     
     @app.route('/api/libraries', methods=['GET'])
     def get_libraries():
         """Get available libraries"""
-        schema_libraries = schema_core.get_libraries()
-        brick_libraries = brick_integration.get_brick_libraries()
+        schema_libraries = web_session.schema_core.get_libraries()
+        brick_libraries = web_session.brick_integration.get_brick_libraries()
         
         return jsonify({
             'schema_libraries': schema_libraries,
@@ -192,7 +211,7 @@ def create_app(schema_repository_path: str = "schema_repositories",
         data = request.get_json()
         
         flow_type = FlowType(data.get('flow_type', 'sequential'))
-        flow = flow_engine.create_flow(
+        flow = web_session.flow_engine.create_flow(
             name=data.get('name', ''),
             flow_type=flow_type,
             description=data.get('description', '')
@@ -203,7 +222,7 @@ def create_app(schema_repository_path: str = "schema_repositories",
     @app.route('/api/flows/<flow_id>', methods=['GET'])
     def get_flow(flow_id):
         """Get a specific flow"""
-        flow = flow_engine.get_flow(flow_id)
+        flow = web_session.flow_engine.get_flow(flow_id)
         
         if flow:
             return jsonify(flow.to_dict())
@@ -213,14 +232,14 @@ def create_app(schema_repository_path: str = "schema_repositories",
     @app.route('/api/flows/<flow_id>/validate', methods=['POST'])
     def validate_flow(flow_id):
         """Validate a flow"""
-        issues = flow_engine.validate_flow(flow_id)
+        issues = web_session.flow_engine.validate_flow(flow_id)
         return jsonify({'issues': issues})
     
     @app.route('/api/schemas/<schema_id>/export/shacl', methods=['GET'])
     def export_shacl(schema_id):
         """Export schema as SHACL"""
         library = request.args.get('library')
-        schema = schema_core.load_schema(schema_id, library)
+        schema = web_session.schema_core.load_schema(schema_id, library)
         
         if not schema:
             return jsonify({'error': 'Schema not found'}), 404
@@ -235,9 +254,9 @@ def create_app(schema_repository_path: str = "schema_repositories",
             shacl_lines.append("")
             
             # Add root brick SHACL
-            root_brick = brick_integration.get_brick_by_id(schema.root_brick_id, library)
+            root_brick = web_session.brick_integration.get_brick_by_id(schema.root_brick_id, library)
             if root_brick:
-                root_shacl = brick_integration.export_brick_as_shacl(schema.root_brick_id, library)
+                root_shacl = web_session.brick_integration.export_brick_as_shacl(schema.root_brick_id, library)
                 if root_shacl:
                     shacl_lines.append("# Root Brick")
                     shacl_lines.append(root_shacl)
@@ -245,7 +264,7 @@ def create_app(schema_repository_path: str = "schema_repositories",
             
             # Add component bricks SHACL
             for brick_id in schema.component_brick_ids:
-                component_shacl = brick_integration.export_brick_as_shacl(brick_id, library)
+                component_shacl = web_session.brick_integration.export_brick_as_shacl(brick_id, library)
                 if component_shacl:
                     shacl_lines.append(f"# Component Brick: {brick_id}")
                     shacl_lines.append(component_shacl)
@@ -265,7 +284,7 @@ def create_app(schema_repository_path: str = "schema_repositories",
     def validate_schema(schema_id):
         """Validate a schema"""
         library = request.args.get('library')
-        schema = schema_core.load_schema(schema_id, library)
+        schema = web_session.schema_core.load_schema(schema_id, library)
         
         if not schema:
             return jsonify({'error': 'Schema not found'}), 404
@@ -281,7 +300,7 @@ def create_app(schema_repository_path: str = "schema_repositories",
         
         # Check root brick exists and is NodeShape
         if schema.root_brick_id:
-            root_brick = brick_integration.get_brick_by_id(schema.root_brick_id, library)
+            root_brick = web_session.brick_integration.get_brick_by_id(schema.root_brick_id, library)
             if not root_brick:
                 issues.append("Root brick not found")
             elif root_brick.object_type != "NodeShape":
@@ -289,13 +308,13 @@ def create_app(schema_repository_path: str = "schema_repositories",
         
         # Check component bricks exist
         for brick_id in schema.component_brick_ids:
-            brick = brick_integration.get_brick_by_id(brick_id, library)
+            brick = web_session.brick_integration.get_brick_by_id(brick_id, library)
             if not brick:
                 issues.append(f"Component brick not found: {brick_id}")
         
         # Validate flow if present
         if schema.flow_config:
-            flow_issues = flow_engine.validate_flow(schema.flow_config.flow_id)
+            flow_issues = web_session.flow_engine.validate_flow(schema.flow_config.flow_id)
             issues.extend([f"Flow: {issue}" for issue in flow_issues])
         
         return jsonify({

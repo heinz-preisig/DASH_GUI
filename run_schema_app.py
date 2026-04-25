@@ -1,23 +1,27 @@
 #!/usr/bin/env python3
 """
 Schema App v2 Launcher
-Launcher for the schema construction system that uses bricks from brick_app_v2
+Clean launcher for the schema construction system with multi-tenant backend
 """
 
 import sys
 import os
-import subprocess
-from pathlib import Path
+from PyQt6.QtWidgets import QApplication
 
-# Change to schema_app_v2 directory for proper path resolution
-schema_app_dir = Path(__file__).parent / 'schema_app_v2'
-os.chdir(schema_app_dir)
+# Change to correct directory and add to path
+os.chdir('/home/heinz/1_Gits/DASH_GUI')
+sys.path.insert(0, os.path.abspath('.'))
 
-print('Starting Schema App v2...')
-print('Schema construction system using bricks from brick_app_v2')
+print('Starting Schema App v2 GUI...')
+print('Schema construction system with multi-tenant backend')
 print('Ready to create schemas with bricks and flows')
 
-# Run schema app main directly - need to run from parent directory for proper imports
-python_path = Path(__file__).parent / '.venv' / 'bin' / 'python'
-os.chdir(Path(__file__).parent)  # Change back to parent directory
-subprocess.run([str(python_path), '-m', 'schema_app_v2.main', '--gui'], check=True)
+app = QApplication(sys.argv)
+
+# Import and create the GUI
+from schema_app_v2.interfaces.qt.schema_gui import SchemaGUI
+window = SchemaGUI()
+window.show()
+
+print('Schema App v2 GUI launched successfully!')
+app.exec()

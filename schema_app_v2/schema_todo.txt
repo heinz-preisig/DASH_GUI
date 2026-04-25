@@ -1,0 +1,111 @@
+# Schema App v2 - Status & TODO
+
+## Current Status
+
+### Multi-Tenant Backend Architecture (NEW)
+**Implemented multi-tenant backend for multiple frontend support:**
+- `core/abstract_events.py` - Event system for multi-client support (Qt, Web, API)
+- `core/session_manager.py` - Session management with isolated state
+- `core/multi_tenant_backend.py` - Multi-tenant backend coordinator
+- Both Qt and web interfaces now use the backend
+- Session isolation for concurrent users
+- Event-driven architecture for real-time updates
+
+### UI Files
+All dialogs use Qt Designer .ui files:
+- schema_gui.py → main_window.ui
+- flow_editor_dialog.py → flow_editor.ui
+- help_dialog.py → main_window_help.ui
+- add_component_dialog.py → add_component_dialog.ui (NEW)
+
+### Architecture
+- **NEW**: Multi-tenant backend with session isolation
+- Core logic separated in core/ directory
+- Qt interface in interfaces/qt/ - uses backend via qt_session
+- Web interface in interfaces/web/ - uses backend via web_session
+- State management via ui_state_manager.py (UIStateManager with SchemaState automaton)
+
+### Data Persistence
+- Uses shared_libraries mechanism
+- Backend provides isolated SchemaCore instances per session
+- Shared data access through shared_libraries
+
+## Key Components
+
+### Core Files
+- schema_core.py - Schema management
+- flow_engine.py - Flow configuration
+- brick_integration.py - Brick library integration
+- schema_helper.py - User-friendly helpers
+- shacl_export.py - SHACL export
+- **NEW**: abstract_events.py - Event system
+- **NEW**: session_manager.py - Session management
+- **NEW**: multi_tenant_backend.py - Multi-tenant backend
+
+### UI Files
+- schema_gui.py - Main Qt GUI (uses backend)
+- add_component_dialog.py - Component selection dialog (uses .ui file)
+- flow_editor_dialog.py - Flow editor dialog (uses .ui file)
+- help_dialog.py - Help system (uses .ui file)
+- ui_components.py - UI loading utilities
+- ui_state_manager.py - State machine/automaton
+
+### UI Files (.ui)
+- ui/main_window.ui
+- ui/flow_editor.ui
+- ui/main_window_help.ui
+- ui/add_component_dialog.ui
+
+## Architecture Notes
+
+### Multi-Frontend Support
+- **NEW**: Multi-tenant backend with session management
+- Qt interface uses dedicated qt_session
+- Web interface uses dedicated web_session
+- Each session has isolated SchemaCore, FlowEngine, BrickIntegration instances
+- Shared data through shared_libraries
+- Event system for cross-session communication
+
+### State Management
+- UIStateManager with SchemaState automaton
+- States: INITIAL, SCHEMA_SELECTED, SCHEMA_MODIFIED, SCHEMA_SAVING, COMPONENT_ADDING, FLOW_EDITING
+- Validates state transitions
+- Controls widget visibility based on state
+- Emits signals for state changes
+
+### Backend Architecture
+- MultiTenantBackend coordinates sessions
+- SessionManager creates and manages sessions
+- SchemaBackendSession provides isolated backend per session
+- EventRouter routes events to appropriate handlers
+- Support for Qt, Web, and API client types
+
+## Event System
+
+### Event Types
+- SCHEMA_CREATED, SCHEMA_UPDATED, SCHEMA_LOADED, SCHEMA_SAVED, SCHEMA_DELETED
+- COMPONENT_ADDED, COMPONENT_REMOVED
+- ROOT_BRICK_SET, FLOW_UPDATED
+- LIBRARY_CHANGED
+- ERROR_OCCURRED, DIALOG_REQUESTED, STATUS_MESSAGE
+
+### Event Handlers
+- QtEventHandler - Emits Qt signals
+- WebEventHandler - Sends via WebSocket
+- APIEventHandler - HTTP callbacks
+- EventRouter - Routes events based on client type
+
+## Completed Tasks
+- [x] All dialogs using .ui files
+- [x] Created add_component_dialog.ui
+- [x] Refactored add_component_dialog.py to load from .ui
+- [x] Archived obsolete GUI backup files
+- [x] Verified .ui file compliance
+- [x] Implemented multi-tenant backend architecture
+- [x] Updated Qt interface to use backend
+- [x] Updated web interface to use backend
+- [x] Added event system for multi-client support
+
+## Run Scripts
+- run_schema_app.py - Schema app launcher
+- run_schema_app_v2.py - Schema app v2 launcher (alternative)
