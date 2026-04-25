@@ -17,6 +17,5 @@ print('Starting Brick App v2 Web Interface...')
 print('SHACL brick generation system with clean architecture')
 print('Ready for web deployment with proper API endpoints')
 
-# Run brick app web interface
-python_path = Path(__file__).parent / '.venv' / 'bin' / 'python'
-subprocess.run([str(python_path), '-m', 'main', '--web', '--port', '5000'], check=True)
+# Run brick app web interface using uv
+subprocess.run(['uv', 'run', 'main.py', '--web', '--port', '5000'], check=True)

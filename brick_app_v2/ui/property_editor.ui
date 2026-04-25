@@ -95,6 +95,23 @@
     </widget>
    </item>
    <item>
+    <widget class="QLabel" name="descriptionLabel">
+     <property name="text">
+      <string>Description:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTextEdit" name="description_edit">
+     <property name="maximumHeight">
+      <number>80</number>
+     </property>
+     <property name="placeholderText">
+      <string>Enter property description...</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>

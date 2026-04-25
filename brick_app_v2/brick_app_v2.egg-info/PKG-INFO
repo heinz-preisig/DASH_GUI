@@ -19,6 +19,8 @@ Classifier: Programming Language :: Python :: 3.10
 Classifier: Programming Language :: Python :: 3.11
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
+Requires-Dist: flask>=3.0.3
+Requires-Dist: flask-cors>=5.0.0
 Requires-Dist: PyQt6
 Requires-Dist: rdflib
 Provides-Extra: dev

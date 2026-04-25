@@ -3,12 +3,8 @@
   "name": "myFirstTest",
   "description": "",
   "object_type": "NodeShape",
-  "targets": [
-    {
-      "target_type": "TargetClass",
-      "value": "http://xmlns.com/foaf/0.1/Person"
-    }
-  ],
+  "target_class": "http://xmlns.com/foaf/0.1/Person",
+  "property_path": "",
   "properties": {
     "Date Property": {
       "constraints": [],
@@ -48,12 +44,27 @@
       "datatype": "xsd:string",
       "name": "firstName",
       "path": "http://xmlns.com/foaf/0.1/firstName"
+    },
+    "New NodeShape": {
+      "name": "New NodeShape",
+      "property_brick_id": "5c4e9353-bf05-4de7-aa5e-49a0b17316e3",
+      "property_brick_name": "New NodeShape",
+      "property_path": "http://xmlns.com/foaf/0.1/depiction",
+      "datatype": "xsd:string",
+      "constraints": [],
+      "is_property_brick": true,
+      "description": ""
     }
   },
   "constraints": [],
   "tags": [],
-  "metadata": {},
   "created_at": "2026-04-16T08:05:40.666832",
-  "updated_at": "2026-04-16T08:05:40.666834",
-  "target_class": "http://xmlns.com/foaf/0.1/Person"
+  "updated_at": "2026-04-25T18:13:46.929041",
+  "targets": [
+    {
+      "target_type": "TargetClass",
+      "value": "http://xmlns.com/foaf/0.1/Person"
+    }
+  ],
+  "metadata": {}
 }

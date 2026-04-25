@@ -32,6 +32,31 @@
     </layout>
    </item>
    <item>
+    <layout class="QHBoxLayout" name="modeLayout">
+     <item>
+      <widget class="QLabel" name="modeLabel">
+       <property name="text">
+        <string>Browse:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="mode_combo">
+       <item>
+        <property name="text">
+         <string>Classes</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Properties</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
     <layout class="QHBoxLayout" name="searchLayout">
      <item>
       <widget class="QLabel" name="searchLabel">

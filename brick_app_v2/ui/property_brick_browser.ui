@@ -18,10 +18,63 @@
   </property>
   <layout class="QVBoxLayout" name="mainLayout">
    <item>
+    <layout class="QHBoxLayout" name="libraryLayout">
+     <item>
+      <widget class="QLabel" name="libraryLabel">
+       <property name="text">
+        <string>Library:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="library_combo"/>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="filterLayout">
+     <item>
+      <widget class="QCheckBox" name="filter_check">
+       <property name="text">
+        <string>PropertyShape only</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="searchLayout">
+     <item>
+      <widget class="QLabel" name="searchLabel">
+       <property name="text">
+        <string>Search:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="search_edit">
+       <property name="placeholderText">
+        <string>Type to filter...</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
     <widget class="QListWidget" name="brick_list"/>
    </item>
    <item>
     <layout class="QHBoxLayout" name="buttonLayout">
+     <item>
+      <widget class="QPushButton" name="selectButton">
+       <property name="text">
+        <string>Select</string>
+       </property>
+      </widget>
+     </item>
      <item>
       <spacer name="buttonSpacer">
        <property name="orientation">

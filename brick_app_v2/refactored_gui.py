@@ -669,9 +669,15 @@ class RefactoredBrickEditor(QMainWindow):
         </div>
         """
     
-    def _get_datatype_icon(self, datatype: str) -> str:
+    def _get_datatype_icon(self, datatype) -> str:
         """Get appropriate icon for datatype"""
-        datatype_lower = datatype.lower()
+        # Handle dict datatype
+        if isinstance(datatype, dict):
+            datatype_str = datatype.get('value', str(datatype))
+        else:
+            datatype_str = str(datatype)
+        
+        datatype_lower = datatype_str.lower()
         if 'string' in datatype_lower:
             return '📝'
         elif 'int' in datatype_lower or 'decimal' in datatype_lower:
@@ -795,8 +801,13 @@ class RefactoredBrickEditor(QMainWindow):
         
         if datatype:
             # Show datatype with icon
+            # Handle dict datatype
+            if isinstance(datatype, dict):
+                datatype_str = datatype.get('value', str(datatype))
+            else:
+                datatype_str = str(datatype)
             datatype_icon = self._get_datatype_icon(datatype)
-            lines.append(f"  {datatype_icon} {datatype}")
+            lines.append(f"  {datatype_icon} {datatype_str}")
         
         # Show constraints with better formatting
         if constraints:

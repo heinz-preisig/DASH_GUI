@@ -12,11 +12,6 @@ from .brick_generator import (
     SHACLTarget
 )
 
-from .brick_backend import (
-    BrickBackendAPI,
-    BrickEventProcessor
-)
-
 __all__ = [
     "SHACLBrick",
     "BrickLibrary",
@@ -24,7 +19,5 @@ __all__ = [
     "SHACLBrickGenerator",
     "SHACLObjectType",
     "SHACLConstraint",
-    "SHACLTarget",
-    "BrickBackendAPI",
-    "BrickEventProcessor"
+    "SHACLTarget"
 ]

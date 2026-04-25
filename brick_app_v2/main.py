@@ -14,8 +14,8 @@ def run_gui():
     app = QApplication(sys.argv)
     
     # Import and create main window
-    from refactored_gui import BrickAppV2GUI
-    window = BrickAppV2GUI()
+    from refactored_gui import RefactoredBrickEditor
+    window = RefactoredBrickEditor()
     window.show()
     
     return app.exec()

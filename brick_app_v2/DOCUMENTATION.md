@@ -99,31 +99,25 @@ python main.py --web --port $WEB_PORT
 
 ### Starting the Application
 
-#### Option 1: PyQt GUI Frontend
+#### Option 1: Using Launcher Scripts (Recommended)
+```bash
+# From main DASH_GUI directory
+python run_brick_app_qt.py              # Launch Qt GUI
+python run_brick_app_web.py             # Launch Web Interface
+```
+
+#### Option 2: Direct with uv
+```bash
+cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
+uv run main.py --gui
+uv run main.py --web --port 5000
+```
+
+#### Option 3: Direct with Python
 ```bash
 cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
 python main.py --gui
-```
-
-#### Option 2: Web Interface Frontend
-```bash
-cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
 python main.py --web --port 5000
-```
-
-#### Option 3: Both Frontends
-```bash
-# Terminal 1 - PyQt GUI
-python main.py --gui
-
-# Terminal 2 - Web Interface  
-python main.py --web --port 5001
-```
-
-#### Option 4: Default (GUI)
-```bash
-cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
-python main.py
 ```
 
 ## Frontend Options
@@ -139,7 +133,15 @@ python main.py
 
 **Startup:**
 ```bash
-cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
+# Option 1: Launcher script
+python run_brick_app_qt.py
+
+# Option 2: Direct with uv
+cd brick_app_v2
+uv run main.py --gui
+
+# Option 3: Direct with Python
+cd brick_app_v2
 python main.py --gui
 ```
 
@@ -160,7 +162,15 @@ python main.py --gui
 
 **Startup:**
 ```bash
-cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
+# Option 1: Launcher script
+python run_brick_app_web.py
+
+# Option 2: Direct with uv
+cd brick_app_v2
+uv run main.py --web --port 5000
+
+# Option 3: Direct with Python
+cd brick_app_v2
 python main.py --web --port 5000
 ```
 
@@ -253,7 +263,7 @@ http://localhost:5000
 ### Creating Bricks
 
 #### PyQt GUI
-1. **Launch**: `cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2 && python main.py --gui`
+1. **Launch**: `python run_brick_app_qt.py` or `cd brick_app_v2 && uv run main.py --gui`
 2. **Library**: Select or create library
 3. **New Brick**: Click "New Brick"
 4. **Details**: Enter name, description, type
@@ -262,7 +272,7 @@ http://localhost:5000
 7. **Save**: Save brick to library
 
 #### Web Interface
-1. **Launch**: `cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2 && python main.py --web --port 5000`
+1. **Launch**: `python run_brick_app_web.py` or `cd brick_app_v2 && uv run main.py --web --port 5000`
 2. **Access**: Open `http://localhost:5000`
 3. **Select**: Choose brick from sidebar
 4. **Edit**: Modify details in main panel
@@ -398,6 +408,8 @@ python main.py --web --debug
 ```
 brick_app_v2/
 ├── main.py                    # Application entry point
+├── refactored_gui.py          # Qt GUI frontend
+├── gui_components.py          # Dialog components (load from .ui files)
 ├── pyproject.toml             # Modern Python packaging
 ├── README.md                  # Basic documentation
 ├── DOCUMENTATION.md           # This file
@@ -407,18 +419,24 @@ brick_app_v2/
 │   ├── bricks/               # Brick storage
 │   └── schemas/              # Schema storage
 ├── api/                      # Web interface
-│   ├── web_api.py           # Flask web server
-│   ├── templates/            # HTML templates
-│   └── static/              # CSS/JS assets
+│   └── web_api.py            # Flask web server
 ├── core/                     # Backend logic
 │   ├── multi_tenant_backend.py
-│   ├── editor_backend.py
 │   ├── brick_generator.py
-│   └── brick_backend.py
+│   ├── brick_core_simple.py
+│   ├── ontology_manager.py
+│   ├── session_manager.py
+│   └── abstract_events.py
+├── ui/                       # Qt Designer .ui files
+│   ├── main_window.ui
+│   ├── ontology_browser_simple.ui
+│   ├── property_brick_browser.ui
+│   ├── constraint_editor.ui
+│   └── property_editor.ui
 ├── state/                    # State management
-├── business/                 # Business logic
-├── gui/                      # GUI components
-└── refactored_gui.py         # PyQt frontend
+│   └── app_state.py
+└── business/                 # Business logic
+    └── brick_operations.py
 ```
 
 ### Adding New Features
@@ -456,14 +474,13 @@ python -m pytest tests/
 #### Import Errors
 ```bash
 # Add to Python path
-export PYTHONPATH=/home/heinz/1_Gits/DASH_GUI/brick_app_v2:$PYTHONPATH
+export PYTHONPATH=/home/heinz/1_Gits/DASH_GUI:$PYTHONPATH
 ```
 
 #### Port Conflicts
 ```bash
-cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
 # Use different port
-python main.py --web --port 5001
+python run_brick_app_web.py  # Or: cd brick_app_v2 && uv run main.py --web --port 5001
 ```
 
 #### Library Not Found
