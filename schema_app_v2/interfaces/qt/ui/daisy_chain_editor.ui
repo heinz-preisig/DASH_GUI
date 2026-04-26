@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DaisyChainEditorDialog</class>
+ <widget class="QDialog" name="DaisyChainEditorDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>900</width>
+    <height>700</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Daisy Chain Editor</string>
+  </property>
+  <layout class="QVBoxLayout" name="dialogLayout">
+   <item>
+    <widget class="QGroupBox" name="chainInfoGroupBox">
+     <property name="title">
+      <string>Chain Information</string>
+     </property>
+     <layout class="QVBoxLayout" name="chainInfoLayout">
+      <item>
+       <layout class="QHBoxLayout" name="chainNameLayout">
+        <item>
+         <widget class="QLabel" name="chainNameLabel">
+          <property name="text">
+           <string>Chain Name:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="chainNameLineEdit">
+          <property name="placeholderText">
+           <string>Enter chain name</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="chainDescLayout">
+        <item>
+         <widget class="QLabel" name="chainDescLabel">
+          <property name="text">
+           <string>Description:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="chainDescLineEdit">
+          <property name="placeholderText">
+           <string>Enter description</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="schemasGroupBox">
+     <property name="title">
+      <string>Schemas in Chain</string>
+     </property>
+     <layout class="QVBoxLayout" name="schemasLayout">
+      <item>
+       <layout class="QHBoxLayout" name="schemaSelectionLayout">
+        <item>
+         <widget class="QLabel" name="availableSchemasLabel">
+          <property name="text">
+           <string>Available Schemas:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="availableSchemasComboBox"/>
+        </item>
+        <item>
+         <widget class="QPushButton" name="addSchemaButton">
+          <property name="text">
+           <string>Add &gt;&gt;</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QListWidget" name="chainSchemasListWidget">
+        <property name="dragDropMode">
+         <enum>QAbstractItemView::InternalMove</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="schemaControlLayout">
+        <item>
+         <widget class="QPushButton" name="moveUpButton">
+          <property name="text">
+           <string>Move Up</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="moveDownButton">
+          <property name="text">
+           <string>Move Down</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="removeSchemaButton">
+          <property name="text">
+           <string>Remove</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="navigationGroupBox">
+     <property name="title">
+      <string>Navigation Rules</string>
+     </property>
+     <layout class="QVBoxLayout" name="navigationLayout">
+      <item>
+       <layout class="QHBoxLayout" name="allowSkipLayout">
+        <item>
+         <widget class="QCheckBox" name="allowSkipCheckBox">
+          <property name="text">
+           <string>Allow skipping steps</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="showProgressCheckBox">
+          <property name="text">
+           <string>Show progress indicator</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>DaisyChainEditorDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>DaisyChainEditorDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

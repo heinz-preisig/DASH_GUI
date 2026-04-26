@@ -8,31 +8,29 @@ from typing import Optional, List, Dict, Any
 from PyQt6.QtWidgets import QDialog, QMessageBox, QInputDialog
 from PyQt6.QtCore import Qt
 
-from ..ui_components import UiLoader, ComponentManager
+from .ui_components import UiLoader, ComponentManager
 
 # Import flow engine components
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'core'))
-
-from flow_engine import FlowEngine, FlowType, FlowStep, FlowConfig
-from brick_integration import BrickIntegration
+from schema_app_v2.core.flow_engine import FlowEngine, FlowType, FlowStep, FlowConfig
+from schema_app_v2.core.brick_integration import BrickIntegration
 
 
 class FlowEditorDialog(QDialog):
     """Dialog for editing flow configurations"""
     
     def __init__(self, flow_engine: FlowEngine, brick_integration: BrickIntegration, 
-                 existing_flow: Optional[FlowConfig] = None, parent=None):
+                 existing_flow: Optional[FlowConfig] = None, parent=None, schema=None):
         super().__init__(parent)
         
         self.flow_engine = flow_engine
         self.brick_integration = brick_integration
         self.existing_flow = existing_flow
+        self.schema = schema
         
         # Load UI from .ui file
         self.ui_loader = UiLoader()
-        self.ui = self.ui_loader.load_flow_editor_dialog(self)
+        self.ui_loader.load_flow_editor_dialog(self)
+        self.ui = self
         
         # Component manager
         self.components = ComponentManager()
@@ -90,6 +88,7 @@ class FlowEditorDialog(QDialog):
         self.ui.conditionsTextEdit.textChanged.connect(self.on_conditions_changed)
         
         # Dialog buttons
+        self.ui.helpButton.clicked.connect(self.show_help)
         self.ui.validateFlowButton.clicked.connect(self.validate_flow)
         self.ui.okButton.clicked.connect(self.accept_dialog)
         self.ui.cancelButton.clicked.connect(self.reject)
@@ -108,7 +107,16 @@ class FlowEditorDialog(QDialog):
     def refresh_available_bricks(self):
         """Refresh available bricks list"""
         try:
-            self.available_bricks = self.brick_integration.get_available_bricks()
+            # Load bricks from the schema's component bricks
+            if self.schema and self.schema.component_brick_ids:
+                self.available_bricks = []
+                for brick_id in self.schema.component_brick_ids:
+                    brick = self.brick_integration.get_brick_by_id(brick_id)
+                    if brick:
+                        self.available_bricks.append(brick)
+            else:
+                self.available_bricks = []
+            
             self.components.set_list_widget_data(
                 self.ui.availableBricksListWidget, 
                 self.available_bricks, 
@@ -347,6 +355,42 @@ class FlowEditorDialog(QDialog):
         if brick_id in self.current_step.brick_ids:
             self.current_step.brick_ids.remove(brick_id)
             self.refresh_step_bricks()
+    
+    def show_help(self):
+        """Show help dialog for flow editor"""
+        help_text = """
+<h3>Flow Editor Help</h3>
+
+<p><b>What is a Flow?</b><br>
+A flow defines how users interact with a schema in multiple steps. Each step shows specific bricks (UI components) in a specific order.</p>
+
+<p><b>Flow Types:</b></p>
+<ul>
+<li><b>Sequential:</b> Steps are executed in order (1 → 2 → 3)</li>
+<li><b>Conditional:</b> Next step depends on conditions (e.g., user input)</li>
+<li><b>Parallel:</b> Multiple steps execute simultaneously</li>
+<li><b>Dynamic:</b> Steps can be added/removed at runtime</li>
+</ul>
+
+<p><b>How to Use:</b></p>
+<ol>
+<li><b>Set Flow Info:</b> Name your flow and choose the type</li>
+<li><b>Add Steps:</b> Click "Add Step" to create interface steps</li>
+<li><b>Name Steps:</b> Give each step a descriptive name (e.g., "Personal Info", "Address")</li>
+<li><b>Add Bricks to Steps:</b> Select a step, then double-click bricks from "Available Bricks" to add them</li>
+<li><b>Order Steps:</b> Use Up/Down buttons to arrange steps in sequence</li>
+<li><b>Configure Navigation:</b> For conditional flows, check which steps can follow the current step</li>
+<li><b>Set Conditions:</b> For conditional flows, enter JSON conditions (e.g., {"field": "status", "value": "active"})</li>
+<li><b>Validate:</b> Click "Validate Flow" to check for errors</li>
+</ol>
+
+<p><b>Example Use Case:</b></p>
+A form with multiple sections:<br>
+Step 1: Personal Information (name, email bricks)<br>
+Step 2: Address (street, city bricks)<br>
+Step 3: Confirmation (summary brick)
+"""
+        QMessageBox.information(self, "Flow Editor Help", help_text)
     
     def validate_flow(self):
         """Validate current flow"""

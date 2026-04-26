@@ -8,7 +8,7 @@ import os
 from typing import Optional, Dict, List, Any
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QMessageBox, 
-    QFileDialog, QInputDialog, QDialog
+    QFileDialog, QInputDialog, QDialog, QListWidgetItem, QTreeWidgetItem
 )
 from PyQt6.QtCore import Qt
 
@@ -21,8 +21,9 @@ from schema_app_v2.core.multi_tenant_backend import MultiTenantBackend
 from schema_app_v2.core.abstract_events import EventType
 
 from .ui_components import UiLoader, ComponentManager
-from .help_dialog import HelpDialog
 from .add_component_dialog import AddComponentDialog
+from .daisy_chain_editor_dialog import DaisyChainEditorDialog
+from .ui_state_manager import UIStateManager, SchemaState
 
 
 class SchemaGUI(QMainWindow):
@@ -52,6 +53,9 @@ class SchemaGUI(QMainWindow):
         # Component manager for UI interactions
         self.components = ComponentManager()
         
+        # Initialize state manager
+        self.state_manager = UIStateManager()
+        
         # Current state
         self.current_schema: Optional[Schema] = self.qt_session.current_schema
         self.current_flow: Optional[FlowConfig] = None
@@ -59,7 +63,12 @@ class SchemaGUI(QMainWindow):
         # Setup UI
         self.setup_ui()
         self.connect_signals()
+        self.register_widgets_with_state_manager()
+        self.connect_state_signals()
         self.load_initial_data()
+        
+        # Set initial state
+        self.state_manager.set_state(SchemaState.INITIAL)
         
         # Register Qt signals for event handling
         self._setup_event_handlers()
@@ -83,12 +92,19 @@ class SchemaGUI(QMainWindow):
         self.ui.exitAction.triggered.connect(self.close)
         
         # Tools menu
-        self.ui.manageLibrariesAction.triggered.connect(self.manage_libraries)
         self.ui.validateSchemaAction.triggered.connect(self.validate_schema)
         
+        # Schema menu - add advanced features
+        daisy_chain_action = self.ui.toolsMenu.addAction("Create Daisy Chain")
+        daisy_chain_action.triggered.connect(self.create_daisy_chain)
+        
+        extend_schema_action = self.ui.toolsMenu.addAction("Extend Schema")
+        extend_schema_action.triggered.connect(self.extend_schema)
+        
         # Help menu
-        help_action = self.ui.helpMenu.addAction("Help & Guide")
-        help_action.triggered.connect(self.show_help)
+        self.ui.helpMenu.addSeparator()
+        help_guide_action = self.ui.helpMenu.addAction("Schema Guide")
+        help_guide_action.triggered.connect(self.show_schema_guide)
         self.ui.helpMenu.addSeparator()
         self.ui.aboutAction.triggered.connect(self.show_about)
     
@@ -106,6 +122,7 @@ class SchemaGUI(QMainWindow):
         # Brick management
         self.ui.brickSearchLineEdit.textChanged.connect(self.on_brick_search_changed)
         self.ui.brickListWidget.itemDoubleClicked.connect(self.add_brick_as_component)
+        self.ui.brickListWidget.itemSelectionChanged.connect(self.on_brick_selection_changed)
         
         # Schema details (only connect when schema exists)
         # Note: These will be connected when schema is created/selected
@@ -115,13 +132,73 @@ class SchemaGUI(QMainWindow):
         self.ui.removeComponentButton.clicked.connect(self.remove_component_brick)
         self.ui.componentBricksListWidget.itemSelectionChanged.connect(self.on_component_selection_changed)
         
+        # View toggle
+        self.ui.listViewRadio.toggled.connect(self.on_component_view_changed)
+        self.ui.treeViewRadio.toggled.connect(self.on_component_view_changed)
+        
         # Flow management
         self.ui.flowTypeComboBox.currentTextChanged.connect(self.on_flow_type_changed)
         self.ui.editFlowButton.clicked.connect(self.edit_flow)
+        self.ui.flowStepsListWidget.itemSelectionChanged.connect(self.on_flow_step_selection_changed)
         
         # Action buttons
         self.ui.saveButton.clicked.connect(self.save_schema)
         self.ui.exportShaclButton.clicked.connect(self.export_shacl)
+    
+    def register_widgets_with_state_manager(self):
+        """Register UI widgets with state manager"""
+        # Register all widgets that need state management
+        self.state_manager.register_widget("libraryComboBox", self.ui.libraryComboBox)
+        self.state_manager.register_widget("brickLibraryComboBox", self.ui.brickLibraryComboBox)
+        self.state_manager.register_widget("schemaListWidget", self.ui.schemaListWidget)
+        self.state_manager.register_widget("newSchemaButton", self.ui.newSchemaButton)
+        self.state_manager.register_widget("deleteSchemaButton", self.ui.deleteSchemaButton)
+        self.state_manager.register_widget("nameLineEdit", self.ui.nameLineEdit)
+        self.state_manager.register_widget("descriptionLineEdit", self.ui.descriptionLineEdit)
+        self.state_manager.register_widget("rootBrickComboBox", self.ui.rootBrickComboBox)
+        self.state_manager.register_widget("addComponentButton", self.ui.addComponentButton)
+        self.state_manager.register_widget("removeComponentButton", self.ui.removeComponentButton)
+        self.state_manager.register_widget("componentBricksListWidget", self.ui.componentBricksListWidget)
+        self.state_manager.register_widget("flowTypeComboBox", self.ui.flowTypeComboBox)
+        self.state_manager.register_widget("editFlowButton", self.ui.editFlowButton)
+        self.state_manager.register_widget("saveButton", self.ui.saveButton)
+        self.state_manager.register_widget("exportShaclButton", self.ui.exportShaclButton)
+        self.state_manager.register_widget("brickListWidget", self.ui.brickListWidget)
+        self.state_manager.register_widget("brickSearchLineEdit", self.ui.brickSearchLineEdit)
+        self.state_manager.register_widget("bricksGroupBox", self.ui.bricksGroupBox)
+        self.state_manager.register_widget("schemaDetailsGroupBox", self.ui.schemaDetailsGroupBox)
+        self.state_manager.register_widget("flowStepsListWidget", self.ui.flowStepsListWidget)
+        self.state_manager.register_widget("previewTextEdit", self.ui.previewTextEdit)
+    
+    def connect_state_signals(self):
+        """Connect state manager signals to handlers"""
+        self.state_manager.state_changed.connect(self.on_state_changed)
+        self.state_manager.schema_modified.connect(self.on_schema_modified)
+        self.state_manager.schema_saved.connect(self.on_schema_saved)
+        self.state_manager.schema_selected.connect(self.on_schema_selected)
+        self.state_manager.schema_deselected.connect(self.on_schema_deselected)
+    
+    def on_state_changed(self, old_state: SchemaState, new_state: SchemaState):
+        """Handle state changes"""
+        # Could add additional logic here if needed
+        pass
+    
+    def on_schema_modified(self):
+        """Handle schema modification"""
+        pass  # Can add specific logic if needed
+    
+    def on_schema_saved(self):
+        """Handle schema saved"""
+        pass  # Can add specific logic if needed
+    
+    def on_schema_selected(self, schema):
+        """Handle schema selected"""
+        pass  # Can add specific logic if needed
+    
+    def on_schema_deselected(self):
+        """Handle schema deselected"""
+        # Clear preview when deselected
+        self.ui.previewTextEdit.clear()
     
     def _setup_event_handlers(self):
         """Setup Qt signal handlers for backend events"""
@@ -157,13 +234,16 @@ class SchemaGUI(QMainWindow):
         self.current_schema = schema
         self.qt_session.current_schema = schema  # Sync with backend session
         
+        # Save to disk so it appears in the list
+        self.schema_core.save_schema(schema)
+        
         # Emit event
         self.qt_session._emit_event('schema_created', schema.to_dict())
         
         # Update UI
         self.refresh_schema_list()
         self.load_schema_into_ui(schema)
-        self.set_ui_state(True)
+        self.state_manager.set_current_schema(schema, has_unsaved_changes=False)
         
         self.ui.statusbar.showMessage(f"Created new schema: {name}")
     
@@ -186,7 +266,7 @@ class SchemaGUI(QMainWindow):
                 self.qt_session.current_schema = schema  # Sync with backend session
                 self.qt_session._emit_event('schema_loaded', schema.to_dict())
                 self.load_schema_into_ui(schema)
-                self.set_ui_state(True)
+                self.state_manager.set_current_schema(schema, has_unsaved_changes=False)
                 self.ui.statusbar.showMessage(f"Opened schema: {name}")
                 break
     
@@ -196,8 +276,10 @@ class SchemaGUI(QMainWindow):
             return
         
         try:
+            self.state_manager.start_saving()
             self.schema_core.save_schema(self.current_schema)
             self.qt_session._emit_event('schema_saved', self.current_schema.to_dict())
+            self.state_manager.mark_schema_saved()
             self.ui.statusbar.showMessage(f"Saved schema: {self.current_schema.name}")
         except Exception as e:
             self.qt_session._emit_event('error_occurred', {"message": f"Failed to save schema: {e}"})
@@ -219,25 +301,124 @@ class SchemaGUI(QMainWindow):
         
         try:
             from schema_app_v2.core.shacl_export import SHACLExporter
-            exporter = SHACLExporter()
+            exporter = SHACLExporter(self.brick_integration)
             exporter.export_schema(self.current_schema, file_path)
             self.ui.statusbar.showMessage(f"Exported SHACL to: {file_path}")
         except Exception as e:
             QMessageBox.critical(self, "Export Error", f"Failed to export SHACL: {e}")
     
-    def show_help(self):
-        """Show help dialog"""
-        help_dialog = HelpDialog(self)
-        
-        # Handle template selection if any
-        if help_dialog.exec() == QDialog.DialogCode.Accepted:
-            template = help_dialog.get_selected_template()
-            if template:
-                self.create_schema_from_template(template)
-
-    def manage_libraries(self):
         """Manage libraries dialog"""
         QMessageBox.information(self, "Library Management", "Library management feature coming soon.")
+    
+    def create_daisy_chain(self):
+        """Create daisy chain of schemas"""
+        # Get all available schemas
+        schemas = self.schema_core.get_all_schemas()
+        
+        if len(schemas) < 2:
+            QMessageBox.warning(self, "Insufficient Schemas", 
+                "You need at least 2 schemas to create a daisy chain.")
+            return
+        
+        # Open daisy chain editor dialog
+        dialog = DaisyChainEditorDialog(
+            self.schema_core,
+            schemas,
+            self
+        )
+        
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            chain_data = dialog.get_chain_data()
+            
+            # Create daisy chain using backend
+            daisy_chain = self.schema_core.create_daisy_chain(
+                chain_data['name'],
+                chain_data['description'],
+                chain_data['schema_ids'],
+                chain_data['navigation_rules']
+            )
+            
+            if daisy_chain:
+                self.qt_session._emit_event('daisy_chain_created', daisy_chain.to_dict())
+                QMessageBox.information(self, "Success", 
+                    f"Daisy chain '{daisy_chain.name}' created with {len(daisy_chain.schema_ids)} schemas.")
+                self.ui.statusbar.showMessage(f"Created daisy chain: {daisy_chain.name}")
+            else:
+                QMessageBox.critical(self, "Error", "Failed to create daisy chain.")
+    
+    def extend_schema(self):
+        """Extend an existing schema"""
+        if not self.current_schema:
+            QMessageBox.warning(self, "No Schema", 
+                "Please create or select a schema to extend first.")
+            return
+        
+        # Get all schemas except current one
+        all_schemas = self.schema_core.get_all_schemas()
+        parent_schemas = [s for s in all_schemas if s.schema_id != self.current_schema.schema_id]
+        
+        if not parent_schemas:
+            QMessageBox.warning(self, "No Parent Schemas", 
+                "No other schemas available to extend from.")
+            return
+        
+        # Let user select parent schema
+        schema_names = [s.name for s in parent_schemas]
+        parent_name, ok = QInputDialog.getItem(
+            self, "Select Parent Schema",
+            "Select the schema to extend:",
+            schema_names, 0, False
+        )
+        
+        if not ok or not parent_name:
+            return
+        
+        # Find parent schema
+        parent_schema = next((s for s in parent_schemas if s.name == parent_name), None)
+        if not parent_schema:
+            return
+        
+        # Get additional bricks
+        additional_bricks, ok = QInputDialog.getText(
+            self, "Additional Bricks",
+            "Enter additional brick IDs (comma-separated):"
+        )
+        
+        if not ok:
+            return
+        
+        brick_ids = [b.strip() for b in additional_bricks.split(',') if b.strip()] if additional_bricks else []
+        
+        # Get new schema name
+        new_name, ok = QInputDialog.getText(
+            self, "Extended Schema Name",
+            "Enter name for the extended schema:",
+            text=f"{self.current_schema.name}_extended"
+        )
+        
+        if not ok or not new_name.strip():
+            return
+        
+        # Extend schema using backend
+        extended_schema = self.schema_core.extend_schema(
+            parent_schema.schema_id,
+            new_name.strip(),
+            f"Extended from {parent_schema.name}",
+            brick_ids,
+            self.brick_integration
+        )
+        
+        if extended_schema:
+            self.current_schema = extended_schema
+            self.qt_session.current_schema = extended_schema
+            self.qt_session._emit_event('schema_extended', extended_schema.to_dict())
+            self.load_schema_into_ui(extended_schema)
+            self.state_manager.set_current_schema(extended_schema, has_unsaved_changes=False)
+            QMessageBox.information(self, "Success", 
+                f"Schema '{extended_schema.name}' created extending '{parent_schema.name}'.")
+            self.ui.statusbar.showMessage(f"Extended schema: {extended_schema.name}")
+        else:
+            QMessageBox.critical(self, "Error", "Failed to extend schema.")
     
     def validate_schema(self):
         """Validate current schema"""
@@ -270,13 +451,87 @@ class SchemaGUI(QMainWindow):
         
         if reply == QMessageBox.StandardButton.Yes:
             try:
-                self.schema_core.delete_schema(self.current_schema.schema_id)
+                schema_id = self.current_schema.schema_id
+                schema_name = self.current_schema.name
                 self.current_schema = None
-                self.refresh_schema_list()
-                self.set_ui_state(False)
-                self.ui.statusbar.showMessage("Schema deleted")
+                self.state_manager.set_current_schema(None, has_unsaved_changes=False)
+                
+                # Clear UI first
+                self.ui.schemaListWidget.clear()
+                self.ui.nameLineEdit.clear()
+                self.ui.descriptionLineEdit.clear()
+                self.ui.componentBricksListWidget.clear()
+                self.ui.previewTextEdit.clear()
+                
+                # Delete from backend
+                if self.schema_core.delete_schema(schema_id):
+                    # Refresh list after deletion
+                    self.refresh_schema_list()
+                    self.ui.statusbar.showMessage(f"Deleted schema: {schema_name}")
+                else:
+                    QMessageBox.warning(self, "Delete Warning", "Schema file may not have been deleted")
             except Exception as e:
                 QMessageBox.critical(self, "Delete Error", f"Failed to delete schema: {e}")
+    
+    def show_schema_guide(self):
+        """Show schema construction guide"""
+        guide_text = """
+<h3>Schema Construction Guide</h3>
+
+<p><b>Step 1: Create a Schema</b></p>
+<ol>
+<li>Click "New Schema" button or File → New Schema</li>
+<li>Enter a name for your schema (required)</li>
+<li>Add a description (optional)</li>
+<li>Click OK to create the schema</li>
+</ol>
+
+<p><b>Step 2: Select Root Brick</b></p>
+<ol>
+<li>Choose a NodeShape brick from the "Root Brick" dropdown</li>
+<li>The root brick defines the main entity of your schema (e.g., Person, Organization)</li>
+<li>This is the foundation that all other components relate to</li>
+</ol>
+
+<p><b>Step 3: Add Component Bricks</b></p>
+<ol>
+<li>Browse PropertyShape bricks in the brick list (center panel)</li>
+<li>Double-click a brick to add it as a component</li>
+<li>Components appear in the "Components" list</li>
+<li>Add all relevant properties for your schema</li>
+</ol>
+
+<p><b>Step 4: Configure Flow (Optional)</b></p>
+<ol>
+<li>Select a flow type from the dropdown:
+  <ul>
+  <li><b>Sequential:</b> Steps in order (1 → 2 → 3)</li>
+  <li><b>Conditional:</b> Next step depends on conditions</li>
+  <li><b>Parallel:</b> Multiple steps at once</li>
+  <li><b>Dynamic:</b> Steps added/removed at runtime</li>
+  </ul>
+</li>
+<li>Click "Edit Flow" to configure steps</li>
+<li>Add steps and assign bricks to each step</li>
+<li>Configure navigation between steps</li>
+</ol>
+
+<p><b>Step 5: Save and Export</b></p>
+<ol>
+<li>Click "Save" to save your schema</li>
+<li>Click "Export SHACL" to generate a SHACL file</li>
+<li>The SHACL file can be used for validation</li>
+</ol>
+
+<p><b>Tips:</b></p>
+<ul>
+<li>Use the preview panel to review your schema</li>
+<li>Components shown in preview are by brick name, not ID</li>
+<li>Save frequently to avoid losing work</li>
+<li>Use the Help button in the flow editor for detailed flow configuration help</li>
+</ul>
+"""
+        QMessageBox.information(self, "Schema Construction Guide", guide_text)
     
     def show_about(self):
         """Show about dialog"""
@@ -307,7 +562,7 @@ class SchemaGUI(QMainWindow):
                     self.qt_session.current_schema = schema  # Sync with backend session
                     self.qt_session._emit_event('schema_loaded', schema.to_dict())
                     self.load_schema_into_ui(schema)
-                    self.set_ui_state(True)
+                    self.state_manager.set_current_schema(schema, has_unsaved_changes=False)
                     
                     # Connect schema detail signals now that we have a schema
                     self.ui.nameLineEdit.textChanged.connect(self.on_schema_details_changed)
@@ -333,6 +588,43 @@ class SchemaGUI(QMainWindow):
                 self.refresh_component_list()
                 self.ui.statusbar.showMessage(f"Added component: {brick_name}")
     
+    def on_brick_selection_changed(self):
+        """Handle brick selection change - show brick details"""
+        current_item = self.ui.brickListWidget.currentItem()
+        if not current_item:
+            self.ui.brickDetailsTextEdit.clear()
+            return
+        
+        brick_name = current_item.text()
+        # Find brick by name since get_brick_by_name doesn't exist
+        all_bricks = self.brick_integration.get_available_bricks()
+        brick = next((b for b in all_bricks if b.name == brick_name), None)
+        
+        if brick:
+            details = f"<b>Name:</b> {brick.name}<br>"
+            details += f"<b>Type:</b> {brick.object_type}<br>"
+            details += f"<b>ID:</b> {brick.brick_id}<br>"
+            
+            if hasattr(brick, 'description') and brick.description:
+                details += f"<b>Description:</b> {brick.description}<br>"
+            
+            if hasattr(brick, 'target_class') and brick.target_class:
+                details += f"<b>Target Class:</b> {brick.target_class}<br>"
+            
+            if hasattr(brick, 'properties') and brick.properties:
+                details += f"<b>Properties ({len(brick.properties)}):</b><br>"
+                for prop_name, prop_value in brick.properties.items():
+                    details += f"  • {prop_name}: {prop_value}<br>"
+            
+            if hasattr(brick, 'constraints') and brick.constraints:
+                details += f"<b>Constraints ({len(brick.constraints)}):</b><br>"
+                for constraint in brick.constraints:
+                    details += f"  • {constraint}<br>"
+            
+            self.ui.brickDetailsTextEdit.setText(details)
+        else:
+            self.ui.brickDetailsTextEdit.setText("Brick details not available")
+    
     def on_schema_details_changed(self):
         """Handle schema detail changes"""
         if self.current_schema:
@@ -340,6 +632,7 @@ class SchemaGUI(QMainWindow):
             self.current_schema.description = self.ui.descriptionLineEdit.text()
             self.current_schema.update_timestamp()
             self.qt_session._emit_event('schema_updated', self.current_schema.to_dict())
+            self.update_preview()
     
     def on_root_brick_changed(self, brick_name):
         """Handle root brick change"""
@@ -350,6 +643,8 @@ class SchemaGUI(QMainWindow):
                 self.current_schema.root_brick_id = bricks[0].brick_id
                 self.current_schema.update_timestamp()
                 self.qt_session._emit_event('root_brick_set', {"brick_id": bricks[0].brick_id})
+                self.state_manager.mark_schema_modified()
+                self.update_preview()
     
     def add_component_brick(self):
         """Add component brick button handler"""
@@ -371,6 +666,7 @@ class SchemaGUI(QMainWindow):
                     
                     # Update UI
                     self.refresh_component_list()
+                    self.update_preview()
                     QMessageBox.information(self, "Success", 
                         f"Component '{selected_brick_id}' added to schema successfully!")
                 except Exception as e:
@@ -397,8 +693,66 @@ class SchemaGUI(QMainWindow):
                 self.current_schema.component_brick_ids.remove(brick_id)
                 self.current_schema.update_timestamp()
                 self.qt_session._emit_event('component_removed', {"brick_id": brick_id})
+                self.state_manager.mark_schema_modified()
                 self.refresh_component_list()
+                self.update_preview()
                 self.ui.statusbar.showMessage(f"Removed component: {component_name}")
+    
+    def on_component_view_changed(self):
+        """Handle component view toggle between list and tree"""
+        if self.ui.listViewRadio.isChecked():
+            self.ui.componentViewStack.setCurrentIndex(0)
+        else:
+            self.ui.componentViewStack.setCurrentIndex(1)
+            self.refresh_component_tree()
+    
+    def refresh_component_tree(self):
+        """Refresh the component tree view with parent-child relationships"""
+        self.ui.componentTreeWidget.clear()
+        
+        if not self.current_schema:
+            return
+        
+        # Get root components (components with no parent)
+        root_brick_ids = self.current_schema.get_root_components()
+        
+        # Add root brick as the tree root
+        if self.current_schema.root_brick_id:
+            root_brick = self.brick_integration.get_brick_by_id(self.current_schema.root_brick_id)
+            if root_brick:
+                root_item = QTreeWidgetItem(self.ui.componentTreeWidget)
+                root_item.setText(0, f"Root: {root_brick.name}")
+                root_item.setData(0, Qt.ItemDataRole.UserRole, self.current_schema.root_brick_id)
+                
+                # Add children recursively
+                self._add_tree_children(root_item, self.current_schema.root_brick_id)
+        
+        # Add top-level components (components with no parent)
+        for brick_id in root_brick_ids:
+            brick = self.brick_integration.get_brick_by_id(brick_id)
+            if brick:
+                item = QTreeWidgetItem(self.ui.componentTreeWidget)
+                item.setText(0, brick.name)
+                item.setData(0, Qt.ItemDataRole.UserRole, brick_id)
+                
+                # Add children recursively
+                self._add_tree_children(item, brick_id)
+    
+    def _add_tree_children(self, parent_item: QTreeWidgetItem, parent_brick_id: str):
+        """Recursively add children to a tree item"""
+        if not self.current_schema:
+            return
+        
+        children = self.current_schema.get_children(parent_brick_id)
+        for child_id in children:
+            child_brick = self.brick_integration.get_brick_by_id(child_id)
+            if child_brick:
+                child_item = QTreeWidgetItem(parent_item)
+                child_item.setText(0, child_brick.name)
+                child_item.setData(0, Qt.ItemDataRole.UserRole, child_id)
+                
+                # Recursively add grandchildren
+                self._add_tree_children(child_item, child_id)
     
     def on_component_selection_changed(self):
         """Handle component selection change"""
@@ -414,6 +768,8 @@ class SchemaGUI(QMainWindow):
                 )
                 self.current_schema.update_timestamp()
                 self.qt_session._emit_event('flow_updated', self.current_schema.flow_config.to_dict())
+                self.state_manager.mark_schema_modified()
+                self.refresh_flow_steps()
             except ValueError:
                 pass
     
@@ -430,12 +786,15 @@ class SchemaGUI(QMainWindow):
             self.flow_engine, 
             self.brick_integration, 
             self.current_schema.flow_config,
-            self
+            self,
+            self.current_schema
         )
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self.current_schema.flow_config = dialog.current_flow
             self.current_schema.update_timestamp()
             self.qt_session._emit_event('flow_updated', self.current_schema.flow_config.to_dict())
+            self.refresh_flow_steps()
+            self.update_preview()
             self.ui.statusbar.showMessage("Flow updated successfully")
     
     def refresh_schema_libraries(self):
@@ -510,14 +869,12 @@ class SchemaGUI(QMainWindow):
         
         # Load components
         self.refresh_component_list()
-    
-    def set_ui_state(self, has_schema):
-        """Set UI state based on whether a schema is loaded"""
-        self.ui.nameLineEdit.setEnabled(has_schema)
-        self.ui.descriptionLineEdit.setEnabled(has_schema)
-        self.ui.rootBrickComboBox.setEnabled(has_schema)
-        self.ui.saveButton.setEnabled(has_schema)
-        self.ui.exportShaclButton.setEnabled(has_schema)
+        
+        # Load flow steps
+        self.refresh_flow_steps()
+        
+        # Update preview
+        self.update_preview()
     
     def create_schema_from_template(self, template):
         """Create schema from selected template"""
@@ -549,93 +906,77 @@ class SchemaGUI(QMainWindow):
         # Load into UI
         self.current_schema = schema
         self.load_schema_into_ui(schema)
-        self.set_ui_state(True)
+        self.state_manager.set_current_schema(schema, has_unsaved_changes=False)
         
         self.ui.statusbar.showMessage(f"Created schema from template: {template.name}")
 
-    def show_about(self):
-        """Show about dialog"""
-        about_text = """
-        <h3>Schema App v2</h3>
-        <p>Schema Constructor for SHACL Bricks</p>
-        <p>Version: 2.0</p>
-        <p>Architecture: Simple, modular design following brick_app_v2</p>
-        <p><strong>Features:</strong></p>
-        <ul>
-        <li>📋 Schema composition from bricks</li>
-        <li>🔄 Flow configuration (sequential, conditional, parallel, dynamic)</li>
-        <li>📤 SHACL export</li>
-        <li>🎨 PyQt interface with .ui files</li>
-        <li>💡 User-friendly help system</li>
-        <li>📚 Templates for common use cases</li>
-        </ul>
-        <p><strong>Perfect for:</strong> Users who want to create data schemas without learning SHACL technical details</p>
-        """
+    def on_flow_step_selection_changed(self):
+        """Handle flow step selection change"""
+        # Could show step details here
+        pass
+    
+    def refresh_flow_steps(self):
+        """Refresh flow steps list widget"""
+        self.ui.flowStepsListWidget.clear()
         
-        QMessageBox.about(self, "About Schema App v2", about_text)
-
-    def on_schema_library_changed(self):
-        """Handle schema library change"""
-        library_name = self.components.get_combo_box_current_text(self.ui.libraryComboBox)
-        if library_name:
-            self.schema_core.set_active_library(library_name)
-            self.refresh_schema_list()
-    
-    def on_brick_library_changed(self):
-        """Handle brick library change"""
-        self.refresh_brick_list()
-        self.refresh_root_bricks()
-    
-    def on_brick_search_changed(self):
-        """Handle brick search text change"""
-        self.refresh_brick_list()
-    
-    def on_schema_selection_changed(self):
-        """Handle schema selection change"""
-        pass  # Selection is handled by open_schema()
-    
-    def on_component_selection_changed(self):
-        """Handle component brick selection change"""
-        pass  # Could show component details here
-    
-    def on_schema_details_changed(self):
-        """Handle schema details change"""
-        if self.current_schema:
-            self.update_preview()
+        if self.current_schema and self.current_schema.flow_config:
+            flow = self.current_schema.flow_config
+            for step in flow.steps:
+                step_text = f"{step.name} ({len(step.brick_ids)} bricks)"
+                self.ui.flowStepsListWidget.addItem(step_text)
     
     def update_preview(self):
         """Update schema preview"""
-        # Placeholder for preview functionality
-        pass
-    
-    def on_root_brick_changed(self):
-        """Handle root brick change"""
-        if self.current_schema:
-            root_brick_id = self.ui.rootBrickComboBox.currentData()
-            if root_brick_id and root_brick_id != "Select root brick...":
-                self.current_schema.root_brick_id = root_brick_id
-                self.update_preview()
-    
-    def on_flow_type_changed(self):
-        """Handle flow type change"""
-        if self.current_schema:
-            flow_type_str = self.components.get_combo_box_current_text(self.ui.flowTypeComboBox)
-            flow_type = FlowType(flow_type_str.lower())
-            
-            if not self.current_flow:
-                # Create basic flow
-                self.current_flow = self.flow_engine.create_flow(
-                    f"Flow for {self.current_schema.name}",
-                    flow_type,
-                    f"Auto-generated flow for {self.current_schema.name}"
-                )
-                self.current_schema.flow_config = self.current_flow
-            else:
-                # Update flow type
-                self.current_flow.flow_type = flow_type
-            
-            self.update_preview()
-    
+        if not self.current_schema:
+            self.ui.previewTextEdit.clear()
+            return
+        
+        # Get root brick name
+        root_brick_name = "Not set"
+        if self.current_schema.root_brick_id:
+            root_brick = self.brick_integration.get_brick_by_id(self.current_schema.root_brick_id)
+            if root_brick:
+                root_brick_name = root_brick.name
+        
+        preview_text = f"""Schema Preview
+{'=' * 50}
+
+Name: {self.current_schema.name}
+Description: {self.current_schema.description or 'No description'}
+Root Brick: {root_brick_name}
+
+Components ({len(self.current_schema.component_brick_ids)}):
+"""
+        for brick_id in self.current_schema.component_brick_ids:
+            brick = self.brick_integration.get_brick_by_id(brick_id)
+            brick_name = brick.name if brick else brick_id
+            preview_text += f"  - {brick_name}\n"
+        
+        # Add inheritance chain if present
+        if self.current_schema.inheritance_chain:
+            preview_text += f"\nInherits from: {len(self.current_schema.inheritance_chain)} schemas\n"
+            for parent_id in self.current_schema.inheritance_chain:
+                preview_text += f"  - {parent_id}\n"
+        
+        # Add relationships if present
+        if self.current_schema.relationships:
+            preview_text += f"\nBrick Relationships:\n"
+            for brick_id, relations in self.current_schema.relationships.items():
+                preview_text += f"  - {brick_id}: {relations}\n"
+        
+        # Add flow info if present
+        if self.current_schema.flow_config:
+            flow = self.current_schema.flow_config
+            preview_text += f"""
+Flow Configuration:
+  Type: {flow.flow_type.value}
+  Steps: {len(flow.steps)}
+"""
+            for i, step in enumerate(flow.steps, 1):
+                preview_text += f"  {i}. {step.name} ({len(step.brick_ids)} bricks)\n"
+        
+        self.ui.previewTextEdit.setPlainText(preview_text)
+
     def closeEvent(self, event):
         """Handle application close"""
         # Check for unsaved changes

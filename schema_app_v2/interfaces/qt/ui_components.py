@@ -27,9 +27,8 @@ class UiLoader:
     def load_flow_editor_dialog(self, parent=None) -> QDialog:
         """Load the flow editor dialog from .ui file"""
         ui_file = os.path.join(self.ui_directory, 'flow_editor.ui')
-        dialog = QDialog(parent)
-        loadUi(ui_file, dialog)
-        return dialog
+        loadUi(ui_file, parent)
+        return parent
     
     def load_ui_file(self, ui_filename: str, parent=None) -> QMainWindow:
         """Load a generic .ui file"""
@@ -107,11 +106,11 @@ class ComponentManager:
             list_widget.setItemData(list_widget.count() - 1, data_value)
     
     @staticmethod
-    def get_selected_list_data(list_widget, data_role=256):
+    def get_selected_list_data(list_widget, data_role=None):
         """Get data from selected list widget item"""
         current_item = list_widget.currentItem()
         if current_item:
-            return current_item.data(data_role)
+            return current_item.data(Qt.ItemDataRole.UserRole)
         return None
     
     @staticmethod
@@ -136,6 +135,16 @@ class ComponentManager:
     def get_line_edit_text(line_edit) -> str:
         """Get line edit text"""
         return line_edit.text().strip()
+    
+    @staticmethod
+    def set_text_edit_text(text_edit, text: str):
+        """Set text edit text"""
+        text_edit.setText(text or "")
+    
+    @staticmethod
+    def get_text_edit_text(text_edit) -> str:
+        """Get text edit text"""
+        return text_edit.toPlainText().strip()
     
     @staticmethod
     def set_combo_box_current_text(combo_box, text: str):
@@ -185,5 +194,15 @@ class ComponentManager:
             parent, title, message,
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No
+        )
+        return reply == QMessageBox.StandardButton.Yes
+    
+    @staticmethod
+    def ask_confirmation(parent, title: str, message: str) -> bool:
+        """Ask for confirmation"""
+        from PyQt6.QtWidgets import QMessageBox
+        reply = QMessageBox.question(
+            parent, title, message,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         return reply == QMessageBox.StandardButton.Yes

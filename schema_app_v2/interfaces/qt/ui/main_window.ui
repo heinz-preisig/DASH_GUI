@@ -90,6 +90,25 @@
              </property>
             </widget>
            </item>
+           <item>
+            <widget class="QGroupBox" name="brickDetailsGroupBox">
+             <property name="title">
+              <string>Brick Details</string>
+             </property>
+             <layout class="QVBoxLayout" name="brickDetailsLayout">
+              <item>
+               <widget class="QTextEdit" name="brickDetailsTextEdit">
+                <property name="readOnly">
+                 <bool>true</bool>
+                </property>
+                <property name="maximumHeight">
+                 <number>150</number>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>
@@ -178,10 +197,61 @@
              </widget>
             </item>
             <item>
-             <widget class="QListWidget" name="componentBricksListWidget">
-              <property name="toolTip">
-               <string>Bricks included in this schema</string>
+             <layout class="QHBoxLayout" name="viewToggleLayout">
+              <item>
+               <widget class="QRadioButton" name="listViewRadio">
+                <property name="text">
+                 <string>List View</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="treeViewRadio">
+                <property name="text">
+                 <string>Tree View</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QStackedWidget" name="componentViewStack">
+              <property name="currentIndex">
+               <number>0</number>
               </property>
+              <widget class="QWidget" name="listViewPage">
+               <layout class="QVBoxLayout" name="listViewLayout">
+                <item>
+                 <widget class="QListWidget" name="componentBricksListWidget">
+                  <property name="toolTip">
+                   <string>Bricks included in this schema</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+              <widget class="QWidget" name="treeViewPage">
+               <layout class="QVBoxLayout" name="treeViewLayout">
+                <item>
+                 <widget class="QTreeWidget" name="componentTreeWidget">
+                  <property name="toolTip">
+                   <string>Hierarchical view of components</string>
+                  </property>
+                  <property name="headerHidden">
+                   <bool>true</bool>
+                  </property>
+                  <column>
+                   <property name="text">
+                    <string notr="true">1</string>
+                   </property>
+                  </column>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
              </widget>
             </item>
             <item>

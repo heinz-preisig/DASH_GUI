@@ -270,6 +270,13 @@ Example: {"field_equals:status": "active", "next_step": "step2_id"}</string>
    <item>
     <layout class="QHBoxLayout" name="dialogButtonsLayout">
      <item>
+      <widget class="QPushButton" name="helpButton">
+       <property name="text">
+        <string>Help</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="validateFlowButton">
        <property name="text">
         <string>Validate Flow</string>

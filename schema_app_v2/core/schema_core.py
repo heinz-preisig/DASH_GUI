@@ -21,6 +21,8 @@ class Schema:
     root_brick_id: str
     component_brick_ids: List[str]
     flow_config: Optional['FlowConfig'] = None
+    inheritance_chain: List[str] = field(default_factory=list)  # Parent schema IDs
+    relationships: Dict[str, List[str]] = field(default_factory=dict)  # Brick relationships
     metadata: Dict[str, Any] = field(default_factory=dict)
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
@@ -40,6 +42,70 @@ class Schema:
         if data.get('flow_config'):
             from .flow_engine import FlowConfig
             data['flow_config'] = FlowConfig.from_dict(data['flow_config'])
+        return cls(**data)
+    
+    def update_timestamp(self):
+        """Update the modification timestamp"""
+        self.updated_at = datetime.now().isoformat()
+    
+    def add_child_component(self, parent_brick_id: str, child_brick_id: str):
+        """Add a child component to a parent"""
+        if parent_brick_id not in self.relationships:
+            self.relationships[parent_brick_id] = []
+        if child_brick_id not in self.relationships[parent_brick_id]:
+            self.relationships[parent_brick_id].append(child_brick_id)
+    
+    def remove_child_component(self, parent_brick_id: str, child_brick_id: str):
+        """Remove a child component from a parent"""
+        if parent_brick_id in self.relationships:
+            if child_brick_id in self.relationships[parent_brick_id]:
+                self.relationships[parent_brick_id].remove(child_brick_id)
+    
+    def get_children(self, parent_brick_id: str) -> List[str]:
+        """Get all children of a parent brick"""
+        return self.relationships.get(parent_brick_id, [])
+    
+    def get_parent(self, child_brick_id: str) -> Optional[str]:
+        """Get the parent of a child brick"""
+        for parent_id, children in self.relationships.items():
+            if child_brick_id in children:
+                return parent_id
+        return None
+    
+    def get_root_components(self) -> List[str]:
+        """Get components with no parent (top-level)"""
+        all_children = set()
+        for children in self.relationships.values():
+            all_children.update(children)
+        root_components = []
+        for brick_id in self.component_brick_ids:
+            if brick_id not in all_children:
+                root_components.append(brick_id)
+        return root_components
+
+
+@dataclass
+class DaisyChain:
+    """Daisy-chain configuration for multi-step interfaces"""
+    chain_id: str
+    name: str
+    description: str
+    schema_ids: List[str]  # Schema IDs in chain order
+    navigation_rules: Dict[str, Any] = field(default_factory=dict)
+    shared_data: Dict[str, Any] = field(default_factory=dict)  # Data shared between steps
+    conditional_logic: Dict[str, Any] = field(default_factory=dict)
+    ui_theme: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    created_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary"""
+        return asdict(self)
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'DaisyChain':
+        """Create from dictionary"""
         return cls(**data)
     
     def update_timestamp(self):
@@ -70,6 +136,7 @@ class SchemaCore:
         os.makedirs(self.repository_path, exist_ok=True)
         self.current_schema: Optional[Schema] = None
         self.active_library: str = "default"
+        self.daisy_chains: Dict[str, DaisyChain] = {}  # Store daisy chains
         
         # Ensure default library exists
         self._ensure_library_exists("default")
@@ -77,10 +144,7 @@ class SchemaCore:
     def _ensure_library_exists(self, library_name: str):
         """Ensure a library directory exists"""
         library_path = os.path.join(self.repository_path, library_name)
-        schemas_path = os.path.join(library_path, "schemas")
-        
         os.makedirs(library_path, exist_ok=True)
-        os.makedirs(schemas_path, exist_ok=True)
     
     def create_schema(self, name: str, description: str = "", root_brick_id: str = "") -> Schema:
         """Create a new schema"""
@@ -146,7 +210,7 @@ class SchemaCore:
     def get_all_schemas(self, library_name: Optional[str] = None) -> List[Schema]:
         """Get all schemas from a library"""
         lib_name = library_name or self.active_library
-        schemas_dir = os.path.join(self.repository_path, lib_name, "schemas")
+        schemas_dir = os.path.join(self.repository_path, lib_name)
         
         if not os.path.exists(schemas_dir):
             return []
@@ -206,6 +270,39 @@ class SchemaCore:
         
         return True
     
+    def extend_schema(self, parent_schema_id: str, name: str, description: str,
+                     additional_brick_ids: List[str], brick_integration=None) -> Optional[Schema]:
+        """Create a schema that extends an existing one"""
+        # Load parent schema
+        parent_schema = self.load_schema(parent_schema_id)
+        if not parent_schema:
+            return None
+        
+        # Combine parent and new bricks
+        all_brick_ids = [parent_schema.root_brick_id] + parent_schema.component_brick_ids + additional_brick_ids
+        
+        # Create extended schema
+        schema = Schema(
+            schema_id=str(uuid.uuid4()),
+            name=name,
+            description=description,
+            root_brick_id=parent_schema.root_brick_id,
+            component_brick_ids=parent_schema.component_brick_ids + additional_brick_ids,
+            inheritance_chain=[parent_schema_id] + parent_schema.inheritance_chain,
+            flow_config=parent_schema.flow_config
+        )
+        
+        # Analyze brick relationships if brick_integration is provided
+        if brick_integration:
+            schema.relationships = self._analyze_brick_relationships(
+                schema.root_brick_id,
+                schema.component_brick_ids,
+                brick_integration
+            )
+        
+        self.current_schema = schema
+        return schema
+    
     def get_libraries(self) -> List[str]:
         """Get all available libraries"""
         try:
@@ -230,3 +327,65 @@ class SchemaCore:
             self.active_library = library_name
             return True
         return False
+    
+    def create_daisy_chain(self, name: str, description: str, schema_ids: List[str],
+                         navigation_rules: Dict[str, Any] = None) -> Optional[DaisyChain]:
+        """Create a daisy-chain of schemas for multi-step interfaces"""
+        # Validate schemas exist
+        for schema_id in schema_ids:
+            schema = self.load_schema(schema_id)
+            if not schema:
+                return None
+        
+        chain_id = str(uuid.uuid4())
+        
+        daisy_chain = DaisyChain(
+            chain_id=chain_id,
+            name=name,
+            description=description,
+            schema_ids=schema_ids,
+            navigation_rules=navigation_rules or {}
+        )
+        
+        self.daisy_chains[chain_id] = daisy_chain
+        return daisy_chain
+    
+    def get_daisy_chain(self, chain_id: str) -> Optional[DaisyChain]:
+        """Get daisy chain by ID"""
+        return self.daisy_chains.get(chain_id)
+    
+    def get_all_daisy_chains(self) -> List[DaisyChain]:
+        """Get all daisy chains"""
+        return list(self.daisy_chains.values())
+    
+    def delete_daisy_chain(self, chain_id: str) -> bool:
+        """Delete a daisy chain"""
+        if chain_id in self.daisy_chains:
+            del self.daisy_chains[chain_id]
+            return True
+        return False
+    
+    def _analyze_brick_relationships(self, root_brick_id: str, component_brick_ids: List[str],
+                                    brick_integration) -> Dict[str, List[str]]:
+        """Analyze relationships between bricks"""
+        relationships = {}
+        
+        # Get root brick details
+        root_brick = brick_integration.get_brick_by_id(root_brick_id)
+        if not root_brick:
+            return relationships
+        
+        # Analyze component bricks
+        for brick_id in component_brick_ids:
+            comp_brick = brick_integration.get_brick_by_id(brick_id)
+            if comp_brick:
+                # Determine relationship type based on object_type
+                if hasattr(comp_brick, 'object_type'):
+                    if comp_brick.object_type == "PropertyShape":
+                        relationships[brick_id] = ["property_of", root_brick_id]
+                    else:
+                        relationships[brick_id] = ["related_to", root_brick_id]
+                else:
+                    relationships[brick_id] = ["related_to", root_brick_id]
+        
+        return relationships

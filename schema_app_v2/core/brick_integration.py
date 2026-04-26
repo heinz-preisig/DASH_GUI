@@ -64,12 +64,8 @@ class BrickIntegration:
         
         # Use shared libraries by default
         if use_shared_libraries and brick_repository_path is None:
-            # Use the shared library manager to get the correct path
-            if shared_library_manager:
-                brick_repository_path = shared_library_manager.get_brick_library_path()
-            else:
-                # Fallback if library manager not available
-                brick_repository_path = os.path.join(project_root, 'shared_libraries', 'bricks')
+            # Use the same path as brick_app_v2 - direct path to shared_libraries/bricks
+            brick_repository_path = os.path.join(shared_libs_path, 'bricks')
             self.brick_core = BrickCore(repository_path=brick_repository_path, use_shared_libraries=False)
         else:
             self.brick_core = BrickCore(brick_repository_path, use_shared_libraries=False)

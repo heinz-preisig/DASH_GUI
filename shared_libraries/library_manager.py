@@ -51,23 +51,35 @@ class SharedLibraryManager:
             "version": "2.0",
             "libraries": {
                 "bricks": {
-                    "default_path": "shared_libraries/bricks",
+                    "default_path": "bricks",
                     "libraries": [
                         {
                             "name": "default",
-                            "path": "shared_libraries/bricks/default",
+                            "path": "bricks/default",
                             "description": "Default brick library",
+                            "type": "bricks"
+                        },
+                        {
+                            "name": "myFirst",
+                            "path": "bricks/myFirst",
+                            "description": "My first brick library",
                             "type": "bricks"
                         }
                     ]
                 },
                 "schemas": {
-                    "default_path": "shared_libraries/schemas",
+                    "default_path": "schemas",
                     "libraries": [
                         {
                             "name": "default",
-                            "path": "shared_libraries/schemas/default",
+                            "path": "schemas/default",
                             "description": "Default schema library",
+                            "type": "schemas"
+                        },
+                        {
+                            "name": "test_schema_lib",
+                            "path": "schemas/test_schema_lib",
+                            "description": "Test schema library",
                             "type": "schemas"
                         }
                     ]
@@ -89,28 +101,19 @@ class SharedLibraryManager:
             for lib in libraries:
                 lib_path = Path(lib["path"])
                 lib_path.mkdir(parents=True, exist_ok=True)
-                
-                # Create subdirectories
-                if lib_type == "bricks":
-                    (lib_path / "bricks").mkdir(exist_ok=True)
-                else:
-                    (lib_path / "schemas").mkdir(exist_ok=True)
+                # No nested subdirectories - the library path is the bricks/schemas directory
     
     def get_brick_library_path(self, library_name: str = "default") -> str:
-        """Get the absolute path to a brick library parent directory"""
-        # Return the absolute path to the parent directory of libraries
+        """Get the absolute path to the brick libraries parent directory"""
+        # Return the parent directory of all brick libraries
         relative_path = self.config["libraries"]["bricks"]["default_path"]
-        # Use the absolute base path to resolve the relative path
-        project_root = self.base_path.absolute().parent
-        return str(project_root / relative_path)
+        return str(self.base_path / relative_path)
     
     def get_schema_library_path(self, library_name: str = "default") -> str:
-        """Get the absolute path to a schema library parent directory"""
-        # Return the absolute path to the parent directory of libraries
+        """Get the absolute path to the schema libraries parent directory"""
+        # Return the parent directory of all schema libraries
         relative_path = self.config["libraries"]["schemas"]["default_path"]
-        # Use the absolute base path to resolve the relative path
-        project_root = self.base_path.absolute().parent
-        return str(project_root / relative_path)
+        return str(self.base_path / relative_path)
     
     def get_brick_libraries(self) -> List[Dict[str, Any]]:
         """Get all brick libraries"""
