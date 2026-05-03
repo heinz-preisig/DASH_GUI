@@ -46,7 +46,20 @@ def create_app(schema_repository_path: str = None,
         """Get all schemas"""
         library = request.args.get('library')
         schemas = web_session.schema_core.get_all_schemas(library)
-        return jsonify([schema.to_dict() for schema in schemas])
+        
+        # Convert schemas to dict and ensure UI metadata is included
+        schemas_list = []
+        for schema in schemas:
+            schema_dict = schema.to_dict()
+            # Ensure component_ui_metadata is properly serialized
+            if 'component_ui_metadata' in schema_dict:
+                schema_dict['component_ui_metadata'] = {
+                    k: v if isinstance(v, dict) else v.to_dict() 
+                    for k, v in schema_dict['component_ui_metadata'].items()
+                }
+            schemas_list.append(schema_dict)
+        
+        return jsonify(schemas_list)
     
     @app.route('/api/schemas', methods=['POST'])
     def create_schema():
@@ -321,6 +334,178 @@ def create_app(schema_repository_path: str = None,
             'valid': len(issues) == 0,
             'issues': issues
         })
+    
+    # UI Metadata API endpoints
+    
+    @app.route('/api/schemas/<schema_id>/components/<brick_id>/ui-metadata', methods=['GET'])
+    def get_component_ui_metadata(schema_id, brick_id):
+        """Get UI metadata for a component"""
+        library = request.args.get('library')
+        schema = web_session.schema_core.load_schema(schema_id, library)
+        
+        if not schema:
+            return jsonify({'error': 'Schema not found'}), 404
+        
+        if brick_id not in schema.component_brick_ids:
+            return jsonify({'error': 'Component not found'}), 404
+        
+        ui_metadata = schema.get_component_ui_metadata(brick_id)
+        if ui_metadata:
+            return jsonify(ui_metadata.to_dict())
+        else:
+            return jsonify({'error': 'UI metadata not found'}), 404
+    
+    @app.route('/api/schemas/<schema_id>/components/<brick_id>/ui-metadata', methods=['PUT'])
+    def update_component_ui_metadata(schema_id, brick_id):
+        """Update UI metadata for a component"""
+        library = request.args.get('library')
+        schema = web_session.schema_core.load_schema(schema_id, library)
+        
+        if not schema:
+            return jsonify({'error': 'Schema not found'}), 404
+        
+        if brick_id not in schema.component_brick_ids:
+            return jsonify({'error': 'Component not found'}), 404
+        
+        data = request.get_json()
+        
+        from schema_core import UIMetadata
+        ui_metadata = UIMetadata(
+            sequence=data.get('sequence', 0),
+            group_id=data.get('group_id'),
+            parent_id=data.get('parent_id'),
+            label=data.get('label', ''),
+            help_text=data.get('help_text', ''),
+            is_collapsible=data.get('is_collapsible', True),
+            is_visible=data.get('is_visible', True)
+        )
+        
+        schema.set_component_ui_metadata(brick_id, ui_metadata)
+        web_session.schema_core.save_schema(schema)
+        web_session._emit_event('ui_metadata_updated', {
+            'schema_id': schema_id,
+            'brick_id': brick_id,
+            'ui_metadata': ui_metadata.to_dict()
+        })
+        
+        return jsonify(ui_metadata.to_dict())
+    
+    @app.route('/api/schemas/<schema_id>/groups', methods=['GET'])
+    def get_schema_groups(schema_id):
+        """Get all groups for a schema"""
+        library = request.args.get('library')
+        schema = web_session.schema_core.load_schema(schema_id, library)
+        
+        if not schema:
+            return jsonify({'error': 'Schema not found'}), 404
+        
+        groups = schema.get_groups_by_sequence()
+        return jsonify(groups)
+    
+    @app.route('/api/schemas/<schema_id>/groups', methods=['POST'])
+    def create_schema_group(schema_id):
+        """Create a new group in a schema"""
+        library = request.args.get('library')
+        schema = web_session.schema_core.load_schema(schema_id, library)
+        
+        if not schema:
+            return jsonify({'error': 'Schema not found'}), 404
+        
+        data = request.get_json()
+        group_id = data.get('group_id')
+        label = data.get('label', group_id)
+        description = data.get('description', '')
+        sequence = data.get('sequence', 0)
+        
+        if not group_id:
+            return jsonify({'error': 'group_id is required'}), 400
+        
+        if schema.create_group(group_id, label, description, sequence):
+            web_session.schema_core.save_schema(schema)
+            web_session._emit_event('group_created', {
+                'schema_id': schema_id,
+                'group_id': group_id,
+                'group': schema.groups[group_id]
+            })
+            return jsonify(schema.groups[group_id]), 201
+        else:
+            return jsonify({'error': 'Group already exists'}), 400
+    
+    @app.route('/api/schemas/<schema_id>/groups/<group_id>', methods=['DELETE'])
+    def delete_schema_group(schema_id, group_id):
+        """Delete a group from a schema"""
+        library = request.args.get('library')
+        schema = web_session.schema_core.load_schema(schema_id, library)
+        
+        if not schema:
+            return jsonify({'error': 'Schema not found'}), 404
+        
+        if schema.delete_group(group_id):
+            web_session.schema_core.save_schema(schema)
+            web_session._emit_event('group_deleted', {
+                'schema_id': schema_id,
+                'group_id': group_id
+            })
+            return jsonify({'message': 'Group deleted'})
+        else:
+            return jsonify({'error': 'Group not found'}), 404
+    
+    @app.route('/api/schemas/<schema_id>/components/<brick_id>/group', methods=['PUT'])
+    def add_component_to_group_api(schema_id, brick_id):
+        """Add a component to a group"""
+        library = request.args.get('library')
+        schema = web_session.schema_core.load_schema(schema_id, library)
+        
+        if not schema:
+            return jsonify({'error': 'Schema not found'}), 404
+        
+        data = request.get_json()
+        group_id = data.get('group_id')
+        
+        if not group_id:
+            return jsonify({'error': 'group_id is required'}), 400
+        
+        if schema.add_component_to_group(brick_id, group_id):
+            web_session.schema_core.save_schema(schema)
+            web_session._emit_event('component_added_to_group', {
+                'schema_id': schema_id,
+                'brick_id': brick_id,
+                'group_id': group_id
+            })
+            return jsonify({'message': 'Added to group'})
+        else:
+            return jsonify({'error': 'Group not found'}), 404
+    
+    @app.route('/api/schemas/<schema_id>/components/<brick_id>/group', methods=['DELETE'])
+    def remove_component_from_group_api(schema_id, brick_id):
+        """Remove a component from its group"""
+        library = request.args.get('library')
+        schema = web_session.schema_core.load_schema(schema_id, library)
+        
+        if not schema:
+            return jsonify({'error': 'Schema not found'}), 404
+        
+        if schema.remove_component_from_group(brick_id):
+            web_session.schema_core.save_schema(schema)
+            web_session._emit_event('component_removed_from_group', {
+                'schema_id': schema_id,
+                'brick_id': brick_id
+            })
+            return jsonify({'message': 'Removed from group'})
+        else:
+            return jsonify({'error': 'Failed to remove from group'}), 500
+    
+    @app.route('/api/schemas/<schema_id>/tree', methods=['GET'])
+    def get_schema_tree(schema_id):
+        """Get the UI tree structure for a schema"""
+        library = request.args.get('library')
+        schema = web_session.schema_core.load_schema(schema_id, library)
+        
+        if not schema:
+            return jsonify({'error': 'Schema not found'}), 404
+        
+        tree = schema.get_ui_tree()
+        return jsonify(tree)
     
     @app.errorhandler(404)
     def not_found(error):

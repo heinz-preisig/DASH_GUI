@@ -13,6 +13,27 @@ from dataclasses import dataclass, field, asdict
 
 
 @dataclass
+class UIMetadata:
+    """UI-specific metadata for schema components"""
+    sequence: int = 0  # Order in UI
+    group_id: Optional[str] = None  # Group membership
+    parent_id: Optional[str] = None  # Parent component for nesting
+    label: str = ""  # UI label (can differ from name)
+    help_text: str = ""  # Help text for UI
+    is_collapsible: bool = True  # Can be collapsed in tree view
+    is_visible: bool = True  # Visibility in UI
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary"""
+        return asdict(self)
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'UIMetadata':
+        """Create from dictionary"""
+        return cls(**data)
+
+
+@dataclass
 class Schema:
     """Simple schema representation"""
     schema_id: str
@@ -24,6 +45,8 @@ class Schema:
     inheritance_chain: List[str] = field(default_factory=list)  # Parent schema IDs
     relationships: Dict[str, List[str]] = field(default_factory=dict)  # Brick relationships
     metadata: Dict[str, Any] = field(default_factory=dict)
+    component_ui_metadata: Dict[str, UIMetadata] = field(default_factory=dict)  # UI metadata per component
+    groups: Dict[str, Dict[str, Any]] = field(default_factory=dict)  # UI groups (id -> {label, description, sequence})
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
     
@@ -33,6 +56,10 @@ class Schema:
         # Handle flow_config serialization
         if self.flow_config:
             data['flow_config'] = self.flow_config.to_dict()
+        # Handle UIMetadata serialization
+        data['component_ui_metadata'] = {
+            k: v.to_dict() for k, v in self.component_ui_metadata.items()
+        }
         return data
     
     @classmethod
@@ -42,6 +69,11 @@ class Schema:
         if data.get('flow_config'):
             from .flow_engine import FlowConfig
             data['flow_config'] = FlowConfig.from_dict(data['flow_config'])
+        # Handle UIMetadata deserialization
+        if data.get('component_ui_metadata'):
+            data['component_ui_metadata'] = {
+                k: UIMetadata.from_dict(v) for k, v in data['component_ui_metadata'].items()
+            }
         return cls(**data)
     
     def update_timestamp(self):
@@ -82,6 +114,226 @@ class Schema:
             if brick_id not in all_children:
                 root_components.append(brick_id)
         return root_components
+    
+    # UI Metadata Methods
+    
+    def set_component_ui_metadata(self, brick_id: str, ui_metadata: UIMetadata):
+        """Set UI metadata for a component"""
+        self.component_ui_metadata[brick_id] = ui_metadata
+        self.update_timestamp()
+    
+    def get_component_ui_metadata(self, brick_id: str) -> Optional[UIMetadata]:
+        """Get UI metadata for a component"""
+        return self.component_ui_metadata.get(brick_id)
+    
+    def initialize_component_ui_metadata(self, brick_id: str):
+        """Initialize UI metadata for a component if not exists"""
+        if brick_id not in self.component_ui_metadata:
+            # Auto-assign sequence based on current count
+            sequence = len(self.component_ui_metadata)
+            self.component_ui_metadata[brick_id] = UIMetadata(sequence=sequence)
+            self.update_timestamp()
+    
+    # Sequence Management Methods
+    
+    def set_component_sequence(self, brick_id: str, sequence: int):
+        """Set sequence number for a component"""
+        self.initialize_component_ui_metadata(brick_id)
+        self.component_ui_metadata[brick_id].sequence = sequence
+        self.update_timestamp()
+    
+    def get_component_sequence(self, brick_id: str) -> int:
+        """Get sequence number for a component"""
+        ui_metadata = self.get_component_ui_metadata(brick_id)
+        return ui_metadata.sequence if ui_metadata else 0
+    
+    def get_components_by_sequence(self) -> List[str]:
+        """Get component brick IDs sorted by sequence"""
+        components_with_sequence = []
+        for brick_id in self.component_brick_ids:
+            seq = self.get_component_sequence(brick_id)
+            components_with_sequence.append((seq, brick_id))
+        components_with_sequence.sort(key=lambda x: x[0])
+        return [brick_id for _, brick_id in components_with_sequence]
+    
+    def reorder_component(self, brick_id: str, new_sequence: int):
+        """Move component to new sequence, shifting others"""
+        old_sequence = self.get_component_sequence(brick_id)
+        if old_sequence == new_sequence:
+            return
+        
+        # Get all components with their sequences
+        component_sequences = {}
+        for comp_id in self.component_brick_ids:
+            component_sequences[comp_id] = self.get_component_sequence(comp_id)
+        
+        # Remove the moved component
+        del component_sequences[brick_id]
+        
+        # Shift components
+        for comp_id in component_sequences:
+            if old_sequence < new_sequence:
+                # Moving down: shift components between old and new down
+                if old_sequence < component_sequences[comp_id] <= new_sequence:
+                    component_sequences[comp_id] -= 1
+            else:
+                # Moving up: shift components between new and old up
+                if new_sequence <= component_sequences[comp_id] < old_sequence:
+                    component_sequences[comp_id] += 1
+        
+        # Set new sequence for moved component
+        component_sequences[brick_id] = new_sequence
+        
+        # Apply changes
+        for comp_id, seq in component_sequences.items():
+            self.set_component_sequence(comp_id, seq)
+    
+    # Grouping Methods
+    
+    def create_group(self, group_id: str, label: str, description: str = "", sequence: int = 0) -> bool:
+        """Create a UI group"""
+        if group_id in self.groups:
+            return False
+        self.groups[group_id] = {
+            'label': label,
+            'description': description,
+            'sequence': sequence
+        }
+        self.update_timestamp()
+        return True
+    
+    def delete_group(self, group_id: str) -> bool:
+        """Delete a UI group and remove components from it"""
+        if group_id not in self.groups:
+            return False
+        del self.groups[group_id]
+        # Remove components from this group
+        for brick_id, ui_metadata in self.component_ui_metadata.items():
+            if ui_metadata.group_id == group_id:
+                ui_metadata.group_id = None
+        self.update_timestamp()
+        return True
+    
+    def add_component_to_group(self, brick_id: str, group_id: str) -> bool:
+        """Add a component to a group"""
+        if group_id not in self.groups:
+            return False
+        self.initialize_component_ui_metadata(brick_id)
+        self.component_ui_metadata[brick_id].group_id = group_id
+        self.update_timestamp()
+        return True
+    
+    def remove_component_from_group(self, brick_id: str) -> bool:
+        """Remove a component from its group"""
+        if brick_id not in self.component_ui_metadata:
+            return False
+        self.component_ui_metadata[brick_id].group_id = None
+        self.update_timestamp()
+        return True
+    
+    def get_group_members(self, group_id: str) -> List[str]:
+        """Get all components in a group, sorted by sequence"""
+        members = []
+        for brick_id in self.component_brick_ids:
+            ui_metadata = self.get_component_ui_metadata(brick_id)
+            if ui_metadata and ui_metadata.group_id == group_id:
+                members.append((ui_metadata.sequence, brick_id))
+        members.sort(key=lambda x: x[0])
+        return [brick_id for _, brick_id in members]
+    
+    def get_groups_by_sequence(self) -> List[Dict[str, Any]]:
+        """Get groups sorted by sequence"""
+        groups_list = [{'id': gid, **gdata} for gid, gdata in self.groups.items()]
+        groups_list.sort(key=lambda x: x['sequence'])
+        return groups_list
+    
+    def get_components_without_group(self) -> List[str]:
+        """Get components not assigned to any group"""
+        ungrouped = []
+        for brick_id in self.component_brick_ids:
+            ui_metadata = self.get_component_ui_metadata(brick_id)
+            if not ui_metadata or not ui_metadata.group_id:
+                ungrouped.append(brick_id)
+        return ungrouped
+    
+    # Enhanced Parent-Child Methods for UI Metadata
+    
+    def set_component_parent(self, child_brick_id: str, parent_brick_id: str) -> bool:
+        """Set parent component for UI nesting (separate from SHACL relationships)"""
+        if child_brick_id not in self.component_brick_ids:
+            return False
+        if parent_brick_id not in self.component_brick_ids:
+            return False
+        
+        self.initialize_component_ui_metadata(child_brick_id)
+        self.component_ui_metadata[child_brick_id].parent_id = parent_brick_id
+        self.update_timestamp()
+        return True
+    
+    def remove_component_parent(self, child_brick_id: str) -> bool:
+        """Remove parent from component (make it top-level in UI)"""
+        if child_brick_id not in self.component_ui_metadata:
+            return False
+        self.component_ui_metadata[child_brick_id].parent_id = None
+        self.update_timestamp()
+        return True
+    
+    def get_ui_children(self, parent_brick_id: str) -> List[str]:
+        """Get UI children of a component (sorted by sequence)"""
+        children = []
+        for brick_id in self.component_brick_ids:
+            ui_metadata = self.get_component_ui_metadata(brick_id)
+            if ui_metadata and ui_metadata.parent_id == parent_brick_id:
+                children.append((ui_metadata.sequence, brick_id))
+        children.sort(key=lambda x: x[0])
+        return [brick_id for _, brick_id in children]
+    
+    def get_ui_parent(self, child_brick_id: str) -> Optional[str]:
+        """Get UI parent of a component"""
+        ui_metadata = self.get_component_ui_metadata(child_brick_id)
+        return ui_metadata.parent_id if ui_metadata else None
+    
+    def get_ui_root_components(self) -> List[str]:
+        """Get components with no UI parent (top-level in UI)"""
+        roots = []
+        for brick_id in self.component_brick_ids:
+            ui_metadata = self.get_component_ui_metadata(brick_id)
+            if not ui_metadata or not ui_metadata.parent_id:
+                roots.append(brick_id)
+        return roots
+    
+    def get_ui_tree(self) -> Dict[str, List[str]]:
+        """Get complete UI tree structure (parent -> children)"""
+        tree = {}
+        for brick_id in self.component_brick_ids:
+            children = self.get_ui_children(brick_id)
+            if children:
+                tree[brick_id] = children
+        return tree
+    
+    def set_component_label(self, brick_id: str, label: str):
+        """Set UI label for a component"""
+        self.initialize_component_ui_metadata(brick_id)
+        self.component_ui_metadata[brick_id].label = label
+        self.update_timestamp()
+    
+    def set_component_help_text(self, brick_id: str, help_text: str):
+        """Set help text for a component"""
+        self.initialize_component_ui_metadata(brick_id)
+        self.component_ui_metadata[brick_id].help_text = help_text
+        self.update_timestamp()
+    
+    def set_component_collapsible(self, brick_id: str, is_collapsible: bool):
+        """Set whether component can be collapsed in tree view"""
+        self.initialize_component_ui_metadata(brick_id)
+        self.component_ui_metadata[brick_id].is_collapsible = is_collapsible
+        self.update_timestamp()
+    
+    def set_component_visibility(self, brick_id: str, is_visible: bool):
+        """Set component visibility in UI"""
+        self.initialize_component_ui_metadata(brick_id)
+        self.component_ui_metadata[brick_id].is_visible = is_visible
+        self.update_timestamp()
 
 
 @dataclass
@@ -161,7 +413,7 @@ class SchemaCore:
     def load_schema(self, schema_id: str, library_name: Optional[str] = None) -> Optional[Schema]:
         """Load a schema from storage"""
         lib_name = library_name or self.active_library
-        schema_file = os.path.join(self.repository_path, lib_name, "schemas", f"{schema_id}.json")
+        schema_file = os.path.join(self.repository_path, lib_name, f"{schema_id}.json")
         
         if not os.path.exists(schema_file):
             return None
@@ -210,17 +462,17 @@ class SchemaCore:
     def get_all_schemas(self, library_name: Optional[str] = None) -> List[Schema]:
         """Get all schemas from a library"""
         lib_name = library_name or self.active_library
-        schemas_dir = os.path.join(self.repository_path, lib_name)
+        lib_path = os.path.join(self.repository_path, lib_name)
         
-        if not os.path.exists(schemas_dir):
+        if not os.path.exists(lib_path):
             return []
         
         schemas = []
         try:
-            schema_files = [f for f in os.listdir(schemas_dir) if f.endswith('.json')]
+            schema_files = [f for f in os.listdir(lib_path) if f.endswith('.json')]
                 
             for schema_file in schema_files:
-                schema_path = os.path.join(schemas_dir, schema_file)
+                schema_path = os.path.join(lib_path, schema_file)
                 try:
                     with open(schema_path, 'r') as f:
                         data = json.load(f)
@@ -237,7 +489,7 @@ class SchemaCore:
     def delete_schema(self, schema_id: str, library_name: Optional[str] = None) -> bool:
         """Delete a schema"""
         lib_name = library_name or self.active_library
-        schema_file = os.path.join(self.repository_path, lib_name, "schemas", f"{schema_id}.json")
+        schema_file = os.path.join(self.repository_path, lib_name, f"{schema_id}.json")
         
         try:
             if os.path.exists(schema_file):

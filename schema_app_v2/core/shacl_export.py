@@ -35,7 +35,15 @@ class SHACLExporter:
         
         # Export component bricks
         for brick_id in schema.component_brick_ids:
-            component_shacl = self.brick_integration.export_brick_as_shacl(brick_id, library_name)
+            # Get sequence from UI metadata
+            sequence = None
+            ui_metadata = schema.get_component_ui_metadata(brick_id)
+            if ui_metadata:
+                sequence = ui_metadata.sequence
+            
+            component_shacl = self.brick_integration.export_brick_as_shacl(
+                brick_id, library_name, sequence=sequence
+            )
             if component_shacl:
                 lines.append(f"# Component Brick: {brick_id}")
                 lines.append(component_shacl)

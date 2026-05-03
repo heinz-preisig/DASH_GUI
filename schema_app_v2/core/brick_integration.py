@@ -205,7 +205,8 @@ class BrickIntegration:
         except Exception:
             return []
     
-    def export_brick_as_shacl(self, brick_id: str, library_name: Optional[str] = None) -> Optional[str]:
+    def export_brick_as_shacl(self, brick_id: str, library_name: Optional[str] = None, 
+                           sequence: Optional[int] = None) -> Optional[str]:
         """Export a brick as SHACL Turtle format"""
         brick = self.get_brick_by_id(brick_id, library_name)
         if not brick:
@@ -256,6 +257,10 @@ class BrickIntegration:
                     shacl_lines.append(f"    sh:minInclusive {constraint_value} ;")
                 elif constraint_type == "maxInclusive":
                     shacl_lines.append(f"    sh:maxInclusive {constraint_value} ;")
+        
+        # Add sh:order if sequence is provided
+        if sequence is not None:
+            shacl_lines.append(f"    sh:order {sequence} ;")
         
         # Remove trailing semicolon from last line
         if shacl_lines and shacl_lines[-1].endswith(" ;"):

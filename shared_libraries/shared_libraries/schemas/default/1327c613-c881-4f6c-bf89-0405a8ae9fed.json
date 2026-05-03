@@ -1,0 +1,53 @@
+{
+  "schema_id": "1327c613-c881-4f6c-bf89-0405a8ae9fed",
+  "name": "Direct Test",
+  "description": "Direct test schema",
+  "root_brick_id": "root",
+  "component_brick_ids": [
+    "comp1",
+    "comp2",
+    "comp3"
+  ],
+  "flow_config": null,
+  "inheritance_chain": [],
+  "relationships": {},
+  "metadata": {},
+  "component_ui_metadata": {
+    "comp1": {
+      "sequence": 0,
+      "group_id": "group1",
+      "parent_id": null,
+      "label": "Component 1",
+      "help_text": "",
+      "is_collapsible": true,
+      "is_visible": true
+    },
+    "comp2": {
+      "sequence": 1,
+      "group_id": null,
+      "parent_id": null,
+      "label": "Component 2",
+      "help_text": "",
+      "is_collapsible": true,
+      "is_visible": true
+    },
+    "comp3": {
+      "sequence": 2,
+      "group_id": null,
+      "parent_id": null,
+      "label": "Component 3",
+      "help_text": "",
+      "is_collapsible": true,
+      "is_visible": true
+    }
+  },
+  "groups": {
+    "group1": {
+      "label": "Group 1",
+      "description": "Description",
+      "sequence": 0
+    }
+  },
+  "created_at": "2026-05-03T15:39:48.906028",
+  "updated_at": "2026-05-03T15:39:48.906057"
+}

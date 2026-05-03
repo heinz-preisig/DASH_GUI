@@ -131,6 +131,11 @@ class SchemaGUI(QMainWindow):
         self.ui.addComponentButton.clicked.connect(self.add_component_brick)
         self.ui.removeComponentButton.clicked.connect(self.remove_component_brick)
         self.ui.componentBricksListWidget.itemSelectionChanged.connect(self.on_component_selection_changed)
+        self.ui.componentBricksListWidget.itemDoubleClicked.connect(self.open_ui_metadata_editor)
+        
+        # Tree widget double-click
+        if hasattr(self.ui, 'componentTreeWidget'):
+            self.ui.componentTreeWidget.itemDoubleClicked.connect(self.open_ui_metadata_editor_tree)
         
         # View toggle
         self.ui.listViewRadio.toggled.connect(self.on_component_view_changed)
@@ -757,6 +762,37 @@ class SchemaGUI(QMainWindow):
     def on_component_selection_changed(self):
         """Handle component selection change"""
         pass
+    
+    def open_ui_metadata_editor(self, item):
+        """Open UI metadata editor for double-clicked component in list view"""
+        if not self.current_schema:
+            QMessageBox.warning(self, "No Schema", "Please create or select a schema first")
+            return
+        
+        brick_id = item.text()
+        self._open_ui_metadata_dialog(brick_id)
+    
+    def open_ui_metadata_editor_tree(self, item, column):
+        """Open UI metadata editor for double-clicked component in tree view"""
+        if not self.current_schema:
+            QMessageBox.warning(self, "No Schema", "Please create or select a schema first")
+            return
+        
+        brick_id = item.text(0)
+        self._open_ui_metadata_dialog(brick_id)
+    
+    def _open_ui_metadata_dialog(self, brick_id: str):
+        """Open UI metadata dialog for a component"""
+        if brick_id not in self.current_schema.component_brick_ids:
+            QMessageBox.warning(self, "Invalid Component", f"Component '{brick_id}' not found in schema")
+            return
+        
+        dialog = UIMetadataPanelDialog(self.current_schema, brick_id, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            # Save schema after metadata update
+            self.qt_session.schema_core.save_schema(self.current_schema)
+            self.qt_session._emit_event('schema_updated', self.current_schema.to_dict())
+            self.refresh_component_list()
     
     def on_flow_type_changed(self, flow_type):
         """Handle flow type change"""
