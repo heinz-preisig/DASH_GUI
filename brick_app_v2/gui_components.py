@@ -86,7 +86,7 @@ class ConstraintEditorDialog(QDialog):
         loadUi(str(ui_path), self)
         
         # Connect signals
-        self.constraint_type_combo.currentTextChanged.connect(self.on_constraint_type_changed)
+        self.constraintTypeCombo.currentTextChanged.connect(self.on_constraint_type_changed)
         self.okButton.clicked.connect(self.on_accept_clicked)
         self.cancelButton.clicked.connect(self.reject)
         
@@ -348,7 +348,7 @@ PropertyBrickBrowser.on_select_clicked = on_select_clicked
 # Business logic methods for ConstraintEditorDialog
 def on_constraint_type_changed(self):
     """Handle constraint type change"""
-    constraint_type = self.constraint_type_combo.currentText()
+    constraint_type = self.constraintTypeCombo.currentText()
     
     # Hide all value widgets first
     self.numericValueWidget.setVisible(False)
@@ -377,7 +377,7 @@ ConstraintEditorDialog.on_constraint_type_changed = on_constraint_type_changed
 
 def on_accept_clicked(self):
     """Handle OK button click"""
-    constraint_type = self.constraint_type_combo.currentText()
+    constraint_type = self.constraintTypeCombo.currentText()
     
     # Get value based on which widget is visible
     if self.numericValueWidget.isVisible():
@@ -428,23 +428,29 @@ def set_constraint_data(self, constraint_data):
         constraint_value = constraint_data.get('value', '1')
         
         # Find and select the constraint type
-        for i in range(self.constraint_type_combo.count()):
-            if self.constraint_type_combo.itemText(i) == constraint_type:
-                self.constraint_type_combo.setCurrentIndex(i)
+        found = False
+        for i in range(self.constraintTypeCombo.count()):
+            if self.constraintTypeCombo.itemText(i) == constraint_type:
+                self.constraintTypeCombo.setCurrentIndex(i)
+                found = True
                 break
         
+        # Update widget visibility based on constraint type
+        self.on_constraint_type_changed()
+        
         # Set value based on which widget should be visible
-        if constraint_type in ["minCount", "maxCount", "minLength", "maxLength"]:
-            self.numericValueSpinBox.setValue(int(constraint_value))
-        elif constraint_type == "pattern":
-            self.patternValueEdit.setPlainText(str(constraint_value))
-        elif constraint_type == "datatype":
-            self.datatypeCombo.setCurrentText(str(constraint_value))
-        elif constraint_type in ["in", "notIn"]:
-            self.valueListWidget.clear()
-            for val in str(constraint_value).split(','):
-                if val.strip():
-                    self.valueListWidget.addItem(val.strip())
+        if found:
+            if constraint_type in ["minCount", "maxCount", "minLength", "maxLength"]:
+                self.numericValueSpinBox.setValue(int(constraint_value))
+            elif constraint_type == "pattern":
+                self.patternValueEdit.setPlainText(str(constraint_value))
+            elif constraint_type == "datatype":
+                self.datatypeCombo.setCurrentText(str(constraint_value))
+            elif constraint_type in ["in", "notIn"]:
+                self.valueListWidget.clear()
+                for val in str(constraint_value).split(','):
+                    if val.strip():
+                        self.valueListWidget.addItem(val.strip())
 
 ConstraintEditorDialog.set_constraint_data = set_constraint_data
 

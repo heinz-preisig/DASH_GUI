@@ -1,0 +1,35 @@
+{
+  "brick_id": "c8cf185a-3cf7-40a6-b880-ce58a541e81a",
+  "name": "person",
+  "description": "",
+  "object_type": "NodeShape",
+  "target_class": "http://xmlns.com/foaf/0.1/Person",
+  "property_path": "",
+  "properties": {
+    "Name Property": {
+      "name": "Name Property",
+      "property_brick_id": "name_property",
+      "property_brick_name": "Name Property",
+      "property_path": "http://xmlns.com/foaf/0.1/name",
+      "datatype": "xsd:string",
+      "constraints": [],
+      "is_property_brick": true,
+      "description": "Name property with constraints"
+    }
+  },
+  "constraints": [
+    {
+      "constraint_type": "minCount",
+      "value": "1"
+    },
+    {
+      "constraint_type": "maxCount",
+      "value": "1"
+    }
+  ],
+  "tags": [],
+  "created_at": "2026-05-04T12:47:45.532619",
+  "updated_at": "2026-05-04T14:01:32.987057",
+  "targets": [],
+  "metadata": {}
+}

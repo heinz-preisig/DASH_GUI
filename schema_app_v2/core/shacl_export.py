@@ -33,21 +33,22 @@ class SHACLExporter:
                 lines.append(root_shacl)
                 lines.append("")
         
-        # Export component bricks
-        for brick_id in schema.component_brick_ids:
-            # Get sequence from UI metadata
-            sequence = None
-            ui_metadata = schema.get_component_ui_metadata(brick_id)
-            if ui_metadata:
-                sequence = ui_metadata.sequence
-            
-            component_shacl = self.brick_integration.export_brick_as_shacl(
-                brick_id, library_name, sequence=sequence
+        # Export component bricks hierarchically
+        exported_bricks = set()
+        root_components = schema.get_ui_root_components()
+        
+        # Export root-level components first
+        for brick_id in root_components:
+            self._export_component_hierarchy(
+                schema, brick_id, library_name, lines, exported_bricks, 0
             )
-            if component_shacl:
-                lines.append(f"# Component Brick: {brick_id}")
-                lines.append(component_shacl)
-                lines.append("")
+        
+        # Export any remaining components (orphaned or not in tree)
+        for brick_id in schema.component_brick_ids:
+            if brick_id not in exported_bricks:
+                self._export_component_hierarchy(
+                    schema, brick_id, library_name, lines, exported_bricks, 0
+                )
         
         # Add schema metadata
         lines.extend(self._generate_schema_metadata(schema))
@@ -291,3 +292,183 @@ class SHACLExporter:
                     doc_lines.append("")
         
         return "\n".join(doc_lines)
+    
+    def _export_component_hierarchy(self, schema: Schema, brick_id: str, library_name: Optional[str],
+                                   lines: List[str], exported_bricks: set, depth: int):
+        """Export a component and its children hierarchically"""
+        if brick_id in exported_bricks:
+            return
+        
+        # Get brick details
+        brick = self.brick_integration.get_brick_by_id(brick_id, library_name)
+        if not brick:
+            return
+        
+        # Get UI metadata
+        ui_metadata = schema.get_component_ui_metadata(brick_id)
+        sequence = ui_metadata.sequence if ui_metadata else None
+        
+        # Generate hierarchical SHACL
+        hierarchical_shacl = self._generate_hierarchical_shacl(
+            brick, schema, library_name, sequence, depth
+        )
+        
+        if hierarchical_shacl:
+            lines.append(f"# Component: {brick_id} (depth {depth})")
+            lines.append(hierarchical_shacl)
+            lines.append("")
+        
+        exported_bricks.add(brick_id)
+        
+        # Export children recursively
+        children = schema.get_ui_children(brick_id)
+        for child_id in children:
+            self._export_component_hierarchy(
+                schema, child_id, library_name, lines, exported_bricks, depth + 1
+            )
+    
+    def _generate_hierarchical_shacl(self, brick, schema: Schema, library_name: Optional[str],
+                                   sequence: Optional[int], depth: int) -> str:
+        """Generate hierarchical SHACL for a brick"""
+        shacl_lines = []
+        
+        # Prefix declarations (only for root level or first brick)
+        if depth == 0:
+            shacl_lines.append("@prefix sh: <http://www.w3.org/ns/shacl#> .")
+            shacl_lines.append("@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .")
+            
+            if brick.target_class and ":" in brick.target_class:
+                prefix = brick.target_class.split(":")[0]
+                shacl_lines.append(f"@prefix {prefix}: <http://example.org/{prefix}/#> .")
+            
+            shacl_lines.append("")
+        
+        # Shape definition
+        if brick.object_type == "NodeShape":
+            shacl_lines.append(f"{brick.name} a sh:NodeShape ;")
+            if brick.target_class:
+                shacl_lines.append(f"    sh:targetClass {brick.target_class} ;")
+            
+            # Add hierarchical properties for children
+            children = schema.get_ui_children(brick.brick_id)
+            if children:
+                shacl_lines.append("    sh:property [")
+                for i, child_id in enumerate(children):
+                    child_brick = self.brick_integration.get_brick_by_id(child_id, library_name)
+                    if child_brick:
+                        if i > 0:
+                            shacl_lines.append("    ] ;")
+                            shacl_lines.append("    sh:property [")
+                        
+                        if child_brick.object_type == "PropertyShape":
+                            shacl_lines.append(f"        sh:path {child_brick.property_path or child_id} ;")
+                            shacl_lines.append(f"        sh:node {child_brick.name} ;")
+                        elif child_brick.object_type == "NodeShape":
+                            # For nested NodeShapes, create a property shape
+                            property_name = f"has{child_brick.name.capitalize()}"
+                            shacl_lines.append(f"        sh:path {property_name} ;")
+                            shacl_lines.append(f"        sh:node {child_brick.name} ;")
+                        
+                        # Add UI metadata as SHACL properties
+                        child_ui_metadata = schema.get_component_ui_metadata(child_id)
+                        if child_ui_metadata:
+                            if child_ui_metadata.sequence is not None:
+                                shacl_lines.append(f"        sh:order {child_ui_metadata.sequence} ;")
+                            if child_ui_metadata.label:
+                                shacl_lines.append(f"        sh:name \"{child_ui_metadata.label}\"@en ;")
+                            if child_ui_metadata.help_text:
+                                shacl_lines.append(f"        sh:description \"{child_ui_metadata.help_text}\"@en ;")
+                
+                shacl_lines.append("    ] ;")
+                
+        else:  # PropertyShape
+            shacl_lines.append(f"{brick.name} a sh:PropertyShape ;")
+            if brick.property_path:
+                shacl_lines.append(f"    sh:path {brick.property_path} ;")
+            
+            # Add properties
+            for prop_name, prop_value in brick.properties.items():
+                if prop_name == "datatype":
+                    shacl_lines.append(f"    sh:datatype {prop_value} ;")
+                elif prop_name in ["minCount", "maxCount", "minLength", "maxLength"]:
+                    shacl_lines.append(f"    sh:{prop_name} {prop_value} ;")
+        
+        # Add brick properties and constraints
+        for prop_name, prop_value in brick.properties.items():
+            if prop_name not in ["datatype", "minCount", "maxCount", "minLength", "maxLength"]:
+                shacl_lines.append(f"    sh:{prop_name} {prop_value} ;")
+        
+        # Add constraints
+        for constraint in brick.constraints:
+            for constraint_type, constraint_value in constraint.items():
+                if constraint_type == "pattern":
+                    shacl_lines.append(f"    sh:pattern \"{constraint_value}\" ;")
+                elif constraint_type in ["minInclusive", "maxInclusive"]:
+                    shacl_lines.append(f"    sh:{constraint_type} {constraint_value} ;")
+        
+        # Add sh:order if sequence is provided
+        if sequence is not None:
+            shacl_lines.append(f"    sh:order {sequence} ;")
+        
+        # Remove trailing semicolon from last line
+        if shacl_lines and shacl_lines[-1].endswith(" ;"):
+            shacl_lines[-1] = shacl_lines[-1][:-2] + " ."
+        
+        return "\n".join(shacl_lines)
+    
+    def export_schema_hierarchical(self, schema: Schema, library_name: Optional[str] = None) -> str:
+        """Export schema with explicit hierarchical structure"""
+        lines = []
+        
+        # Add prefixes
+        lines.extend(self._generate_prefixes(schema, library_name))
+        lines.append("")
+        
+        # Add comment about hierarchical structure
+        lines.append("# Hierarchical SHACL Schema Export")
+        lines.append("# Components are organized in tree structure with sh:node references")
+        lines.append("")
+        
+        # Export root brick
+        if schema.root_brick_id:
+            root_shacl = self.brick_integration.export_brick_as_shacl(
+                schema.root_brick_id, library_name
+            )
+            if root_shacl:
+                lines.append("# Root Brick")
+                lines.append(root_shacl)
+                lines.append("")
+        
+        # Export hierarchical tree structure
+        tree = schema.get_hierarchical_tree(self.brick_integration)
+        for parent_id, parent_info in tree.items():
+            lines.append(f"# Parent Component: {parent_id}")
+            lines.append(f"# Type: {parent_info['brick_type']}")
+            lines.append("")
+            
+            # Export parent brick
+            parent_brick = self.brick_integration.get_brick_by_id(parent_id, library_name)
+            if parent_brick:
+                parent_shacl = self._generate_hierarchical_shacl(
+                    parent_brick, schema, library_name, None, 0
+                )
+                if parent_shacl:
+                    lines.append(parent_shacl)
+                    lines.append("")
+            
+            # Export children
+            for child_id in parent_info['children']:
+                child_brick = self.brick_integration.get_brick_by_id(child_id, library_name)
+                if child_brick:
+                    child_shacl = self._generate_hierarchical_shacl(
+                        child_brick, schema, library_name, None, 1
+                    )
+                    if child_shacl:
+                        lines.append(f"# Child Component: {child_id}")
+                        lines.append(child_shacl)
+                        lines.append("")
+        
+        # Add schema metadata
+        lines.extend(self._generate_schema_metadata(schema))
+        
+        return "\n".join(lines)

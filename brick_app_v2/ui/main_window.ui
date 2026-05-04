@@ -280,6 +280,13 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QPushButton" name="deleteProperty">
+        <property name="text">
+         <string>delete property</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </widget>

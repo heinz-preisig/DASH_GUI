@@ -207,28 +207,50 @@ class BrickBusinessLogic:
     def remove_property(self, prop_name: str) -> Tuple[bool, str]:
         """Remove property from current brick"""
         try:
-            success = self.brick_core.remove_property(prop_name)
-            if success:
-                # Update state
-                brick_state = app_state_manager.get_brick_state()
-                if prop_name in brick_state.properties:
-                    del brick_state.properties[prop_name]
-                    app_state_manager.update_brick_field("properties", brick_state.properties)
+            # Update brick_core first (doesn't return success status)
+            self.brick_core.remove_property(prop_name)
+            
+            # Update state
+            brick_state = app_state_manager.get_brick_state()
+            if prop_name in brick_state.properties:
+                del brick_state.properties[prop_name]
+                app_state_manager.update_brick_field("properties", brick_state.properties)
                 return True, "Property removed successfully"
             else:
-                return False, "Failed to remove property"
+                return False, "Property not found in brick state"
         except Exception as e:
             return False, f"Error removing property: {str(e)}"
     
-    def add_constraint(self, prop_name: str, constraint_data: Dict[str, Any]) -> Tuple[bool, str]:
+    def add_constraint(self, prop_name: str, constraint_data: Dict[str, Any], prop_data: Dict[str, Any] = None) -> Tuple[bool, str]:
         """Add constraint to property"""
         try:
             # Update brick state with constraint
             brick_state = app_state_manager.get_brick_state()
             if prop_name in brick_state.properties:
-                if 'constraints' not in brick_state.properties[prop_name]:
-                    brick_state.properties[prop_name]['constraints'] = []
-                brick_state.properties[prop_name]['constraints'].append(constraint_data)
+                # Ensure property data is a dict, not a string
+                existing_prop = brick_state.properties[prop_name]
+                if not isinstance(existing_prop, dict):
+                    # Try to recover by replacing with prop_data if available
+                    if prop_data and isinstance(prop_data, dict):
+                        brick_state.properties[prop_name] = prop_data
+                        existing_prop = prop_data
+                    else:
+                        return False, f"Property '{prop_name}' data is corrupted (expected dict, got {type(existing_prop).__name__})"
+                if 'constraints' not in existing_prop:
+                    existing_prop['constraints'] = []
+                existing_prop['constraints'].append(constraint_data)
+                app_state_manager.update_brick_field("properties", brick_state.properties)
+            elif prop_data:
+                # Property not in brick state yet, add full property data with constraint
+                prop_data_copy = prop_data.copy()
+                if 'constraints' not in prop_data_copy:
+                    prop_data_copy['constraints'] = []
+                prop_data_copy['constraints'].append(constraint_data)
+                brick_state.properties[prop_name] = prop_data_copy
+                app_state_manager.update_brick_field("properties", brick_state.properties)
+            else:
+                # Property not in brick state and no prop_data provided
+                brick_state.properties[prop_name] = {'constraints': [constraint_data]}
                 app_state_manager.update_brick_field("properties", brick_state.properties)
             
             self.brick_core.add_constraint(constraint_data)
@@ -253,6 +275,24 @@ class BrickBusinessLogic:
                 return False, "Property not found or has no constraints"
         except Exception as e:
             return False, f"Error removing constraint: {str(e)}"
+    
+    def update_constraint(self, prop_name: str, constraint_index: int, constraint_data: Dict[str, Any]) -> Tuple[bool, str]:
+        """Update constraint at specific index"""
+        try:
+            # Update brick state by modifying constraint at index
+            brick_state = app_state_manager.get_brick_state()
+            if prop_name in brick_state.properties and 'constraints' in brick_state.properties[prop_name]:
+                constraints = brick_state.properties[prop_name]['constraints']
+                if 0 <= constraint_index < len(constraints):
+                    constraints[constraint_index] = constraint_data
+                    app_state_manager.update_brick_field("properties", brick_state.properties)
+                    return True, "Constraint updated successfully"
+                else:
+                    return False, "Invalid constraint index"
+            else:
+                return False, "Property not found or has no constraints"
+        except Exception as e:
+            return False, f"Error updating constraint: {str(e)}"
     
     # Ontology Operations
     def get_ontology_classes(self) -> List[Dict[str, Any]]:

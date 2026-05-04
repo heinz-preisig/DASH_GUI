@@ -10,15 +10,8 @@ brick_app_v2.egg-info/requires.txt
 brick_app_v2.egg-info/top_level.txt
 core/__init__.py
 core/abstract_events.py
-core/brick_backend.py
-core/brick_core.py
 core/brick_core_simple.py
 core/brick_generator.py
-core/dialog_controller.py
-core/editor_backend.py
-core/editor_controller.py
-core/main_backend.py
 core/multi_tenant_backend.py
 core/ontology_manager.py
-core/ontology_manager_broken.py
 core/session_manager.py

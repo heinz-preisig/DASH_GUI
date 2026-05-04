@@ -334,6 +334,152 @@ class Schema:
         self.initialize_component_ui_metadata(brick_id)
         self.component_ui_metadata[brick_id].is_visible = is_visible
         self.update_timestamp()
+    
+    # Enhanced Tree Structure Methods for Hierarchical Schemas
+    
+    def get_hierarchical_tree(self, brick_integration=None) -> Dict[str, Any]:
+        """Get complete hierarchical tree structure with brick details"""
+        if not brick_integration:
+            return self.get_ui_tree()
+        
+        tree = {}
+        for brick_id in self.component_brick_ids:
+            children = self.get_ui_children(brick_id)
+            if children:
+                # Get brick details
+                brick = brick_integration.get_brick_by_id(brick_id)
+                brick_info = {
+                    'brick_id': brick_id,
+                    'brick_type': brick.object_type if brick else 'unknown',
+                    'children': children,
+                    'ui_metadata': self.get_component_ui_metadata(brick_id)
+                }
+                tree[brick_id] = brick_info
+        return tree
+    
+    def get_tree_depth(self, brick_id: str) -> int:
+        """Get depth of a component in the tree (root = 0)"""
+        if brick_id not in self.component_brick_ids:
+            return -1
+        
+        depth = 0
+        current = brick_id
+        while True:
+            parent = self.get_ui_parent(current)
+            if not parent:
+                break
+            depth += 1
+            current = parent
+        return depth
+    
+    def get_tree_level(self, depth: int) -> List[str]:
+        """Get all components at a specific tree depth"""
+        components_at_level = []
+        for brick_id in self.component_brick_ids:
+            if self.get_tree_depth(brick_id) == depth:
+                components_at_level.append(brick_id)
+        return components_at_level
+    
+    def validate_tree_structure(self) -> Dict[str, Any]:
+        """Validate tree structure for cycles and orphaned nodes"""
+        issues = []
+        warnings = []
+        
+        # Check for cycles
+        visited = set()
+        recursion_stack = set()
+        
+        def has_cycle(node):
+            if node in recursion_stack:
+                return True
+            if node in visited:
+                return False
+            
+            visited.add(node)
+            recursion_stack.add(node)
+            
+            children = self.get_ui_children(node)
+            for child in children:
+                if has_cycle(child):
+                    return True
+            
+            recursion_stack.remove(node)
+            return False
+        
+        # Check each component for cycles
+        for brick_id in self.component_brick_ids:
+            if has_cycle(brick_id):
+                issues.append(f"Circular reference detected involving component: {brick_id}")
+                break
+        
+        # Check for orphaned nodes (parent not in component list)
+        for brick_id in self.component_brick_ids:
+            parent = self.get_ui_parent(brick_id)
+            if parent and parent not in self.component_brick_ids:
+                warnings.append(f"Component {brick_id} has parent {parent} which is not in the schema")
+        
+        # Check for deep nesting
+        for brick_id in self.component_brick_ids:
+            depth = self.get_tree_depth(brick_id)
+            if depth > 5:
+                warnings.append(f"Component {brick_id} is deeply nested (depth {depth})")
+        
+        return {
+            'valid': len(issues) == 0,
+            'issues': issues,
+            'warnings': warnings,
+            'tree_stats': {
+                'total_components': len(self.component_brick_ids),
+                'root_components': len(self.get_ui_root_components()),
+                'max_depth': max([self.get_tree_depth(bid) for bid in self.component_brick_ids]) if self.component_brick_ids else 0
+            }
+        }
+    
+    def get_nested_components(self, parent_brick_id: str) -> List[str]:
+        """Get all nested components (recursively) under a parent"""
+        nested = []
+        children = self.get_ui_children(parent_brick_id)
+        
+        for child in children:
+            nested.append(child)
+            nested.extend(self.get_nested_components(child))
+        
+        return nested
+    
+    def get_component_path(self, brick_id: str) -> List[str]:
+        """Get the path from root to a component"""
+        if brick_id not in self.component_brick_ids:
+            return []
+        
+        path = []
+        current = brick_id
+        while current:
+            path.insert(0, current)
+            parent = self.get_ui_parent(current)
+            if not parent:
+                break
+            current = parent
+        
+        return path
+    
+    def is_ancestor(self, ancestor_id: str, descendant_id: str) -> bool:
+        """Check if ancestor_id is an ancestor of descendant_id"""
+        current = descendant_id
+        while current:
+            parent = self.get_ui_parent(current)
+            if parent == ancestor_id:
+                return True
+            current = parent
+        return False
+    
+    def get_leaf_components(self) -> List[str]:
+        """Get all leaf components (components with no children)"""
+        leaves = []
+        for brick_id in self.component_brick_ids:
+            children = self.get_ui_children(brick_id)
+            if not children:
+                leaves.append(brick_id)
+        return leaves
 
 
 @dataclass

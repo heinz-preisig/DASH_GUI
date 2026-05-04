@@ -31,6 +31,9 @@ from gui_components import (
     SimpleOntologyBrowser
 )
 
+# Constants
+MAX_CONSTRAINTS_IN_SUMMARY = 10  # Maximum constraints shown in property list preview
+
 
 class RefactoredBrickEditor(QMainWindow):
     """Refactored SHACL Brick Editor using clean architecture"""
@@ -106,6 +109,7 @@ class RefactoredBrickEditor(QMainWindow):
         self.addProperty.clicked.connect(self.add_property)
         self.addPropertyBrick.clicked.connect(self.add_property_brick)
         self.addConstraint.clicked.connect(self.add_constraint)
+        self.deleteProperty.clicked.connect(self.delete_property)
         
         # Control signals
         self.saveBrick.clicked.connect(self.save_brick)
@@ -496,11 +500,37 @@ class RefactoredBrickEditor(QMainWindow):
             constraint_data = dialog.get_constraint_data()
             if constraint_data:
                 prop_name = property_data.get('name')
-                success, message = brick_business_logic.add_constraint(prop_name, constraint_data)
+                success, message = brick_business_logic.add_constraint(prop_name, constraint_data, property_data)
                 if success:
                     self._update_property_list()
                 else:
                     QMessageBox.warning(self, "Error", message)
+    
+    def delete_property(self):
+        """Delete selected property from current brick"""
+        property_data = self._get_selected_property()
+        if not property_data:
+            QMessageBox.warning(self, "Warning", "Please select a property to delete.")
+            return
+        
+        prop_name = property_data.get('name')
+        if not prop_name:
+            QMessageBox.warning(self, "Error", "Selected property has no name.")
+            return
+        
+        # Confirm deletion
+        reply = QMessageBox.question(
+            self, "Delete Property",
+            f"Are you sure you want to delete the property '{prop_name}'?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            success, message = brick_business_logic.remove_property(prop_name)
+            if success:
+                self._update_property_list()
+            else:
+                QMessageBox.warning(self, "Error", message)
     
     def on_property_double_clicked(self, item):
         """Handle property double-click - show constraint management dialog"""
@@ -697,8 +727,8 @@ class RefactoredBrickEditor(QMainWindow):
             return ""
         
         constraint_types = []
-        for constraint in constraints[:3]:  # Show max 3 constraints
-            constraint_type = constraint.get('type', 'unknown')
+        for constraint in constraints[:MAX_CONSTRAINTS_IN_SUMMARY]:  # Show max constraints in summary
+            constraint_type = constraint.get('constraint_type', 'unknown')
             constraint_value = constraint.get('value', '')
             
             # Format constraint type nicely
@@ -716,8 +746,8 @@ class RefactoredBrickEditor(QMainWindow):
             nice_type = type_mapping.get(constraint_type, constraint_type)
             constraint_types.append(f"{nice_type}={constraint_value}")
         
-        if len(constraints) > 3:
-            constraint_types.append("...")
+        if len(constraints) > MAX_CONSTRAINTS_IN_SUMMARY:
+            constraint_types.append(f"... ({len(constraints) - MAX_CONSTRAINTS_IN_SUMMARY} more)")
         
         return ", ".join(constraint_types)
     
@@ -839,7 +869,7 @@ class RefactoredBrickEditor(QMainWindow):
         
         if constraints:
             for i, constraint in enumerate(constraints):
-                constraint_text = f"{constraint.get('type', 'Unknown')}: {constraint.get('value', 'No value')}"
+                constraint_text = f"{constraint.get('constraint_type', 'Unknown')}: {constraint.get('value', 'No value')}"
                 list_item = QListWidgetItem(constraint_text)
                 list_item.setData(Qt.ItemDataRole.UserRole, i)  # Store index
                 constraints_list.addItem(list_item)
@@ -870,11 +900,8 @@ class RefactoredBrickEditor(QMainWindow):
             if constraint_dialog.exec() == QDialog.DialogCode.Accepted:
                 new_constraint = constraint_dialog.get_constraint_data()
                 if new_constraint:
-                    if 'constraints' not in prop_data:
-                        prop_data['constraints'] = []
-                    prop_data['constraints'].append(new_constraint)
-                    # Update brick state
-                    success, message = brick_business_logic.add_constraint(prop_data.get('name'), new_constraint)
+                    # Update brick state (pass prop_data to ensure full property data is stored)
+                    success, message = brick_business_logic.add_constraint(prop_data.get('name'), new_constraint, prop_data)
                     if success:
                         self._update_property_list()
                         refresh_constraint_list()
@@ -882,12 +909,21 @@ class RefactoredBrickEditor(QMainWindow):
                         QMessageBox.warning(self, "Error", message)
         
         def refresh_constraint_list():
+            nonlocal constraints
             constraints_list.clear()
-            constraints = prop_data.get('constraints', [])
+            # Get fresh constraints from brick state
+            brick_state = app_state_manager.get_brick_state()
+            prop_name = prop_data.get('name')
+            if prop_name and prop_name in brick_state.properties:
+                constraints = brick_state.properties[prop_name].get('constraints', [])
+                # Also update prop_data to stay in sync
+                prop_data['constraints'] = constraints
+            else:
+                constraints = prop_data.get('constraints', [])
             
             if constraints:
                 for i, constraint in enumerate(constraints):
-                    constraint_text = f"{constraint.get('type', 'Unknown')}: {constraint.get('value', 'No value')}"
+                    constraint_text = f"{constraint.get('constraint_type', 'Unknown')}: {constraint.get('value', 'No value')}"
                     list_item = QListWidgetItem(constraint_text)
                     list_item.setData(Qt.ItemDataRole.UserRole, i)  # Store index
                     constraints_list.addItem(list_item)
@@ -908,11 +944,10 @@ class RefactoredBrickEditor(QMainWindow):
                 if constraint_dialog.exec() == QDialog.DialogCode.Accepted:
                     updated_constraint = constraint_dialog.get_constraint_data()
                     if updated_constraint:
-                        constraints[constraint_index] = updated_constraint
-                        # Update brick state
+                        # Update constraint at the same index
                         prop_name = prop_data.get('name')
                         if prop_name:
-                            success, message = brick_business_logic.add_constraint(prop_name, updated_constraint)
+                            success, message = brick_business_logic.update_constraint(prop_name, constraint_index, updated_constraint)
                             if success:
                                 self._update_property_list()
                                 refresh_constraint_list()
@@ -931,7 +966,7 @@ class RefactoredBrickEditor(QMainWindow):
                 constraint = constraints[constraint_index]
                 reply = QMessageBox.question(
                     dialog, "Delete Constraint",
-                    f"Are you sure you want to delete the constraint '{constraint.get('type', 'Unknown')}'?",
+                    f"Are you sure you want to delete the constraint '{constraint.get('constraint_type', 'Unknown')}'?",
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
                 )
                 
@@ -956,7 +991,7 @@ class RefactoredBrickEditor(QMainWindow):
         
         # Enable/disable buttons based on selection
         def update_button_states():
-            has_selection = constraints_list.currentItem() is not None and constraints
+            has_selection = constraints_list.currentItem() is not None and bool(constraints)
             edit_btn.setEnabled(has_selection)
             delete_btn.setEnabled(has_selection)
         

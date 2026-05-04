@@ -1,0 +1,48 @@
+{
+  "form_title": "Product Catalog",
+  "form_description": "Complex product schema with nested structures",
+  "schema_id": "c5b14aef-abd1-4017-a3df-e797d9abf956",
+  "root_shape": "ProductNode",
+  "namespaces": {
+    "sh": "http://www.w3.org/ns/shacl#",
+    "dash": "http://datashapes.org/dash#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
+  },
+  "shapes": {},
+  "property_groups": {
+    "basic_info": {
+      "label": "Basic Information",
+      "description": "Core product details",
+      "order": 0
+    },
+    "company_info": {
+      "label": "Company Information",
+      "description": "Manufacturer details",
+      "order": 1
+    },
+    "properties_info": {
+      "label": "Properties",
+      "description": "Product characteristics",
+      "order": 2
+    }
+  },
+  "ui_layout": {
+    "type": "hierarchical",
+    "root_components": [
+      "productName",
+      "productDescription",
+      "company",
+      "address",
+      "properties"
+    ],
+    "tree_structure": {
+      "company": {
+        "brick_id": "company",
+        "brick_type": "unknown",
+        "children": [
+          "companyName",
+          "companyLogo"
+        ],
+        "ui_metadata": 

@@ -60,8 +60,8 @@ pip install PyQt6 rdflib
 
 ```bash
 # From the main DASH_GUI directory
-python run_brick_app.py --gui          # Launch GUI
-python run_brick_app.py --test         # Run tests
+python run_brick_app_qt.py             # Launch Qt GUI
+python run_brick_app_web.py            # Launch Web Interface
 ```
 
 ### Option 2: Package Import
@@ -77,31 +77,22 @@ backend, processor = create_brick_system()
 run_gui()
 ```
 
-### Option 3: Direct Package Usage
+### Option 2: Direct Usage with uv
 
 ```bash
-# Navigate to the package directory
-cd shacl_brick_app
+# Navigate to brick_app_v2 directory
+cd brick_app_v2
 
-# Run the GUI
-python bricks.py --gui
+# Run the Qt GUI
+uv run main.py --gui
 
-# Run tests
-python bricks.py --test
-
-# Use custom repository path
-python bricks.py --gui --repository ./my_libraries
+# Run the Web Interface
+uv run main.py --web --port 5000
 
 # Show help
-python bricks.py --help
+uv run main.py --help
 ```
 
-### Option 4: Direct GUI Launch
-
-```bash
-# Run GUI directly (from package directory)
-python gui/brick_gui.py
-```
 
 ## Usage Examples
 
@@ -147,30 +138,39 @@ python examples/basic_usage.py
 ## Package Structure
 
 ```
-shacl_brick_app/
+brick_app_v2/
 |
-|__ __init__.py              # Main package interface
-|__ bricks.py                # Command line entry point (renamed from main.py)
-|__ setup.py                 # Package setup script
+|__ main.py                  # Application entry point
+|__ refactored_gui.py        # Qt GUI frontend
+|__ gui_components.py        # Dialog components (load from .ui files)
+|__ pyproject.toml           # Package configuration
 |__ README.md                # This file
+|__ DOCUMENTATION.md         # Detailed documentation
 |
 |__ core/                    # Backend components
 |   |__ __init__.py
 |   |__ brick_generator.py   # Core SHACL brick system
-|   |__ brick_backend.py      # Backend API
+|   |__ brick_core_simple.py # Brick core implementation
+|   |__ ontology_manager.py   # Ontology management
+|   |__ multi_tenant_backend.py # Multi-tenant backend
+|   |__ session_manager.py    # Session management
+|   |__ abstract_events.py    # Event system
 |
-|__ gui/                     # Frontend components
-|   |__ __init__.py
-|   |__ brick_gui.py         # PyQt6 GUI
+|__ ui/                      # Qt Designer .ui files
+|   |__ main_window.ui        # Main window
+|   |__ ontology_browser_simple.ui
+|   |__ property_brick_browser.ui
+|   |__ constraint_editor.ui
+|   |__ property_editor.ui
 |
-|__ tests/                   # Test suite
-|   |__ __init__.py
-|   |__ test_brick_generator.py
-|   |__ test_export_fix.py
+|__ business/                # Business logic
+|   |__ brick_operations.py
 |
-|__ examples/                # Example scripts
-|   |__ __init__.py
-|   |__ basic_usage.py       # Basic usage example
+|__ api/                     # Web interface
+|   |__ web_api.py            # Flask web server
+|
+|__ state/                   # State management
+|   |__ app_state.py
 ```
 
 ## Core Components
@@ -346,12 +346,13 @@ The main project documentation is maintained in `../project_memory.md` and conta
 - **Documentation**: Complete usage examples and API reference
 
 ### Files Created
-- `shacl_brick_app/core/brick_generator.py` - Core SHACL brick system
-- `shacl_brick_app/core/brick_backend.py` - Backend API
-- `shacl_brick_app/gui/brick_gui.py` - PyQt6 GUI
-- `shacl_brick_app/tests/` - Complete test suite
-- `shacl_brick_app/examples/` - Usage examples
-- `run_brick_app.py` - Easy launcher script
+- `brick_app_v2/core/brick_generator.py` - Core SHACL brick system
+- `brick_app_v2/core/brick_core_simple.py` - Brick core implementation
+- `brick_app_v2/refactored_gui.py` - Qt GUI frontend
+- `brick_app_v2/gui_components.py` - Dialog components (load from .ui files)
+- `brick_app_v2/ui/` - Qt Designer .ui files for all dialogs
+- `run_brick_app_qt.py` - Qt GUI launcher script
+- `run_brick_app_web.py` - Web interface launcher script
 
 ## Next Steps
 
