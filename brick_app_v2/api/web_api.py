@@ -22,9 +22,11 @@ except ImportError:
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../business'))
 
 from core.multi_tenant_backend import MultiTenantBackend
 from core.abstract_events import EventType, ClientType
+from brick_operations import brick_business_logic
 
 
 class BrickWebAPI:
@@ -273,7 +275,7 @@ class BrickWebAPI:
                     "message": "No property data provided"
                 }), 400
             
-            success = backend_session.editor_backend.add_property_to_current_brick(data)
+            success, message = brick_business_logic.add_property(data)
             
             if success:
                 return jsonify({
@@ -283,7 +285,7 @@ class BrickWebAPI:
             else:
                 return jsonify({
                     "status": "error",
-                    "message": "Failed to add property"
+                    "message": message
                 }), 400
         
         @self.app.route('/api/session/<session_id>/brick/properties/<property_name>', methods=['DELETE'])
@@ -296,7 +298,7 @@ class BrickWebAPI:
                     "message": "Session not found"
                 }), 404
             
-            success = backend_session.editor_backend.remove_property_from_current_brick(property_name)
+            success, message = brick_business_logic.remove_property(property_name)
             
             if success:
                 return jsonify({
@@ -306,7 +308,109 @@ class BrickWebAPI:
             else:
                 return jsonify({
                     "status": "error",
-                    "message": "Failed to remove property"
+                    "message": message
+                }), 400
+        
+        # Constraint operations
+        @self.app.route('/api/session/<session_id>/brick/properties/<property_name>/constraints', methods=['POST'])
+        def add_constraint(session_id, property_name):
+            """Add constraint to a property"""
+            backend_session = self.backend.get_session(session_id)
+            if not backend_session:
+                return jsonify({
+                    "status": "error",
+                    "message": "Session not found"
+                }), 404
+            
+            data = request.get_json()
+            if not data:
+                return jsonify({
+                    "status": "error",
+                    "message": "No constraint data provided"
+                }), 400
+            
+            constraint_data = {
+                'constraint_type': data.get('constraint_type', 'minLength'),
+                'value': data.get('value', ''),
+                'name': data.get('constraint_type', 'minLength')
+            }
+            
+            success, message = brick_business_logic.add_constraint(
+                property_name, constraint_data
+            )
+            
+            if success:
+                return jsonify({
+                    "status": "success",
+                    "message": "Constraint added successfully"
+                })
+            else:
+                return jsonify({
+                    "status": "error",
+                    "message": message
+                }), 400
+        
+        @self.app.route('/api/session/<session_id>/brick/properties/<property_name>/constraints/<int:index>', methods=['PUT'])
+        def update_constraint(session_id, property_name, index):
+            """Update constraint at specific index"""
+            backend_session = self.backend.get_session(session_id)
+            if not backend_session:
+                return jsonify({
+                    "status": "error",
+                    "message": "Session not found"
+                }), 404
+            
+            data = request.get_json()
+            if not data:
+                return jsonify({
+                    "status": "error",
+                    "message": "No constraint data provided"
+                }), 400
+            
+            constraint_data = {
+                'constraint_type': data.get('constraint_type', 'minLength'),
+                'value': data.get('value', ''),
+                'name': data.get('constraint_type', 'minLength')
+            }
+            
+            success, message = brick_business_logic.update_constraint(
+                property_name, index, constraint_data
+            )
+            
+            if success:
+                return jsonify({
+                    "status": "success",
+                    "message": "Constraint updated successfully"
+                })
+            else:
+                return jsonify({
+                    "status": "error",
+                    "message": message
+                }), 400
+        
+        @self.app.route('/api/session/<session_id>/brick/properties/<property_name>/constraints/<int:index>', methods=['DELETE'])
+        def remove_constraint(session_id, property_name, index):
+            """Remove constraint at specific index"""
+            backend_session = self.backend.get_session(session_id)
+            if not backend_session:
+                return jsonify({
+                    "status": "error",
+                    "message": "Session not found"
+                }), 404
+            
+            success, message = brick_business_logic.remove_constraint(
+                property_name, index
+            )
+            
+            if success:
+                return jsonify({
+                    "status": "success",
+                    "message": "Constraint removed successfully"
+                })
+            else:
+                return jsonify({
+                    "status": "error",
+                    "message": message
                 }), 400
         
         # Target class operations

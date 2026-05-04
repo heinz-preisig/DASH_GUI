@@ -247,6 +247,65 @@ class BrickCore:
         del self.current_brick.constraints[index]
         self.current_brick.update_timestamp()
     
+    def add_constraint_to_property(self, prop_name: str, constraint_data: Dict[str, Any]) -> tuple[bool, str]:
+        """Add constraint to a specific property"""
+        if not self.current_brick:
+            return False, "No brick is currently being edited"
+        
+        if prop_name not in self.current_brick.properties:
+            return False, f"Property '{prop_name}' not found"
+        
+        prop = self.current_brick.properties[prop_name]
+        if not isinstance(prop, dict):
+            return False, f"Property '{prop_name}' has invalid data type"
+        
+        if 'constraints' not in prop:
+            prop['constraints'] = []
+        
+        prop['constraints'].append(constraint_data)
+        self.current_brick.update_timestamp()
+        return True, "Constraint added successfully"
+    
+    def update_constraint_on_property(self, prop_name: str, index: int, constraint_data: Dict[str, Any]) -> tuple[bool, str]:
+        """Update constraint at specific index on a property"""
+        if not self.current_brick:
+            return False, "No brick is currently being edited"
+        
+        if prop_name not in self.current_brick.properties:
+            return False, f"Property '{prop_name}' not found"
+        
+        prop = self.current_brick.properties[prop_name]
+        if not isinstance(prop, dict):
+            return False, f"Property '{prop_name}' has invalid data type"
+        
+        constraints = prop.get('constraints', [])
+        if not (0 <= index < len(constraints)):
+            return False, f"Invalid constraint index {index}"
+        
+        constraints[index] = constraint_data
+        self.current_brick.update_timestamp()
+        return True, "Constraint updated successfully"
+    
+    def remove_constraint_from_property(self, prop_name: str, index: int) -> tuple[bool, str]:
+        """Remove constraint at specific index from a property"""
+        if not self.current_brick:
+            return False, "No brick is currently being edited"
+        
+        if prop_name not in self.current_brick.properties:
+            return False, f"Property '{prop_name}' not found"
+        
+        prop = self.current_brick.properties[prop_name]
+        if not isinstance(prop, dict):
+            return False, f"Property '{prop_name}' has invalid data type"
+        
+        constraints = prop.get('constraints', [])
+        if not (0 <= index < len(constraints)):
+            return False, f"Invalid constraint index {index}"
+        
+        constraints.pop(index)
+        self.current_brick.update_timestamp()
+        return True, "Constraint removed successfully"
+    
     def get_libraries(self) -> List[str]:
         """Get list of all libraries"""
         libraries = []

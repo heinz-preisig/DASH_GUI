@@ -5,18 +5,7 @@
   "object_type": "NodeShape",
   "target_class": "http://xmlns.com/foaf/0.1/Person",
   "property_path": "",
-  "properties": {
-    "Name Property": {
-      "name": "Name Property",
-      "property_brick_id": "name_property",
-      "property_brick_name": "Name Property",
-      "property_path": "http://xmlns.com/foaf/0.1/name",
-      "datatype": "xsd:string",
-      "constraints": [],
-      "is_property_brick": true,
-      "description": "Name property with constraints"
-    }
-  },
+  "properties": {},
   "constraints": [
     {
       "constraint_type": "minCount",
@@ -29,7 +18,7 @@
   ],
   "tags": [],
   "created_at": "2026-05-04T12:47:45.532619",
-  "updated_at": "2026-05-04T14:01:32.987057",
+  "updated_at": "2026-05-04T14:34:21.118746",
   "targets": [],
   "metadata": {}
 }

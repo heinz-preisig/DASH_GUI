@@ -22,6 +22,10 @@ class MultiTenantBackend:
         # Session management
         self.session_manager = SessionManager(repository_path)
         
+        # Shared core for repository operations (doesn't require session)
+        from .brick_core_simple import BrickCore
+        self._shared_core = BrickCore(repository_path)
+        
         # Event management
         self.event_manager = MultiClientEventManager()
         
@@ -153,6 +157,67 @@ class MultiTenantBackend:
         """Cleanup inactive sessions"""
         return self.session_manager.cleanup_inactive_sessions(max_age_hours)
     
+    # Repository operations using shared core (no session required)
+    def get_brick_libraries(self) -> Dict[str, Any]:
+        """Get all available brick libraries"""
+        try:
+            libraries = self._shared_core.get_libraries()
+            return {
+                "status": "success",
+                "libraries": libraries
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": str(e)
+            }
+    
+    def get_library_bricks(self, library_name: str) -> Dict[str, Any]:
+        """Get all bricks in a specific library"""
+        try:
+            bricks = self._shared_core.get_all_bricks(library_name)
+            return {
+                "status": "success",
+                "bricks": [b.to_dict() for b in bricks]
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": str(e)
+            }
+    
+    def get_all_bricks(self) -> Dict[str, Any]:
+        """Get all bricks across all libraries"""
+        try:
+            bricks = self._shared_core.get_all_bricks()
+            return {
+                "status": "success",
+                "bricks": [b.to_dict() for b in bricks]
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": str(e)
+            }
+    
+    def get_repository_info(self) -> Dict[str, Any]:
+        """Get repository information"""
+        try:
+            libraries = self._shared_core.get_libraries()
+            all_bricks = self._shared_core.get_all_bricks()
+            return {
+                "status": "success",
+                "repository_path": self.repository_path,
+                "libraries": libraries,
+                "library_count": len(libraries),
+                "brick_count": len(all_bricks)
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": str(e)
+            }
+    
     # Qt-specific convenience methods for backward compatibility
     def qt_create_new_brick(self, brick_type: str = "NodeShape") -> Dict[str, Any]:
         """Create new brick in Qt session (backward compatibility)"""
@@ -221,35 +286,6 @@ class MultiTenantBackend:
                          event_type: Optional[EventType] = None) -> List[Event]:
         """Get event history"""
         return self.event_manager.get_event_history(session_id, event_type)
-    
-    # Repository operations (shared across sessions)
-    def get_repository_info(self) -> Dict[str, Any]:
-        """Get repository information (shared)"""
-        qt_session = self.get_qt_session()
-        if qt_session:
-            return qt_session.brick_api.get_repository_info()
-        return {"status": "error", "message": "No session available"}
-    
-    def get_brick_libraries(self) -> Dict[str, Any]:
-        """Get brick libraries (shared)"""
-        qt_session = self.get_qt_session()
-        if qt_session:
-            return qt_session.brick_api.get_brick_libraries()
-        return {"status": "error", "message": "No session available"}
-    
-    def get_all_bricks(self) -> Dict[str, Any]:
-        """Get all bricks (shared)"""
-        qt_session = self.get_qt_session()
-        if qt_session:
-            return qt_session.brick_api.get_all_bricks()
-        return {"status": "error", "message": "No session available"}
-    
-    def get_library_bricks(self, library_name: str) -> Dict[str, Any]:
-        """Get bricks from specific library (shared)"""
-        qt_session = self.get_qt_session()
-        if qt_session:
-            return qt_session.brick_api.get_library_bricks(library_name)
-        return {"status": "error", "message": "No session available"}
     
     # Utility methods
     def broadcast_message(self, message: str, exclude_session: str = None):
