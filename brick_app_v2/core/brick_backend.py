@@ -18,7 +18,13 @@ class BrickBackendAPI:
     def __init__(self, repository_path: str = "brick_repositories"):
         """Initialize the backend"""
         self.repository = BrickRepository(repository_path)
-        self.config_file = "config.json"
+        # Find project root (parent of brick_app_v2 or current dir)
+        cwd = Path.cwd()
+        if cwd.name == 'brick_app_v2':
+            self.project_root = cwd.parent
+        else:
+            self.project_root = cwd
+        self.config_file = self.project_root / "config.json"
         self._load_config()
         self._initialize_default_library()
     
@@ -40,9 +46,8 @@ class BrickBackendAPI:
     def _load_config(self):
         """Load configuration from file"""
         import json
-        import os
         try:
-            if os.path.exists(self.config_file):
+            if self.config_file.exists():
                 with open(self.config_file, 'r') as f:
                     config = json.load(f)
                     self.last_export_dir = config.get('export', {}).get('last_directory')

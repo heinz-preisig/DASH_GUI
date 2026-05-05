@@ -25,6 +25,7 @@ sys.path.insert(0, str(app_dir / 'ui'))
 # Import new architecture components
 from state.app_state import app_state_manager, UIState, BrickType
 from business.brick_operations import brick_business_logic
+from core.brick_core_simple import sanitize_filename
 from ui.ui_abstraction import UIManager, BrickEditorComponent, BrickListComponent, LibraryComponent, PropertyListComponent
 from gui_components import (
     PropertyEditorDialog, PropertyBrickBrowser, ConstraintEditorDialog,
@@ -63,7 +64,7 @@ class RefactoredBrickEditor(QMainWindow):
         
         # Setup window
         self.setWindowTitle("Refactored SHACL Brick Editor")
-        self.setGeometry(100, 100, 650, 950)
+        # self.setGeometry(100, 100, 650, 950)
         
         # Connect signals
         self._connect_signals()
@@ -84,18 +85,18 @@ class RefactoredBrickEditor(QMainWindow):
         self.libraryComboBox.currentTextChanged.connect(self.on_library_changed)
         self.nodeBrickList.itemDoubleClicked.connect(self.on_node_brick_selected)
         self.propertyBrickList.itemDoubleClicked.connect(self.on_property_brick_selected)
-        self.newBrick.clicked.connect(self.on_new_brick)
+        self.newNode.clicked.connect(self.on_new_node)
+        self.newProperty.clicked.connect(self.on_new_property)
         self.deleteBrick.clicked.connect(self.on_delete_brick)
         self.newLibrary.clicked.connect(self.on_new_library)
         self.deleteLibrary.clicked.connect(self.on_delete_library)
+        self.downloadOntology.clicked.connect(self.on_download_ontology)
         
         # Brick selection signals for delete button visibility
         self.nodeBrickList.itemSelectionChanged.connect(self.on_brick_selection_changed)
         self.propertyBrickList.itemSelectionChanged.connect(self.on_brick_selection_changed)
         
         # Editor signals
-        self.radioNode.toggled.connect(self.on_type_changed)
-        self.radioProperty.toggled.connect(self.on_type_changed)
         self.namelineEdit.textChanged.connect(self.on_field_changed)
         self.targetLineEdit.textChanged.connect(self.on_field_changed)
         self.propertyPathEdit.textChanged.connect(self.on_field_changed)
@@ -185,18 +186,12 @@ class RefactoredBrickEditor(QMainWindow):
             self.description.blockSignals(True)
             self.targetLineEdit.blockSignals(True)
             self.propertyPathEdit.blockSignals(True)
-            self.radioNode.blockSignals(True)
-            self.radioProperty.blockSignals(True)
-            
             # Update fields
             self.namelineEdit.setText(brick_state.name)
             self.description.setPlainText(brick_state.description)
             
-            # Update radio buttons
-            if brick_state.object_type == "NodeShape":
-                self.radioNode.setChecked(True)
-            else:
-                self.radioProperty.setChecked(True)
+            # Update type label
+            self.currentTypeLabel.setText(brick_state.object_type)
             
             # Update type-specific fields
             if brick_state.object_type == "NodeShape":
@@ -212,8 +207,6 @@ class RefactoredBrickEditor(QMainWindow):
             self.description.blockSignals(False)
             self.targetLineEdit.blockSignals(False)
             self.propertyPathEdit.blockSignals(False)
-            self.radioNode.blockSignals(False)
-            self.radioProperty.blockSignals(False)
             
         except Exception as e:
             print(f"Error updating UI with brick data: {e}")
@@ -223,8 +216,6 @@ class RefactoredBrickEditor(QMainWindow):
                 self.description.blockSignals(False)
                 self.targetLineEdit.blockSignals(False)
                 self.propertyPathEdit.blockSignals(False)
-                self.radioNode.blockSignals(False)
-                self.radioProperty.blockSignals(False)
             except:
                 pass
     
@@ -345,9 +336,13 @@ class RefactoredBrickEditor(QMainWindow):
         if brick_data:
             brick_business_logic.load_brick(brick_data.get('brick_id'))
     
-    def on_new_brick(self):
-        """Handle new brick button"""
-        brick_business_logic.create_new_brick()
+    def on_new_node(self):
+        """Handle new node brick button"""
+        brick_business_logic.create_new_brick(BrickType.NODE_SHAPE)
+    
+    def on_new_property(self):
+        """Handle new property brick button"""
+        brick_business_logic.create_new_brick(BrickType.PROPERTY_SHAPE)
     
     def on_delete_brick(self):
         """Handle delete brick button"""
@@ -374,7 +369,7 @@ class RefactoredBrickEditor(QMainWindow):
                 self.load_library()
             else:
                 QMessageBox.warning(self, "Error", message)
-    
+
     def on_brick_selection_changed(self):
         """Handle brick selection change"""
         self.update_delete_button_visibility()
@@ -397,15 +392,6 @@ class RefactoredBrickEditor(QMainWindow):
         return None
     
     # Editor Operations
-    def on_type_changed(self):
-        """Handle brick type radio button change"""
-        if self.radioNode.isChecked():
-            brick_type = BrickType.NODE_SHAPE
-        else:
-            brick_type = BrickType.PROPERTY_SHAPE
-        
-        app_state_manager.set_brick_type(brick_type)
-    
     def on_field_changed(self):
         """Handle field changes"""
         # Get current field values
@@ -431,10 +417,23 @@ class RefactoredBrickEditor(QMainWindow):
                 selected_item = dialog.selected_item
                 if selected_item:
                     # Set the appropriate field with the selected URI
+                    uri = selected_item['uri']
                     if current_type == BrickType.NODE_SHAPE:
-                        app_state_manager.update_brick_field("target_class", selected_item['uri'])
+                        app_state_manager.update_brick_field("target_class", uri)
                     else:
-                        app_state_manager.update_brick_field("property_path", selected_item['uri'])
+                        app_state_manager.update_brick_field("property_path", uri)
+                    
+                    # Auto-set name from last element of URI if name is empty/default
+                    current_name = app_state_manager.get_brick_dict().get('name', '')
+                    if not current_name or current_name.startswith('New '):
+                        # Extract last element from URI (e.g., http://schema.org/ns#Address -> Address)
+                        name = uri
+                        if '#' in uri:
+                            name = uri.split('#')[-1]
+                        elif '/' in uri:
+                            name = uri.split('/')[-1]
+                        if name:
+                            app_state_manager.update_brick_field("name", name)
         except Exception as e:
             print(f"Error browsing ontology: {e}")
     
@@ -1002,13 +1001,99 @@ class RefactoredBrickEditor(QMainWindow):
     
     # Control Operations
     def save_brick(self):
-        """Save current brick"""
+        """Save current brick and auto-generate SHACL Turtle"""
         success, message = brick_business_logic.save_current_brick()
         if success:
+            # Auto-generate SHACL Turtle file
+            self._generate_shacl_for_saved_brick()
             QMessageBox.information(self, "Success", message)
             self.load_library()
         else:
             QMessageBox.warning(self, "Error", message)
+
+    def _generate_shacl_for_saved_brick(self):
+        """Generate SHACL Turtle for the current brick after save"""
+        try:
+            # Get current brick data
+            brick_data = app_state_manager.get_brick_dict()
+            brick_id = brick_data.get('brick_id')
+            print(f"DEBUG: Generating SHACL for brick_id={brick_id}")
+            if not brick_id:
+                print("DEBUG: No brick_id, skipping SHACL generation")
+                return
+
+            # Get current library path
+            library_name = app_state_manager.get_selected_library()
+            from shared_libraries.library_manager import SharedLibraryManager
+            lib_manager = SharedLibraryManager()
+
+            # Find library directory
+            lib_path = None
+            lib_info = None
+            for lib in lib_manager.scan_brick_libraries():
+                if lib['name'] == library_name:
+                    lib_path = Path(lib['absolute_path'])
+                    lib_info = lib
+                    break
+
+            if not lib_path:
+                return
+
+            # Validate property brick references
+            missing_refs = self._validate_property_references(brick_data, lib_path)
+            if missing_refs:
+                print(f"Warning: Brick '{brick_id}' references missing property bricks: {missing_refs}")
+
+            # Generate SHACL Turtle
+            from core.brick_generator import SHACLBrickGenerator, BrickLibrary, SHACLBrick
+            temp_lib = BrickLibrary(library_name, "", "System")
+            brick = SHACLBrick.from_dict(brick_data)
+            temp_lib.add_brick(brick)
+
+            # Also load referenced property bricks into temp library
+            for ref_id in self._get_property_references(brick_data):
+                ref_file = lib_path / f"{ref_id}.json"
+                if ref_file.exists():
+                    import json
+                    with open(ref_file, 'r') as f:
+                        ref_data = json.load(f)
+                        ref_brick = SHACLBrick.from_dict(ref_data)
+                        temp_lib.add_brick(ref_brick)
+
+            generator = SHACLBrickGenerator(temp_lib)
+            graph = generator.brick_to_shacl(brick)
+            shacl_content = graph.serialize(format="turtle")
+
+            # Write to file with name_UUID format (matching JSON filename)
+            safe_name = sanitize_filename(brick_data.get('name', ''))
+            output_file = lib_path / f"{safe_name}_{brick_id}.ttl"
+            with open(output_file, 'w') as f:
+                f.write(shacl_content)
+            print(f"DEBUG: Wrote TTL file: {output_file}")
+
+        except Exception as e:
+            print(f"Warning: Failed to auto-generate SHACL: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def _get_property_references(self, brick_data: dict) -> list:
+        """Extract property brick IDs referenced by this brick"""
+        refs = []
+        for prop_data in brick_data.get('properties', {}).values():
+            if isinstance(prop_data, dict) and prop_data.get('is_property_brick'):
+                prop_id = prop_data.get('property_brick_id')
+                if prop_id:
+                    refs.append(prop_id)
+        return refs
+
+    def _validate_property_references(self, brick_data: dict, lib_path: Path) -> list:
+        """Check if all referenced property bricks exist"""
+        missing = []
+        for prop_id in self._get_property_references(brick_data):
+            ref_file = lib_path / f"{prop_id}.json"
+            if not ref_file.exists():
+                missing.append(prop_id)
+        return missing
     
     def cancel_edit(self):
         """Cancel edit and return to browse mode"""
@@ -1117,6 +1202,205 @@ class RefactoredBrickEditor(QMainWindow):
                 
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to delete library: {e}")
+
+    def on_download_ontology(self):
+        """Handle download ontology button click"""
+        dialog = OntologySearchDialog(self, brick_business_logic.ontology_manager)
+        dialog.exec()
+
+
+class OntologySearchDialog(QDialog):
+    """Dialog for searching and downloading ontologies"""
+    
+    def __init__(self, parent=None, ontology_manager=None):
+        super().__init__(parent)
+        self.ontology_manager = ontology_manager
+        self.selected_ontology = None
+        
+        # Load UI
+        from pathlib import Path
+        ui_file = Path(__file__).parent / "ui" / "ontology_search_dialog.ui"
+        loadUi(str(ui_file), self)
+        
+        # Connect signals
+        self.searchButton.clicked.connect(self.on_search)
+        self.resultsList.itemClicked.connect(self.on_result_selected)
+        self.downloadButton.clicked.connect(self.on_download)
+        self.cancelButton.clicked.connect(self.reject)
+        
+        # Disable download button initially
+        self.downloadButton.setEnabled(False)
+        
+        self.search_results = []
+    
+    def on_search(self):
+        """Search LOV for ontologies"""
+        query = self.searchLineEdit.text().strip()
+        if not query:
+            return
+        
+        self.resultsList.clear()
+        self.infoLabel.setText("Searching...")
+        self.search_results = []
+        
+        try:
+            # Search LOV API
+            import urllib.request
+            import urllib.parse
+            import json
+            
+            url = f"https://lov.linkeddata.es/dataset/lov/api/v2/vocabulary/search?q={urllib.parse.quote(query)}"
+            
+            req = urllib.request.Request(url, headers={'Accept': 'application/json'})
+            with urllib.request.urlopen(req, timeout=10) as response:
+                data = json.loads(response.read().decode('utf-8'))
+            
+            # Parse results - LOV API returns data in _source field
+            for result in data.get('results', []):
+                vocab = result.get('_source', {})
+                prefix = vocab.get('prefix', 'unknown')
+                
+                # Title is in a field like "http://purl.org/dc/terms/title@en"
+                title = None
+                for key in vocab.keys():
+                    if 'title' in key.lower():
+                        title = vocab.get(key)
+                        break
+                if not title:
+                    title = prefix
+                
+                uri = vocab.get('uri', '')
+                
+                item_text = f"{prefix}: {title}"
+                self.resultsList.addItem(item_text)
+                self.search_results.append({
+                    'prefix': prefix,
+                    'title': title,
+                    'uri': uri
+                })
+            
+            if not self.search_results:
+                self.infoLabel.setText("No results found. Try different keywords.")
+            else:
+                self.infoLabel.setText(f"Found {len(self.search_results)} ontologies. Select one to download.")
+                
+        except Exception as e:
+            self.infoLabel.setText(f"Search failed: {str(e)}")
+    
+    def on_result_selected(self, item):
+        """Handle result selection"""
+        index = self.resultsList.currentRow()
+        if 0 <= index < len(self.search_results):
+            self.selected_ontology = self.search_results[index]
+            self.infoLabel.setText(f"Selected: {self.selected_ontology['prefix']}\n{self.selected_ontology['uri']}")
+            self.downloadButton.setEnabled(True)
+    
+    def on_download(self):
+        """Download the selected or URL ontology"""
+        try:
+            if self.tabWidget.currentIndex() == 0:
+                # Search tab - download selected
+                if not self.selected_ontology:
+                    QMessageBox.warning(self, "Warning", "Please select an ontology first.")
+                    return
+                
+                prefix = self.selected_ontology['prefix']
+                uri = self.selected_ontology['uri']
+                
+                # Get download URL from LOV
+                import urllib.request
+                import urllib.parse
+                import json
+                
+                url = f"https://lov.linkeddata.es/dataset/lov/api/v2/vocabulary/info?vocab={prefix}"
+                req = urllib.request.Request(url, headers={'Accept': 'application/json'})
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    data = json.loads(response.read().decode('utf-8'))
+                
+                # Find download URL - try graphs first, then fall back to homepage
+                download_url = None
+                print(f"DEBUG: Looking for download URL in data with keys: {list(data.keys())}")
+                for graph in data.get('graphs', []):
+                    for dist in graph.get('distributions', []):
+                        download_url = dist.get('downloadURL')
+                        if download_url:
+                            print(f"DEBUG: Found download URL in distributions: {download_url}")
+                            break
+                    if download_url:
+                        break
+                
+                # Fallback to homepage if no distribution URL found
+                if not download_url:
+                    download_url = data.get('homepage')
+                    if download_url:
+                        print(f"DEBUG: Using homepage as fallback: {download_url}")
+                
+                # Fallback to versions fileURL
+                if not download_url:
+                    versions = data.get('versions', [])
+                    if versions:
+                        download_url = versions[0].get('fileURL')
+                        if download_url:
+                            print(f"DEBUG: Using versions fileURL as fallback: {download_url}")
+                
+                if not download_url:
+                    print(f"DEBUG: No download URL found. data.get('homepage')={data.get('homepage')}")
+                    QMessageBox.critical(self, "Error", "Could not find download URL for this ontology.")
+                    return
+                
+                # Download to cache
+                self._download_ontology(prefix, download_url)
+                
+            else:
+                # URL tab - download from direct URL
+                url = self.urlLineEdit.text().strip()
+                name = self.nameLineEdit.text().strip()
+                
+                if not url:
+                    QMessageBox.warning(self, "Warning", "Please enter a URL.")
+                    return
+                
+                if not name:
+                    name = url.split('/')[-1].split('.')[0] or "ontology"
+                
+                self._download_ontology(name, url)
+                
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Download failed: {str(e)}")
+    
+    def _download_ontology(self, name: str, url: str):
+        """Download ontology from URL to cache"""
+        import urllib.request
+        from pathlib import Path
+        
+        # Download with extended timeout for large ontologies
+        req = urllib.request.Request(url, headers={'Accept': 'text/turtle,application/rdf+xml,application/n-triples'})
+        with urllib.request.urlopen(req, timeout=60) as response:
+            content = response.read()
+        
+        # Determine file extension
+        content_type = response.headers.get('Content-Type', '')
+        if 'turtle' in content_type or 'ttl' in url:
+            ext = '.ttl'
+        elif 'xml' in content_type or 'rdf' in url:
+            ext = '.rdf'
+        else:
+            ext = '.ttl'  # Default
+        
+        # Save to cache
+        cache_path = Path(self.ontology_manager.cache_path)
+        cache_path.mkdir(parents=True, exist_ok=True)
+        
+        output_file = cache_path / f"{name}{ext}"
+        with open(output_file, 'wb') as f:
+            f.write(content)
+        
+        # Reload ontologies
+        self.ontology_manager.load_cached_ontologies()
+        
+        QMessageBox.information(self, "Success", 
+            f"Ontology '{name}' downloaded successfully!\nSaved to: {output_file}")
+        self.accept()
 
 
 def main():

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>OntologySearchDialog</class>
+ <widget class="QDialog" name="OntologySearchDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>500</width>
+    <height>400</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Download Ontology</string>
+  </property>
+  <widget class="QTabWidget" name="tabWidget">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>480</width>
+     <height>340</height>
+    </rect>
+   </property>
+   <widget class="QWidget" name="searchTab">
+    <attribute name="title">
+     <string>Search LOV</string>
+    </attribute>
+    <widget class="QLineEdit" name="searchLineEdit">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>360</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="placeholderText">
+      <string>Search for ontologies (e.g., address, building, person)</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="searchButton">
+     <property name="geometry">
+      <rect>
+       <x>380</x>
+       <y>10</y>
+       <width>80</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Search</string>
+     </property>
+    </widget>
+    <widget class="QListWidget" name="resultsList">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>45</y>
+       <width>450</width>
+       <height>200</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="infoLabel">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>250</y>
+       <width>450</width>
+       <height>50</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Select an ontology from the list to download</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="urlTab">
+    <attribute name="title">
+     <string>Direct URL</string>
+    </attribute>
+    <widget class="QLineEdit" name="urlLineEdit">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>450</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="placeholderText">
+      <string>https://example.org/ontology.ttl</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="nameLineEdit">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>45</y>
+       <width>450</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="placeholderText">
+      <string>Ontology name (e.g., myontology)</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="urlHelpLabel">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>80</y>
+       <width>450</width>
+       <height>100</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Enter a direct URL to an ontology file (TTL, RDF/XML, or JSON-LD format). The ontology will be downloaded and cached locally for use in the brick editor.</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QPushButton" name="downloadButton">
+   <property name="geometry">
+    <rect>
+     <x>300</x>
+     <y>360</y>
+     <width>80</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Download</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="cancelButton">
+   <property name="geometry">
+    <rect>
+     <x>390</x>
+     <y>360</y>
+     <width>80</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Cancel</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

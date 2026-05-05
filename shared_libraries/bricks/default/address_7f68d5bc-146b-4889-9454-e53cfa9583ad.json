@@ -1,0 +1,23 @@
+{
+  "brick_id": "7f68d5bc-146b-4889-9454-e53cfa9583ad",
+  "name": "Address",
+  "description": "",
+  "object_type": "NodeShape",
+  "target_class": "https://www.omg.org/spec/Commons/Locations/Address",
+  "property_path": "",
+  "properties": {
+    "streetAddress": {
+      "name": "streetAddress",
+      "path": "https://schema.org/streetAddress",
+      "datatype": "xsd:string",
+      "description": "",
+      "constraints": []
+    }
+  },
+  "constraints": [],
+  "tags": [],
+  "created_at": "2026-05-05T16:38:31.050215",
+  "updated_at": "2026-05-05T16:42:28.155982",
+  "targets": [],
+  "metadata": {}
+}

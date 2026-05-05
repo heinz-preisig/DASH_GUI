@@ -28,9 +28,7 @@ class SharedLibraryManager:
                 self.base_path = cwd / base_path
         self.base_path = self.base_path.absolute()
         
-        # Config file is now at project root, not inside shared_libraries
-        self.project_root = self.base_path.parent
-        self.config_file = self.project_root / "config.json"
+        self.config_file = self.base_path / "config.json"
         self.config = self._load_config()
         
         # Ensure directories exist
@@ -118,71 +116,12 @@ class SharedLibraryManager:
         return str(self.base_path / relative_path)
     
     def get_brick_libraries(self) -> List[Dict[str, Any]]:
-        """Get all brick libraries from config"""
+        """Get all brick libraries"""
         return self.config["libraries"]["bricks"]["libraries"]
-
+    
     def get_schema_libraries(self) -> List[Dict[str, Any]]:
-        """Get all schema libraries from config"""
+        """Get all schema libraries"""
         return self.config["libraries"]["schemas"]["libraries"]
-
-    def scan_brick_libraries(self) -> List[Dict[str, Any]]:
-        """Scan filesystem to discover all brick libraries in the bricks directory"""
-        brick_libs = []
-        bricks_dir = self.base_path / "bricks"
-
-        if not bricks_dir.exists():
-            return brick_libs
-
-        for lib_dir in bricks_dir.iterdir():
-            if lib_dir.is_dir():
-                # Count brick files (json files excluding metadata.json)
-                brick_count = 0
-                for f in lib_dir.glob("*.json"):
-                    if f.name != "metadata.json":
-                        brick_count += 1
-
-                # Check if already in config to get description
-                config_lib = next(
-                    (lib for lib in self.config["libraries"]["bricks"]["libraries"]
-                     if lib["name"] == lib_dir.name), None
-                )
-
-                brick_libs.append({
-                    "name": lib_dir.name,
-                    "path": str(lib_dir.relative_to(self.project_root)),
-                    "description": config_lib.get("description", f"Brick library '{lib_dir.name}'") if config_lib else f"Brick library '{lib_dir.name}'",
-                    "type": "bricks",
-                    "brick_count": brick_count,
-                    "absolute_path": str(lib_dir.absolute())
-                })
-
-        return brick_libs
-
-    def scan_schema_libraries(self) -> List[Dict[str, Any]]:
-        """Scan filesystem to discover all schema libraries in the schemas directory"""
-        schema_libs = []
-        schemas_dir = self.base_path / "schemas"
-
-        if not schemas_dir.exists():
-            return schema_libs
-
-        for lib_dir in schemas_dir.iterdir():
-            if lib_dir.is_dir():
-                # Check if already in config to get description
-                config_lib = next(
-                    (lib for lib in self.config["libraries"]["schemas"]["libraries"]
-                     if lib["name"] == lib_dir.name), None
-                )
-
-                schema_libs.append({
-                    "name": lib_dir.name,
-                    "path": str(lib_dir.relative_to(self.project_root)),
-                    "description": config_lib.get("description", f"Schema library '{lib_dir.name}'") if config_lib else f"Schema library '{lib_dir.name}'",
-                    "type": "schemas",
-                    "absolute_path": str(lib_dir.absolute())
-                })
-
-        return schema_libs
     
     def add_library(self, lib_type: str, name: str, path: str, description: str = ""):
         """Add a new library (legacy method - use create_library instead)"""
