@@ -54,7 +54,7 @@ cd brick_app_v2
 uv run main.py --gui
 
 # Run the Web Interface
-uv run main.py --web --port 5000
+uv run main.py --web --port 5001
 
 # Show help
 uv run main.py --help
