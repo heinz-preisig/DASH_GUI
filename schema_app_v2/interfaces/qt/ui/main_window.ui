@@ -29,11 +29,28 @@
           </property>
           <layout class="QVBoxLayout" name="libraryLayout">
            <item>
-            <widget class="QComboBox" name="libraryComboBox">
-             <property name="toolTip">
-              <string>Select active library</string>
-             </property>
-            </widget>
+            <layout class="QHBoxLayout" name="librarySelectLayout">
+             <item>
+              <widget class="QComboBox" name="libraryComboBox">
+               <property name="toolTip">
+                <string>Select active library</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="newLibraryButton">
+               <property name="text">
+                <string>New…</string>
+               </property>
+               <property name="toolTip">
+                <string>Create a new schema library</string>
+               </property>
+               <property name="maximumWidth">
+                <number>55</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </item>
            <item>
             <widget class="QListWidget" name="schemaListWidget">
@@ -259,7 +276,17 @@
               <item>
                <widget class="QPushButton" name="addComponentButton">
                 <property name="text">
-                 <string>Add Component</string>
+                 <string>Add Brick</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="addSchemaRefButton">
+                <property name="text">
+                 <string>Add Schema</string>
+                </property>
+                <property name="toolTip">
+                 <string>Embed a saved schema via sh:node reference</string>
                 </property>
                </widget>
               </item>

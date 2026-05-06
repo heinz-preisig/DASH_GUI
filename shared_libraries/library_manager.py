@@ -13,27 +13,19 @@ from pathlib import Path
 
 class SharedLibraryManager:
     """Manages shared libraries for both brick and schema applications"""
-    
-    def __init__(self, base_path: str = "shared_libraries"):
-        self.base_path = Path(base_path).absolute()
-        # If the path is relative, resolve it from the current working directory's parent (project root)
-        if not Path(base_path).is_absolute():
-            # Get the project root by going up from the current working directory
-            cwd = Path.cwd()
-            if cwd.name in ['brick_app_v2', 'schema_app_v2']:
-                # We're in a subdirectory, go up to project root
-                self.base_path = cwd.parent / base_path
-            else:
-                # We're at or near project root
-                self.base_path = cwd / base_path
-        self.base_path = self.base_path.absolute()
-        
-        # Config file is now at project root, not inside shared_libraries
-        self.project_root = self.base_path.parent
+
+    def __init__(self):
+        # Project root = directory containing config.json, which lives one level
+        # above this file (shared_libraries/library_manager.py → project root).
+        self.project_root = Path(__file__).resolve().parent.parent
         self.config_file = self.project_root / "config.json"
         self.config = self._load_config()
-        
-        # Ensure directories exist
+
+        # Single source of truth: shared_library_root from config.json
+        root_rel = self.config.get("shared_library_root", "shared_libraries")
+        self.base_path = (self.project_root / root_rel).resolve()
+
+        # Ensure all registered library directories exist
         self._ensure_directories()
     
     def _load_config(self) -> Dict[str, Any]:
@@ -51,71 +43,41 @@ class SharedLibraryManager:
         """Create default configuration"""
         default_config = {
             "version": "2.0",
+            "shared_library_root": "shared_libraries",
             "libraries": {
                 "bricks": {
-                    "default_path": "bricks",
                     "libraries": [
-                        {
-                            "name": "default",
-                            "path": "bricks/default",
-                            "description": "Default brick library",
-                            "type": "bricks"
-                        },
-                        {
-                            "name": "myFirst",
-                            "path": "bricks/myFirst",
-                            "description": "My first brick library",
-                            "type": "bricks"
-                        }
+                        {"name": "default", "description": "Default brick library"}
                     ]
                 },
                 "schemas": {
-                    "default_path": "schemas",
                     "libraries": [
-                        {
-                            "name": "default",
-                            "path": "schemas/default",
-                            "description": "Default schema library",
-                            "type": "schemas"
-                        },
-                        {
-                            "name": "test_schema_lib",
-                            "path": "schemas/test_schema_lib",
-                            "description": "Test schema library",
-                            "type": "schemas"
-                        }
+                        {"name": "default", "description": "Default schema library"}
                     ]
                 }
             }
         }
-        
-        # Save default config
-        self.base_path.mkdir(parents=True, exist_ok=True)
         with open(self.config_file, 'w') as f:
             json.dump(default_config, f, indent=2)
-        
         return default_config
     
+    def lib_path(self, lib_type: str, name: str) -> Path:
+        """Canonical path for a library: base_path / lib_type / name"""
+        return self.base_path / lib_type / name
+
     def _ensure_directories(self):
-        """Ensure all library directories exist"""
+        """Ensure all registered library directories exist"""
         for lib_type in ["bricks", "schemas"]:
-            libraries = self.config["libraries"][lib_type]["libraries"]
-            for lib in libraries:
-                lib_path = self.base_path / lib["path"]
-                lib_path.mkdir(parents=True, exist_ok=True)
-                # No nested subdirectories - the library path is the bricks/schemas directory
+            for lib in self.config["libraries"][lib_type]["libraries"]:
+                self.lib_path(lib_type, lib["name"]).mkdir(parents=True, exist_ok=True)
     
     def get_brick_library_path(self, library_name: str = "default") -> str:
-        """Get the absolute path to the brick libraries parent directory"""
-        # Return the parent directory of all brick libraries
-        relative_path = self.config["libraries"]["bricks"]["default_path"]
-        return str(self.base_path / relative_path)
-    
+        """Absolute path to the bricks root (parent of all brick libraries)"""
+        return str(self.base_path / "bricks")
+
     def get_schema_library_path(self, library_name: str = "default") -> str:
-        """Get the absolute path to the schema libraries parent directory"""
-        # Return the parent directory of all schema libraries
-        relative_path = self.config["libraries"]["schemas"]["default_path"]
-        return str(self.base_path / relative_path)
+        """Absolute path to the schemas root (parent of all schema libraries)"""
+        return str(self.base_path / "schemas")
     
     def get_brick_libraries(self) -> List[Dict[str, Any]]:
         """Get all brick libraries from config"""
@@ -184,11 +146,11 @@ class SharedLibraryManager:
 
         return schema_libs
     
-    def add_library(self, lib_type: str, name: str, path: str, description: str = ""):
+    def add_library(self, lib_type: str, name: str, path: str = None, description: str = ""):
         """Add a new library (legacy method - use create_library instead)"""
-        return self.create_library(lib_type, name, path, description)
+        return self.create_library(lib_type=lib_type, name=name, description=description)
     
-    def create_library(self, lib_type: str, name: str, path: str = None, description: str = "") -> bool:
+    def create_library(self, lib_type: str, name: str, description: str = "", path: str = None) -> bool:
         """Create a new library with proper validation and directory creation"""
         if lib_type not in ["bricks", "schemas"]:
             raise ValueError("Library type must be 'bricks' or 'schemas'")
@@ -205,38 +167,18 @@ class SharedLibraryManager:
             if lib["name"] == name:
                 raise ValueError(f"Library '{name}' already exists")
         
-        # Generate path if not provided
-        if path is None:
-            path = f"shared_libraries/{lib_type}/{name}"
-        
         # Create the library directory
-        lib_path = Path(path)
-        if not lib_path.is_absolute():
-            # Resolve relative path from project root
-            project_root = self.base_path.absolute().parent
-            lib_path = project_root / path
-        
+        new_lib_path = self.lib_path(lib_type, name)
         try:
-            lib_path.mkdir(parents=True, exist_ok=True)
-            
-            # Create subdirectories based on library type
-            if lib_type == "bricks":
-                # Bricks are stored directly in the library directory
-                pass  # No subdirectory needed based on current structure
-            else:
-                # Schemas might need subdirectories
-                (lib_path / "schemas").mkdir(exist_ok=True)
-            
+            new_lib_path.mkdir(parents=True, exist_ok=True)
         except Exception as e:
             raise RuntimeError(f"Failed to create library directory: {e}")
-        
-        # Add to configuration
+
+        # Add to configuration — no path stored, it is always derived
         new_lib = {
             "name": name,
-            "path": path,
             "description": description,
-            "type": lib_type,
-            "created_at": datetime.now().isoformat() if 'datetime' in globals() else None
+            "created_at": datetime.now().isoformat()
         }
         
         self.config["libraries"][lib_type]["libraries"].append(new_lib)
@@ -268,16 +210,10 @@ class SharedLibraryManager:
             raise ValueError("Cannot delete the default library")
         
         try:
-            # Archive the library if requested
             if archive:
-                self._archive_library(lib_to_delete)
-            
-            # Remove the library directory
-            lib_path = Path(lib_to_delete["path"])
-            if not lib_path.is_absolute():
-                project_root = self.base_path.absolute().parent
-                lib_path = project_root / lib_to_delete["path"]
-            
+                self._archive_library(lib_type, lib_to_delete)
+
+            lib_path = self.lib_path(lib_type, name)
             if lib_path.exists():
                 import shutil
                 shutil.rmtree(lib_path)
@@ -291,49 +227,30 @@ class SharedLibraryManager:
         except Exception as e:
             raise RuntimeError(f"Failed to delete library: {e}")
     
-    def _archive_library(self, library_config: Dict[str, Any]):
+    def _archive_library(self, lib_type: str, library_config: Dict[str, Any]):
         """Archive a library before deletion"""
-        lib_path = Path(library_config["path"])
-        if not lib_path.is_absolute():
-            project_root = self.base_path.absolute().parent
-            lib_path = project_root / library_config["path"]
-        
+        lib_path = self.lib_path(lib_type, library_config["name"])
         if not lib_path.exists():
-            return  # Nothing to archive
-        
-        # Create archive directory
-        archive_dir = self.base_path / "archive" / library_config["type"]
+            return
+
+        archive_dir = self.base_path / "archive" / lib_type
         archive_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Create timestamped archive
-        from datetime import datetime
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         archive_name = f"{library_config['name']}_{timestamp}"
-        archive_path = archive_dir / archive_name
-        
+
         try:
             import shutil
-            shutil.make_archive(
-                str(archive_path),
-                'zip',
-                str(lib_path.parent),
-                lib_path.name
-            )
-            
-            # Create archive metadata
+            shutil.make_archive(str(archive_dir / archive_name), 'zip',
+                                str(lib_path.parent), lib_path.name)
             metadata = {
                 "original_name": library_config["name"],
-                "original_path": library_config["path"],
+                "lib_type": lib_type,
                 "description": library_config.get("description", ""),
-                "type": library_config["type"],
                 "archived_at": datetime.now().isoformat(),
                 "archive_file": f"{archive_name}.zip"
             }
-            
-            metadata_file = archive_dir / f"{archive_name}_metadata.json"
-            with open(metadata_file, 'w') as f:
+            with open(archive_dir / f"{archive_name}_metadata.json", 'w') as f:
                 json.dump(metadata, f, indent=2)
-                
         except Exception as e:
             print(f"Warning: Failed to archive library '{library_config['name']}': {e}")
     
@@ -384,26 +301,18 @@ class SharedLibraryManager:
             restore_name = new_name or metadata["original_name"]
             
             # Check if name already exists
-            lib_type = metadata["type"]
+            lib_type = metadata.get("lib_type") or metadata.get("type")
             existing_libs = [lib["name"] for lib in self.config["libraries"][lib_type]["libraries"]]
             if restore_name in existing_libs:
                 raise ValueError(f"Library '{restore_name}' already exists")
             
-            # Extract the archive
             archive_file = metadata_file.parent / metadata["archive_file"]
-            restore_path = Path(metadata["original_path"])
-            if not restore_path.is_absolute():
-                project_root = self.base_path.absolute().parent
-                restore_path = project_root / metadata["original_path"]
-            
+            restore_path = self.lib_path(lib_type, restore_name)
             import shutil
             shutil.unpack_archive(str(archive_file), str(restore_path.parent))
-            
-            # Create library configuration
             self.create_library(
                 lib_type=lib_type,
                 name=restore_name,
-                path=metadata["original_path"],
                 description=metadata.get("description", f"Restored from archive on {datetime.now().strftime('%Y-%m-%d')}")
             )
             

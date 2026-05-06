@@ -49,10 +49,29 @@ class SHACLExporter:
                 self._export_component_hierarchy(
                     schema, brick_id, library_name, lines, exported_bricks, 0
                 )
-        
+
+        # Export schema references as sh:property [ sh:path ... ; sh:node ... ]
+        if schema.schema_refs:
+            lines.append("# Schema References (sh:node)")
+            for ref in schema.schema_refs:
+                ref_schema_id = ref["schema_id"]
+                prop_path = ref.get("property_path", "")
+                label = ref.get("label", ref_schema_id)
+                attach_brick_id = ref.get("attach_to_brick_id", "")
+                attach_brick = self.brick_integration.get_brick_by_id(attach_brick_id)
+                attach_name = attach_brick.name.replace(" ", "_") if attach_brick else attach_brick_id
+                ref_shape_name = label.replace(" ", "_")
+                lines.append(f"# Reference: {label} attached to {attach_name} via {prop_path}")
+                lines.append(f"<{attach_name}Shape> sh:property [")
+                lines.append(f"    sh:path {prop_path} ;")
+                lines.append(f"    sh:node <{ref_shape_name}Shape> ;")
+                lines.append(f"] .")
+                lines.append(f"# <{ref_shape_name}Shape> is defined in schema: {ref_schema_id}")
+                lines.append("")
+
         # Add schema metadata
         lines.extend(self._generate_schema_metadata(schema))
-        
+
         return "\n".join(lines)
     
     def export_schema_with_flow(self, schema: Schema, library_name: Optional[str] = None) -> str:

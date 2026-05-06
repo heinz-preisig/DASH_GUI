@@ -658,99 +658,13 @@ class RefactoredBrickEditor(QMainWindow):
     
     # Control Operations
     def save_brick(self):
-        """Save current brick and auto-generate SHACL Turtle"""
+        """Save current brick (JSON + SHACL .ttl written by BrickCore)"""
         success, message = brick_business_logic.save_current_brick()
         if success:
-            # Auto-generate SHACL Turtle file
-            self._generate_shacl_for_saved_brick()
             QMessageBox.information(self, "Success", message)
             self.load_library()
         else:
             QMessageBox.warning(self, "Error", message)
-
-    def _generate_shacl_for_saved_brick(self):
-        """Generate SHACL Turtle for the current brick after save"""
-        try:
-            # Get current brick data
-            brick_data = app_state_manager.get_brick_dict()
-            brick_id = brick_data.get('brick_id')
-            print(f"DEBUG: Generating SHACL for brick_id={brick_id}")
-            if not brick_id:
-                print("DEBUG: No brick_id, skipping SHACL generation")
-                return
-
-            # Get current library path
-            library_name = app_state_manager.get_selected_library()
-            from shared_libraries.library_manager import SharedLibraryManager
-            lib_manager = SharedLibraryManager()
-
-            # Find library directory
-            lib_path = None
-            lib_info = None
-            for lib in lib_manager.scan_brick_libraries():
-                if lib['name'] == library_name:
-                    lib_path = Path(lib['absolute_path'])
-                    lib_info = lib
-                    break
-
-            if not lib_path:
-                return
-
-            # Validate property brick references
-            missing_refs = self._validate_property_references(brick_data, lib_path)
-            if missing_refs:
-                print(f"Warning: Brick '{brick_id}' references missing property bricks: {missing_refs}")
-
-            # Generate SHACL Turtle
-            from core.brick_generator import SHACLBrickGenerator, BrickLibrary, SHACLBrick
-            temp_lib = BrickLibrary(library_name, "", "System")
-            brick = SHACLBrick.from_dict(brick_data)
-            temp_lib.add_brick(brick)
-
-            # Also load referenced property bricks into temp library
-            for ref_id in self._get_property_references(brick_data):
-                ref_file = lib_path / f"{ref_id}.json"
-                if ref_file.exists():
-                    import json
-                    with open(ref_file, 'r') as f:
-                        ref_data = json.load(f)
-                        ref_brick = SHACLBrick.from_dict(ref_data)
-                        temp_lib.add_brick(ref_brick)
-
-            generator = SHACLBrickGenerator(temp_lib)
-            graph = generator.brick_to_shacl(brick)
-            shacl_content = graph.serialize(format="turtle")
-
-            # Write to file with name_UUID format (matching JSON filename)
-            safe_name = sanitize_filename(brick_data.get('name', ''))
-            output_file = lib_path / f"{safe_name}_{brick_id}.ttl"
-            with open(output_file, 'w') as f:
-                f.write(shacl_content)
-            print(f"DEBUG: Wrote TTL file: {output_file}")
-
-        except Exception as e:
-            print(f"Warning: Failed to auto-generate SHACL: {e}")
-            import traceback
-            traceback.print_exc()
-
-    def _get_property_references(self, brick_data: dict) -> list:
-        """Extract property brick IDs referenced by this brick"""
-        refs = []
-        for prop_data in brick_data.get('properties', {}).values():
-            if isinstance(prop_data, dict) and prop_data.get('is_property_brick'):
-                prop_id = prop_data.get('property_brick_id')
-                if prop_id:
-                    refs.append(prop_id)
-        return refs
-
-    def _validate_property_references(self, brick_data: dict, lib_path: Path) -> list:
-        """Check if all referenced property bricks exist"""
-        missing = []
-        for prop_id in self._get_property_references(brick_data):
-            ref_file = lib_path / f"{prop_id}.json"
-            if not ref_file.exists():
-                missing.append(prop_id)
-        return missing
     
     def cancel_edit(self):
         """Cancel edit and return to browse mode"""
@@ -776,16 +690,14 @@ class RefactoredBrickEditor(QMainWindow):
                 return
             
             try:
-                # For now, just show a message
-                QMessageBox.information(self, "Success", 
-                    f"Library '{library_name}' would be created here!")
-                
-                # Reload libraries
+                brick_business_logic.brick_core.shared_library_manager.create_library(
+                    lib_type="bricks",
+                    name=library_name,
+                    description=f"Brick library '{library_name}'"
+                )
                 self._load_initial_data()
-                
-                # Switch to the new library
                 self.libraryComboBox.setCurrentText(library_name)
-                
+                self.statusBar().showMessage(f"Created library: {library_name}")
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to create library: {e}")
     

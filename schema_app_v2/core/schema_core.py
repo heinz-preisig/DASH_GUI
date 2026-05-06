@@ -47,6 +47,7 @@ class Schema:
     metadata: Dict[str, Any] = field(default_factory=dict)
     component_ui_metadata: Dict[str, UIMetadata] = field(default_factory=dict)  # UI metadata per component
     groups: Dict[str, Dict[str, Any]] = field(default_factory=dict)  # UI groups (id -> {label, description, sequence})
+    schema_refs: List[Dict[str, Any]] = field(default_factory=list)  # Referenced schemas [{schema_id, attach_to_brick_id, property_path, label}]
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
     
@@ -65,6 +66,7 @@ class Schema:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Schema':
         """Create from dictionary"""
+        data = dict(data)  # don't mutate caller's dict
         # Handle flow_config deserialization
         if data.get('flow_config'):
             from .flow_engine import FlowConfig
@@ -74,6 +76,16 @@ class Schema:
             data['component_ui_metadata'] = {
                 k: UIMetadata.from_dict(v) for k, v in data['component_ui_metadata'].items()
             }
+        # Supply defaults for fields added after initial release
+        data.setdefault('schema_refs', [])
+        data.setdefault('groups', {})
+        data.setdefault('inheritance_chain', [])
+        data.setdefault('relationships', {})
+        data.setdefault('metadata', {})
+        data.setdefault('component_ui_metadata', {})
+        # Drop any keys not in the dataclass to stay forward-compatible
+        valid_fields = {f.name for f in cls.__dataclass_fields__.values()}
+        data = {k: v for k, v in data.items() if k in valid_fields}
         return cls(**data)
     
     def update_timestamp(self):
@@ -115,6 +127,33 @@ class Schema:
                 root_components.append(brick_id)
         return root_components
     
+    # Schema Reference Methods
+
+    def add_schema_ref(self, schema_id: str, attach_to_brick_id: str,
+                       property_path: str, label: str = "") -> Dict[str, Any]:
+        """Attach a referenced schema via sh:node on a property of attach_to_brick_id"""
+        ref = {
+            "schema_id": schema_id,
+            "attach_to_brick_id": attach_to_brick_id,
+            "property_path": property_path,
+            "label": label,
+        }
+        self.schema_refs.append(ref)
+        self.update_timestamp()
+        return ref
+
+    def remove_schema_ref(self, schema_id: str, attach_to_brick_id: str):
+        """Remove a schema reference"""
+        self.schema_refs = [
+            r for r in self.schema_refs
+            if not (r["schema_id"] == schema_id and r["attach_to_brick_id"] == attach_to_brick_id)
+        ]
+        self.update_timestamp()
+
+    def get_schema_refs_for_brick(self, brick_id: str) -> List[Dict[str, Any]]:
+        """Get all schema refs attached to a given brick"""
+        return [r for r in self.schema_refs if r["attach_to_brick_id"] == brick_id]
+
     # UI Metadata Methods
     
     def set_component_ui_metadata(self, brick_id: str, ui_metadata: UIMetadata):
@@ -294,13 +333,15 @@ class Schema:
         return ui_metadata.parent_id if ui_metadata else None
     
     def get_ui_root_components(self) -> List[str]:
-        """Get components with no UI parent (top-level in UI)"""
+        """Get components with no UI parent (top-level in UI), sorted by sequence"""
         roots = []
         for brick_id in self.component_brick_ids:
             ui_metadata = self.get_component_ui_metadata(brick_id)
             if not ui_metadata or not ui_metadata.parent_id:
-                roots.append(brick_id)
-        return roots
+                seq = ui_metadata.sequence if ui_metadata else 0
+                roots.append((seq, brick_id))
+        roots.sort(key=lambda x: x[0])
+        return [brick_id for _, brick_id in roots]
     
     def get_ui_tree(self) -> Dict[str, List[str]]:
         """Get complete UI tree structure (parent -> children)"""
@@ -559,7 +600,7 @@ class SchemaCore:
     def load_schema(self, schema_id: str, library_name: Optional[str] = None) -> Optional[Schema]:
         """Load a schema from storage"""
         lib_name = library_name or self.active_library
-        schema_file = os.path.join(self.repository_path, lib_name, f"{schema_id}.json")
+        schema_file = os.path.join(self.repository_path, lib_name, f"{schema_id}.json")  # flat — no schemas/ subdir
         
         if not os.path.exists(schema_file):
             return None
@@ -583,17 +624,14 @@ class SchemaCore:
         if not schema_to_save.name.strip():
             return False
         
-        if not schema_to_save.root_brick_id.strip():
-            return False
-        
         # Update timestamp
         schema_to_save.update_timestamp()
         
         # Save to file
         lib_name = self.active_library
-        schemas_path = os.path.join(self.repository_path, lib_name, "schemas")
+        schemas_path = os.path.join(self.repository_path, lib_name)
         schema_file = os.path.join(schemas_path, f"{schema_to_save.schema_id}.json")
-        
+
         # Ensure directory exists
         os.makedirs(schemas_path, exist_ok=True)
         
@@ -615,7 +653,8 @@ class SchemaCore:
         
         schemas = []
         try:
-            schema_files = [f for f in os.listdir(lib_path) if f.endswith('.json')]
+            schema_files = [f for f in os.listdir(lib_path)
+                            if f.endswith('.json') and f != 'metadata.json']
                 
             for schema_file in schema_files:
                 schema_path = os.path.join(lib_path, schema_file)

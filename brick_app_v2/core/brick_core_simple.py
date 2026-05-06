@@ -71,21 +71,14 @@ class BrickCore:
     def __init__(self, repository_path: str = None, use_shared_libraries: bool = True):
         # Use shared libraries by default
         if use_shared_libraries and repository_path is None:
-            # Import shared library manager
             import sys
-            # Go up three levels from brick_app_v2/core to the project root, then to shared_libraries
-            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            shared_libs_path = os.path.join(project_root, 'shared_libraries')
-            shared_libs_path = os.path.abspath(shared_libs_path)
+            from pathlib import Path
+            project_root = Path(__file__).resolve().parent.parent.parent
+            shared_libs_path = str(project_root / 'shared_libraries')
             if shared_libs_path not in sys.path:
                 sys.path.insert(0, shared_libs_path)
-            
-            # Import the shared library manager
-            exec(open(os.path.join(shared_libs_path, 'library_manager.py')).read(), globals())
-            # Use the absolute path to the shared libraries directory
-            from pathlib import Path
-            self.repository_path = Path(shared_libs_path) / 'bricks'
-            self.repository_path = str(self.repository_path.absolute())
+            from library_manager import shared_library_manager
+            self.repository_path = shared_library_manager.get_brick_library_path()
             self.shared_library_manager = shared_library_manager
         else:
             # Use provided repository path
@@ -186,10 +179,24 @@ class BrickCore:
         try:
             with open(brick_file, 'w') as f:
                 json.dump(brick_to_save.to_dict(), f, indent=2)
-            return True
         except Exception as e:
             print(f"DEBUG: Save failed with error: {e}")
             return False
+
+        # Write .ttl alongside .json
+        try:
+            from brick_app_v2.core.brick_generator import SHACLBrickGenerator, BrickLibrary
+            temp_lib = BrickLibrary(lib_name, "", "System")
+            temp_lib.add_brick(brick_to_save)
+            generator = SHACLBrickGenerator(temp_lib)
+            graph = generator.brick_to_shacl(brick_to_save)
+            ttl_file = os.path.splitext(brick_file)[0] + ".ttl"
+            with open(ttl_file, 'w') as f:
+                f.write(graph.serialize(format="turtle"))
+        except Exception as e:
+            print(f"DEBUG: TTL generation failed: {e}")
+
+        return True
     
     def get_all_bricks(self, library_name: Optional[str] = None) -> List[SHACLBrick]:
         """Get all bricks from a library"""

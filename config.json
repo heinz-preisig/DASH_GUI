@@ -1,25 +1,20 @@
 {
     "version": "2.0",
+    "shared_library_root": "shared_libraries",
     "libraries": {
         "bricks": {
-            "default_path": "shared_libraries/bricks",
             "libraries": [
                 {
                     "name": "default",
-                    "path": "shared_libraries/bricks/default",
-                    "description": "Default brick library",
-                    "type": "bricks"
+                    "description": "Default brick library"
                 }
             ]
         },
         "schemas": {
-            "default_path": "shared_libraries/schemas",
             "libraries": [
                 {
                     "name": "default",
-                    "path": "shared_libraries/schemas/default",
-                    "description": "Default schema library",
-                    "type": "schemas"
+                    "description": "Default schema library"
                 }
             ]
         }

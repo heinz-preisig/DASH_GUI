@@ -6,7 +6,7 @@ Dialog for editing UI metadata (sequence, grouping, nesting, display)
 from PyQt6.QtWidgets import QDialog, QTreeWidgetItem, QMessageBox
 from PyQt6.QtCore import Qt
 from typing import Optional
-from ..core.schema_core import Schema, UIMetadata
+from schema_app_v2.core.schema_core import Schema, UIMetadata
 
 
 class UIMetadataPanelDialog(QDialog):
@@ -36,8 +36,8 @@ class UIMetadataPanelDialog(QDialog):
             return
         
         # Connect signals
-        self.ui.buttonBox.accepted.connect(self.accept)
-        self.ui.buttonBox.rejected.connect(self.reject)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
         
         # Connect custom signals
         self.moveUpButton.clicked.connect(self._move_up)
