@@ -1,0 +1,15 @@
+{
+  "brick_id": "e8edfd55-0d35-438c-bb1b-b26d3184dafb",
+  "name": "Organization",
+  "description": "",
+  "object_type": "NodeShape",
+  "target_class": "https://schema.org/Organization",
+  "property_path": "",
+  "properties": {},
+  "constraints": [],
+  "tags": [],
+  "created_at": "2026-05-06T12:45:25.632330",
+  "updated_at": "2026-05-06T12:46:48.870353",
+  "targets": [],
+  "metadata": {}
+}

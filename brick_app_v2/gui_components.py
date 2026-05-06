@@ -36,6 +36,7 @@ class SimpleOntologyBrowser(QDialog):
         self.ontology_combo.currentTextChanged.connect(self.on_ontology_changed)
         self.mode_combo.currentTextChanged.connect(self.on_mode_changed)
         self.search_edit.textChanged.connect(self.on_search_changed)
+        self.search_all_check.stateChanged.connect(self.on_search_all_toggled)
         self.results_list.itemDoubleClicked.connect(self.on_item_selected)
         self.cancelButton.clicked.connect(self.reject)
         
@@ -178,27 +179,82 @@ def on_search_changed(self):
 SimpleOntologyBrowser.on_search_changed = on_search_changed
 
 
+def on_search_all_toggled(self):
+    """Handle 'Search all ontologies' checkbox toggle"""
+    search_all = self.search_all_check.isChecked()
+    self.ontology_combo.setEnabled(not search_all)
+    if search_all:
+        self.apply_search_filter()
+    else:
+        self.load_ontology_items()
+
+SimpleOntologyBrowser.on_search_all_toggled = on_search_all_toggled
+
+
 def apply_search_filter(self):
     """Apply search filter to items"""
     search_text = self.search_edit.text().lower().strip()
-    
+    search_all = self.search_all_check.isChecked()
+
     self.results_list.clear()
-    
-    for item in self.all_items:
-        name_match = search_text == "" or search_text in item['name'].lower()
-        
-        if name_match:
-            display_text = item['name']
-            list_item = QListWidgetItem(display_text)
-            list_item.setData(Qt.ItemDataRole.UserRole, item)
-            self.results_list.addItem(list_item)
+
+    if search_all and search_text:
+        mode = self.mode_combo.currentText().lower()
+        match_count = 0
+        for ont_name, ont_data in sorted(self.ontology_manager.ontologies.items(), key=lambda x: x[0].lower()):
+            if mode == "classes":
+                items_dict = ont_data.get('classes', {})
+            else:
+                items_dict = ont_data.get('properties', {})
+
+            ont_matches = []
+            for uri, data in items_dict.items():
+                if isinstance(data, dict) and 'name' in data:
+                    item = {'name': data['name'], 'uri': uri,
+                            'description': data.get('description', ''),
+                            'comment': data.get('comment', ''),
+                            'ontology': ont_name}
+                else:
+                    item = {'name': str(data), 'uri': uri,
+                            'description': '', 'comment': '', 'ontology': ont_name}
+
+                if search_text in item['name'].lower() or search_text in uri.lower():
+                    ont_matches.append(item)
+
+            if ont_matches:
+                ont_matches.sort(key=lambda x: x['name'].lower())
+                header_item = QListWidgetItem(f"── {ont_name} ({len(ont_matches)}) ──")
+                header_item.setFlags(Qt.ItemFlag.NoItemFlags)
+                header_item.setForeground(self.palette().mid())
+                self.results_list.addItem(header_item)
+                for item in ont_matches:
+                    display_text = f"  {item['name']}  [{item['uri']}]"
+                    list_item = QListWidgetItem(display_text)
+                    list_item.setData(Qt.ItemDataRole.UserRole, item)
+                    self.results_list.addItem(list_item)
+                    match_count += 1
+
+        self.match_count_label.setText(f"{match_count} match{'es' if match_count != 1 else ''} across all ontologies" if match_count else "No matches found")
+    else:
+        for item in self.all_items:
+            name_match = search_text == "" or search_text in item['name'].lower() or search_text in item['uri'].lower()
+            if name_match:
+                display_text = item['name']
+                list_item = QListWidgetItem(display_text)
+                list_item.setData(Qt.ItemDataRole.UserRole, item)
+                self.results_list.addItem(list_item)
+        count = self.results_list.count()
+        self.match_count_label.setText(f"{count} match{'es' if count != 1 else ''}" if search_text else "")
 
 SimpleOntologyBrowser.apply_search_filter = apply_search_filter
 
 
 def on_item_selected(self, item):
     """Handle item double-click"""
-    self.selected_item = item.data(Qt.ItemDataRole.UserRole)
+    data = item.data(Qt.ItemDataRole.UserRole)
+    if data is None:
+        return
+    self.selected_item = data
     self.accept()
 
 SimpleOntologyBrowser.on_item_selected = on_item_selected
