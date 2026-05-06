@@ -72,7 +72,8 @@ class OntologyManager:
     
     def _extract_ontology_data(self, graph: Graph, ontology_name: str):
         """Extract classes and properties from RDF graph"""
-        from rdflib import RDFS
+        from rdflib import RDFS, Namespace
+        SH = Namespace('http://www.w3.org/ns/shacl#')
         classes = {}
         properties = {}
         
@@ -85,12 +86,22 @@ class OntologyManager:
             if isinstance(class_uri, URIRef):
                 class_uris.add(class_uri)
         
+        # Also treat SHACL NodeShapes as classes
+        for shape_uri in graph.subjects(RDF.type, SH.NodeShape):
+            if isinstance(shape_uri, URIRef):
+                class_uris.add(shape_uri)
+        
         for class_uri in class_uris:
             class_name = str(class_uri).split('#')[-1] if '#' in str(class_uri) else str(class_uri).split('/')[-1]
             comment = ""
             for comment_obj in graph.objects(class_uri, RDFS.comment):
                 comment = str(comment_obj)
                 break
+            # Fall back to sh:description if no rdfs:comment
+            if not comment:
+                for desc_obj in graph.objects(class_uri, SH.description):
+                    comment = str(desc_obj)
+                    break
             
             classes[str(class_uri)] = {
                 'name': class_name,
@@ -108,6 +119,11 @@ class OntologyManager:
         for prop_uri in graph.subjects(RDF.type, RDF.Property):
             if isinstance(prop_uri, URIRef):
                 prop_uris.add(prop_uri)
+        
+        # Also extract sh:path values from SHACL property shapes as properties
+        for path_uri in graph.objects(None, SH.path):
+            if isinstance(path_uri, URIRef):
+                prop_uris.add(path_uri)
         
         for prop_uri in prop_uris:
             prop_name = str(prop_uri).split('#')[-1] if '#' in str(prop_uri) else str(prop_uri).split('/')[-1]

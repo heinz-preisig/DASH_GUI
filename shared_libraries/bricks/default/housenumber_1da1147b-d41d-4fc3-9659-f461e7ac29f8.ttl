@@ -1,0 +1,7 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+<http://example.org/1da1147b-d41d-4fc3-9659-f461e7ac29f8> a sh:PropertyShape ;
+    rdfs:label "HouseNumber" ;
+    sh:datatype "xsd:integer" .
+

@@ -191,6 +191,16 @@
         </property>
        </widget>
       </item>
+      <item row="4" column="4">
+       <widget class="QPushButton" name="generateIriBtn">
+        <property name="text">
+         <string>generate IRI</string>
+        </property>
+        <property name="toolTip">
+         <string>Generate a custom IRI from the brick name (no ontology required)</string>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="0">
        <widget class="QLabel" name="nameLabel">
         <property name="text">
@@ -213,6 +223,52 @@
       </item>
       <item row="0" column="2" colspan="2">
        <widget class="QLineEdit" name="namelineEdit"/>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="datatypeLabel">
+        <property name="text">
+         <string>Datatype</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="2" colspan="2">
+       <widget class="QComboBox" name="datatypeCombo">
+        <item>
+         <property name="text">
+          <string>xsd:string</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>xsd:integer</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>xsd:decimal</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>xsd:boolean</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>xsd:date</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>xsd:dateTime</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>xsd:anyURI</string>
+         </property>
+        </item>
+       </widget>
       </item>
       <item row="4" column="0">
        <widget class="QLabel" name="propertyLabel">

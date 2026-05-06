@@ -1,0 +1,15 @@
+{
+  "brick_id": "1efc4dbd-a227-4032-9998-432d781cab25",
+  "name": "TownName",
+  "description": "",
+  "object_type": "PropertyShape",
+  "target_class": "",
+  "property_path": "https://www.geonames.org/ontology#name",
+  "properties": {},
+  "constraints": [],
+  "tags": [],
+  "created_at": "2026-05-06T12:07:28.728153",
+  "updated_at": "2026-05-06T12:10:31.306216",
+  "targets": [],
+  "metadata": {}
+}

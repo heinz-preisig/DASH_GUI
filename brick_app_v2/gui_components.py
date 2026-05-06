@@ -1,12 +1,7 @@
 import sys
+import re
 from pathlib import Path
-from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, 
-    QWidget, QLabel, QLineEdit, QTextEdit, QComboBox, 
-    QPushButton, QListWidget, QListWidgetItem, QGroupBox, QFormLayout,
-    QMessageBox, QFileDialog, QDialog, QDialogButtonBox,
-    QGridLayout, QRadioButton, QSpinBox, QCheckBox
-)
+from PyQt6.QtWidgets import QDialog, QMessageBox, QListWidgetItem
 from PyQt6.QtCore import Qt
 from PyQt6.uic import loadUi
 
@@ -95,29 +90,7 @@ class ConstraintEditorDialog(QDialog):
 
 class PropertyEditorDialog(QDialog):
     """Property editor dialog - loads from property_editor.ui"""
-    
-    def __init__(self, parent=None, ontology_manager=None):
-        super().__init__(parent)
-        self.ontology_manager = ontology_manager
-        
-        # Load UI from file
-        ui_path = Path(__file__).parent / "ui" / "property_editor.ui"
-        loadUi(str(ui_path), self)
-        
-        # Make datatype combo editable
-        self.datatype_combo.setEditable(True)
-        
-        # Add missing datatypes if not present
-        datatypes = ["xsd:string", "xsd:integer", "xsd:decimal", "xsd:boolean",
-                    "xsd:date", "xsd:dateTime", "xsd:time", "xsd:anyURI"]
-        for dt in datatypes:
-            if self.datatype_combo.findText(dt) == -1:
-                self.datatype_combo.addItem(dt)
-        
-        # Connect signals
-        self.browse_btn.clicked.connect(self.browse_property_path)
-        self.okButton.clicked.connect(self.accept)
-        self.cancelButton.clicked.connect(self.reject)
+    pass
 
 
 # Business logic methods for SimpleOntologyBrowser
@@ -523,3 +496,107 @@ def set_property_data(self, property_data):
     self.description_edit.setPlainText(property_data.get('description', ''))
 
 PropertyEditorDialog.set_property_data = set_property_data
+
+
+# PropertyEditorDialog __init__ and additional methods
+DEFAULT_NAMESPACE = "http://example.org/shaclbuild#"
+
+def property_editor_init(self, parent=None, ontology_manager=None):
+    """Initialize property editor dialog"""
+    super(PropertyEditorDialog, self).__init__(parent)
+    self.ontology_manager = ontology_manager
+    
+    # Load UI from file
+    ui_path = Path(__file__).parent / "ui" / "property_editor.ui"
+    loadUi(str(ui_path), self)
+    
+    # Make datatype combo editable
+    self.datatype_combo.setEditable(True)
+    
+    # Add missing datatypes if not present
+    datatypes = ["xsd:string", "xsd:integer", "xsd:decimal", "xsd:boolean",
+                "xsd:date", "xsd:dateTime", "xsd:time", "xsd:anyURI"]
+    for dt in datatypes:
+        if self.datatype_combo.findText(dt) == -1:
+            self.datatype_combo.addItem(dt)
+    
+    # Set default namespace if field is empty
+    if hasattr(self, 'namespace_edit') and not self.namespace_edit.text().strip():
+        self.namespace_edit.setText(DEFAULT_NAMESPACE)
+    
+    # Connect signals
+    self.browse_btn.clicked.connect(self.browse_property_path)
+    self.okButton.clicked.connect(self.accept)
+    self.cancelButton.clicked.connect(self.reject)
+    
+    # Connect new custom IRI generation signals
+    if hasattr(self, 'generate_iri_btn'):
+        self.generate_iri_btn.clicked.connect(self.generate_custom_iri)
+    if hasattr(self, 'use_custom_namespace'):
+        self.use_custom_namespace.stateChanged.connect(self.on_custom_namespace_toggled)
+
+PropertyEditorDialog.__init__ = property_editor_init
+
+
+def on_custom_namespace_toggled(self, state):
+    """Enable/disable namespace field based on checkbox"""
+    if hasattr(self, 'namespace_edit') and hasattr(self, 'namespaceLabel'):
+        enabled = state == Qt.CheckState.Checked.value
+        self.namespace_edit.setEnabled(enabled)
+        self.namespaceLabel.setEnabled(enabled)
+
+PropertyEditorDialog.on_custom_namespace_toggled = on_custom_namespace_toggled
+
+
+def generate_custom_iri(self):
+    """Generate a custom IRI from the property name and namespace"""
+    name = self.name_edit.text().strip()
+    if not name:
+        QMessageBox.warning(self, "Warning", "Please enter a property name first")
+        return
+    
+    # Get namespace - use custom if enabled, otherwise default
+    if hasattr(self, 'use_custom_namespace') and self.use_custom_namespace.isChecked() and hasattr(self, 'namespace_edit'):
+        namespace = self.namespace_edit.text().strip()
+    else:
+        namespace = DEFAULT_NAMESPACE
+    
+    if not namespace:
+        namespace = DEFAULT_NAMESPACE
+        if hasattr(self, 'namespace_edit'):
+            self.namespace_edit.setText(namespace)
+    
+    # Ensure namespace ends with # or /
+    if not namespace.endswith(('#', '/')):
+        namespace += '#'
+    
+    # Convert property name to valid IRI fragment (camelCase)
+    # Remove invalid characters and convert to camelCase
+    iri_fragment = self._name_to_iri_fragment(name)
+    
+    # Generate full IRI
+    full_iri = f"{namespace}{iri_fragment}"
+    self.path_edit.setText(full_iri)
+
+PropertyEditorDialog.generate_custom_iri = generate_custom_iri
+
+
+def _name_to_iri_fragment(self, name: str) -> str:
+    """Convert a property name to a valid IRI fragment"""
+    # Remove or replace invalid characters
+    # Keep alphanumeric, spaces, hyphens, and underscores
+    cleaned = re.sub(r'[^\w\s-]', '', name)
+    
+    # Split into words
+    words = cleaned.split()
+    
+    if not words:
+        return "property"
+    
+    # Convert to camelCase (first word lowercase, rest capitalized)
+    first_word = words[0].lower()
+    rest_words = [word.capitalize() for word in words[1:]]
+    
+    return first_word + ''.join(rest_words)
+
+PropertyEditorDialog._name_to_iri_fragment = _name_to_iri_fragment

@@ -32,17 +32,68 @@
      <item>
       <widget class="QLabel" name="pathLabel">
        <property name="text">
-        <string>Property Path:</string>
+        <string>Property Path (IRI):</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="path_edit"/>
+      <widget class="QLineEdit" name="path_edit">
+       <property name="placeholderText">
+        <string>Enter IRI or generate from namespace...</string>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QPushButton" name="browse_btn">
        <property name="text">
-        <string>Browse</string>
+        <string>Browse Ontology</string>
+       </property>
+       <property name="toolTip">
+        <string>Browse available ontologies for existing properties</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="generate_iri_btn">
+       <property name="text">
+        <string>Generate IRI</string>
+       </property>
+       <property name="toolTip">
+        <string>Generate custom IRI from property name and namespace</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="use_custom_namespace">
+     <property name="text">
+      <string>Use custom namespace for IRI generation</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="namespaceLayout">
+     <item>
+      <widget class="QLabel" name="namespaceLabel">
+       <property name="text">
+        <string>Namespace:</string>
+       </property>
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="namespace_edit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>http://example.org/shaclbuild#</string>
+       </property>
+       <property name="placeholderText">
+        <string>http://example.org/shaclbuild#</string>
        </property>
       </widget>
      </item>

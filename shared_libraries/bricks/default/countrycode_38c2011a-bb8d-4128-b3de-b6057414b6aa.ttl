@@ -1,0 +1,6 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+<http://example.org/38c2011a-bb8d-4128-b3de-b6057414b6aa> a sh:PropertyShape ;
+    rdfs:label "countryCode" .
+

@@ -101,7 +101,7 @@ class SharedLibraryManager:
         for lib_type in ["bricks", "schemas"]:
             libraries = self.config["libraries"][lib_type]["libraries"]
             for lib in libraries:
-                lib_path = Path(lib["path"])
+                lib_path = self.base_path / lib["path"]
                 lib_path.mkdir(parents=True, exist_ok=True)
                 # No nested subdirectories - the library path is the bricks/schemas directory
     

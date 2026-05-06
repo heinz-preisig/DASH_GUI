@@ -105,6 +105,8 @@ class RefactoredBrickEditor(QMainWindow):
         self.description.textChanged.connect(self.on_field_changed)
         self.ontologyTargetBrowser.clicked.connect(self.browse_ontology)
         self.ontologyPathBrowser.clicked.connect(self.browse_ontology)
+        self.generateIriBtn.clicked.connect(self.generate_property_path_iri)
+        self.datatypeCombo.currentTextChanged.connect(self.on_datatype_changed)
         
         # Property signals
         self.propertyList.itemSelectionChanged.connect(self.on_property_selection_changed)
@@ -200,6 +202,13 @@ class RefactoredBrickEditor(QMainWindow):
                 self.targetLineEdit.setText(brick_state.target_class)
             else:
                 self.propertyPathEdit.setText(brick_state.property_path)
+                # Restore datatype from properties
+                datatype = brick_state.properties.get('datatype', 'xsd:string')
+                self.datatypeCombo.blockSignals(True)
+                index = self.datatypeCombo.findText(datatype)
+                if index >= 0:
+                    self.datatypeCombo.setCurrentIndex(index)
+                self.datatypeCombo.blockSignals(False)
             
             # Update property list
             self._update_property_list()
@@ -405,6 +414,15 @@ class RefactoredBrickEditor(QMainWindow):
         app_state_manager.update_brick_field("target_class", brick_data.get("target_class", ""))
         app_state_manager.update_brick_field("property_path", brick_data.get("property_path", ""))
     
+    def on_datatype_changed(self, datatype: str):
+        """Handle datatype combo change for PropertyShape bricks"""
+        current_type = app_state_manager.get_brick_type()
+        if current_type == BrickType.PROPERTY_SHAPE:
+            brick_state = app_state_manager.get_brick_state()
+            props = brick_state.properties.copy()
+            props['datatype'] = datatype
+            app_state_manager.update_brick_field("properties", props)
+
     def browse_ontology(self):
         """Handle ontology browser button click"""
         try:
@@ -445,6 +463,27 @@ class RefactoredBrickEditor(QMainWindow):
         # This will be handled by state updates
         pass
     
+    def generate_property_path_iri(self):
+        """Generate a custom IRI for the property path from the brick name"""
+        from gui_components import DEFAULT_NAMESPACE
+        import re
+        name = self.namelineEdit.text().strip()
+        if not name:
+            QMessageBox.warning(self, "Warning", "Please enter a brick name first")
+            return
+
+        # Convert name to camelCase IRI fragment
+        cleaned = re.sub(r'[^\w\s-]', '', name)
+        words = cleaned.split()
+        if not words:
+            QMessageBox.warning(self, "Warning", "Name contains no valid characters")
+            return
+        iri_fragment = words[0].lower() + ''.join(w.capitalize() for w in words[1:])
+
+        full_iri = f"{DEFAULT_NAMESPACE}{iri_fragment}"
+        self.propertyPathEdit.setText(full_iri)
+        app_state_manager.update_brick_field("property_path", full_iri)
+
     def add_property(self):
         """Add a property using property editor"""
         dialog = PropertyEditorDialog(self, ontology_manager=brick_business_logic.ontology_manager)
@@ -845,6 +884,8 @@ class OntologySearchDialog(QDialog):
         self.resultsList.itemClicked.connect(self.on_result_selected)
         self.downloadButton.clicked.connect(self.on_download)
         self.cancelButton.clicked.connect(self.reject)
+        self.tabWidget.currentChanged.connect(self._update_download_button)
+        self.urlLineEdit.textChanged.connect(self._update_download_button)
         
         # Disable download button initially
         self.downloadButton.setEnabled(False)
@@ -912,7 +953,16 @@ class OntologySearchDialog(QDialog):
             self.selected_ontology = self.search_results[index]
             self.infoLabel.setText(f"Selected: {self.selected_ontology['prefix']}\n{self.selected_ontology['uri']}")
             self.downloadButton.setEnabled(True)
-    
+
+    def _update_download_button(self):
+        """Enable Download button based on the active tab"""
+        if self.tabWidget.currentIndex() == 1:
+            # URL tab: enable when URL field is non-empty
+            self.downloadButton.setEnabled(bool(self.urlLineEdit.text().strip()))
+        else:
+            # Search tab: enable only when a result is selected
+            self.downloadButton.setEnabled(self.selected_ontology is not None)
+
     def on_download(self):
         """Download the selected or URL ontology"""
         try:
@@ -989,21 +1039,43 @@ class OntologySearchDialog(QDialog):
     def _download_ontology(self, name: str, url: str):
         """Download ontology from URL to cache"""
         import urllib.request
+        import urllib.error
         from pathlib import Path
         
-        # Download with extended timeout for large ontologies
-        req = urllib.request.Request(url, headers={'Accept': 'text/turtle,application/rdf+xml,application/n-triples'})
+        # Build request — prefer RDF/XML then Turtle so GeoNames-style servers respond correctly
+        req = urllib.request.Request(
+            url,
+            headers={
+                'Accept': 'application/rdf+xml,text/turtle;q=0.9,application/n-triples;q=0.8,*/*;q=0.5',
+                'User-Agent': 'Mozilla/5.0 (compatible; BrickApp/2.0; ontology downloader)'
+            }
+        )
+        
+        # Download with extended timeout; urllib follows redirects automatically
         with urllib.request.urlopen(req, timeout=60) as response:
             content = response.read()
+            content_type = response.headers.get('Content-Type', '')
+            final_url = response.url if hasattr(response, 'url') else url
         
-        # Determine file extension
-        content_type = response.headers.get('Content-Type', '')
-        if 'turtle' in content_type or 'ttl' in url:
+        # Reject HTML responses (server returned an error/landing page, not the ontology)
+        if content[:200].lstrip().startswith(b'<!') or b'<html' in content[:200].lower():
+            raise ValueError(
+                f"Server returned an HTML page instead of RDF data.\n"
+                f"Try downloading the file manually and use the URL tab to point to the direct .rdf/.ttl file.\n"
+                f"Final URL was: {final_url}"
+            )
+        
+        # Determine file extension from Content-Type or URL
+        if 'turtle' in content_type or final_url.endswith('.ttl') or url.endswith('.ttl'):
             ext = '.ttl'
-        elif 'xml' in content_type or 'rdf' in url:
+        elif 'xml' in content_type or 'rdf' in content_type or final_url.endswith('.rdf') or url.endswith('.rdf'):
             ext = '.rdf'
+        elif content.lstrip().startswith(b'@') or content.lstrip().startswith(b'<http'):
+            ext = '.ttl'  # Likely Turtle
+        elif content.lstrip().startswith(b'<?xml') or content.lstrip().startswith(b'<rdf'):
+            ext = '.rdf'  # Likely RDF/XML
         else:
-            ext = '.ttl'  # Default
+            ext = '.rdf'  # Default for unknown
         
         # Save to cache
         cache_path = Path(self.ontology_manager.cache_path)

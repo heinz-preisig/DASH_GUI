@@ -1,0 +1,38 @@
+# Windsurf Project Rules
+
+## Project Context
+- This is a Python project managed by **uv**.
+- Total file count is ~250 files (excluding .venv).
+- Always respect the existing project structure and modularity.
+
+## Python & Environment
+- **Environment**: Always use the local `.venv` directory.
+- **Commands**: Prefix all execution commands with `uv run` (e.g., `uv run python main.py` or `uv run pytest`).
+- **Dependencies**: Use `uv add <package>` or `uv remove <package>` instead of pip.
+- **Versioning**: Follow Python 3.12+ standards.
+
+## Exclusion Rules
+- Never index, search, or attempt to modify files inside:
+  - `.venv/`
+  - `__pycache__/`
+  - `.git/`
+  - `.pytest_cache/`
+
+## Agent Behavior
+- Before making large-scale changes across multiple files, summarize the plan and ask for confirmation.
+- If a command fails twice, stop and ask for human intervention rather than looping.
+- Maintain existing coding style and docstring formats found in the project.
+
+## GUI Development (PyQt)
+- **UI Files**: Always use `.ui` files (XML) for layout changes. Do not hard-code complex layouts in Python.
+- **Loading UI**: Use `uic.loadUi()` to load layouts dynamically, or specify if files should be compiled via `pyuic6` (or `pyuic5`).
+- **Separation of Concerns**: Keep logic in `.py` files and visual design in `.ui` files.
+- **Naming Convention**: When creating new UI components, name the file `<component_name>.ui`.
+
+## Web Development (Flask)
+- **Structure**: Maintain strict separation of `static/` (CSS/JS) and `templates/` (HTML).
+- **Routes**: Keep route definitions modular. Use Blueprints for new features to keep the 250-file project manageable.
+- **Development**: Use `uv run flask run` or `uv run python app.py` for testing.
+- **Templates**: Always use Jinja2 templating syntax. Do not hard-code HTML inside Python strings.
+- **Context**: When editing routes, always check `models.py` or the database layer first to ensure data consistency.
+
