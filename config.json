@@ -1,4 +1,29 @@
 {
+    "version": "2.0",
+    "libraries": {
+        "bricks": {
+            "default_path": "shared_libraries/bricks",
+            "libraries": [
+                {
+                    "name": "default",
+                    "path": "shared_libraries/bricks/default",
+                    "description": "Default brick library",
+                    "type": "bricks"
+                }
+            ]
+        },
+        "schemas": {
+            "default_path": "shared_libraries/schemas",
+            "libraries": [
+                {
+                    "name": "default",
+                    "path": "shared_libraries/schemas/default",
+                    "description": "Default schema library",
+                    "type": "schemas"
+                }
+            ]
+        }
+    },
     "export": {
         "last_directory": "",
         "last_filename": ""
@@ -6,5 +31,10 @@
     "ui": {
         "window_geometry": "",
         "window_state": ""
+    },
+    "integration": {
+        "cross_app_compatibility": true,
+        "shared_format": "json",
+        "version_control": "git"
     }
 }

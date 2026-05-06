@@ -103,6 +103,8 @@ class AppStateManager:
         """Set current brick type"""
         old_type = self._ui_state.current_brick_type
         self._ui_state.current_brick_type = brick_type
+        # Also update the brick state object_type
+        self._brick_state.object_type = brick_type.value
         self._update_field_visibility()
         self._notify_state_change("brick_type", old_type, brick_type)
     

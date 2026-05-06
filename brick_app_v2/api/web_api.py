@@ -124,7 +124,13 @@ class BrickWebAPI:
             """Get all brick libraries"""
             result = self.backend.get_brick_libraries()
             return jsonify(result)
-        
+
+        @self.app.route('/api/libraries/filesystem', methods=['GET'])
+        def get_filesystem_libraries():
+            """Get libraries from filesystem (shared_libraries)"""
+            result = self.backend.get_shared_library_info()
+            return jsonify(result)
+
         @self.app.route('/api/libraries/<library_name>/bricks', methods=['GET'])
         def get_library_bricks(library_name):
             """Get bricks from a specific library"""

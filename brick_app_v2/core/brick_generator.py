@@ -680,46 +680,76 @@ class SHACLBrickGenerator:
         else:
             raise ValueError(f"Unknown template type: {template_type}")
     
-    def brick_to_shacl(self, brick: SHACLBrick, base_uri: str = EX) -> Graph:
-        """Convert a brick to SHACL RDF graph"""
+    def brick_to_shacl(self, brick: SHACLBrick, base_uri: str = EX,
+                        visited: Optional[set] = None) -> Graph:
+        """Convert a brick to SHACL RDF graph
+
+        Args:
+            brick: The brick to convert
+            base_uri: Base URI for resources
+            visited: Set of already-visited brick IDs (prevents infinite recursion)
+        """
+        if visited is None:
+            visited = set()
+
+        # Prevent infinite recursion from circular references
+        if brick.brick_id in visited:
+            return Graph()
+        visited.add(brick.brick_id)
+
         g = Graph()
         g.bind("sh", SH)
         g.bind("brick", BRICK)
-        
+
         brick_uri = URIRef(f"{base_uri}{brick.brick_id}")
-        
+
         # Add type
         if brick.object_type == SHACLObjectType.NODE_SHAPE.value:
             g.add((brick_uri, RDF.type, SH.NodeShape))
         elif brick.object_type == SHACLObjectType.PROPERTY_SHAPE.value:
             g.add((brick_uri, RDF.type, SH.PropertyShape))
-        
+
         # Add targets
         for target in brick.targets:
             if target.target_type == SHACLObjectType.TARGET_CLASS.value:
                 g.add((brick_uri, SH.targetClass, URIRef(target.value)))
             elif target.target_type == SHACLObjectType.TARGET_NODE.value:
                 g.add((brick_uri, SH.targetNode, URIRef(target.value)))
-        
+
+        # Track property brick references to include later
+        referenced_property_bricks = []
+
         # Add properties
-        for prop_name, prop_value in brick.properties.items():
+        for prop_name, prop_data in brick.properties.items():
+            # Check if this is a property brick reference
+            if isinstance(prop_data, dict) and prop_data.get('is_property_brick'):
+                prop_brick_id = prop_data.get('property_brick_id')
+                if prop_brick_id:
+                    # Add reference to property brick
+                    prop_brick_uri = URIRef(f"{base_uri}{prop_brick_id}")
+                    g.add((brick_uri, SH.property, prop_brick_uri))
+                    # Queue for inclusion
+                    referenced_property_bricks.append(prop_brick_id)
+                    continue
+
+            # Regular property (inline)
             if hasattr(SH, prop_name):
                 prop = getattr(SH, prop_name)
-                if isinstance(prop_value, str) and (prop_value.startswith("http://") or prop_value.startswith("https://") or ":" in prop_value and "/" in prop_value):
-                    g.add((brick_uri, prop, URIRef(prop_value)))
-                elif isinstance(prop_value, bool):
-                    g.add((brick_uri, prop, Literal(prop_value)))
-                elif isinstance(prop_value, (int, float)):
-                    g.add((brick_uri, prop, Literal(prop_value)))
+                if isinstance(prop_data, str) and (prop_data.startswith("http://") or prop_data.startswith("https://") or ":" in prop_data and "/" in prop_data):
+                    g.add((brick_uri, prop, URIRef(prop_data)))
+                elif isinstance(prop_data, bool):
+                    g.add((brick_uri, prop, Literal(prop_data)))
+                elif isinstance(prop_data, (int, float)):
+                    g.add((brick_uri, prop, Literal(prop_data)))
                 else:
-                    g.add((brick_uri, prop, Literal(prop_value)))
-        
+                    g.add((brick_uri, prop, Literal(str(prop_data))))
+
         # Add constraints
         for constraint in brick.constraints:
             # Map constraint types to SHACL properties
             constraint_mapping = {
                 "MinCountConstraintComponent": "minCount",
-                "MaxCountConstraintComponent": "maxCount", 
+                "MaxCountConstraintComponent": "maxCount",
                 "MinLengthConstraintComponent": "minLength",
                 "MaxLengthConstraintComponent": "maxLength",
                 "PatternConstraintComponent": "pattern",
@@ -727,7 +757,7 @@ class SHACLBrickGenerator:
                 "ClassConstraintComponent": "class",
                 "NodeKindConstraintComponent": "nodeKind"
             }
-            
+
             constraint_name = constraint_mapping.get(constraint.constraint_type)
             if constraint_name and hasattr(SH, constraint_name):
                 constraint_prop = getattr(SH, constraint_name)
@@ -740,13 +770,22 @@ class SHACLBrickGenerator:
                         g.add((brick_uri, constraint_prop, Literal(val)))
                 else:
                     g.add((brick_uri, constraint_prop, Literal(constraint.value)))
-        
+
         # Add annotations
         if brick.description:
             g.add((brick_uri, RDFS.comment, Literal(brick.description)))
-        
+
         g.add((brick_uri, RDFS.label, Literal(brick.name)))
-        
+
+        # Include referenced property bricks
+        for prop_brick_id in referenced_property_bricks:
+            prop_brick = self.library.get_brick(prop_brick_id)
+            if prop_brick:
+                prop_graph = self.brick_to_shacl(prop_brick, base_uri, visited)
+                # Merge property brick graph into main graph
+                for triple in prop_graph:
+                    g.add(triple)
+
         return g
 
 def main():

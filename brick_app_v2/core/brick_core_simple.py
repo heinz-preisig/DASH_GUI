@@ -7,11 +7,23 @@ It's designed to be interface-agnostic and can be used by GUI, web, or CLI inter
 
 import json
 import os
+import re
 import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Union
 from dataclasses import dataclass, field, asdict
+
+
+def sanitize_filename(name: str, max_length: int = 30) -> str:
+    """Sanitize name for use in filename"""
+    # Replace spaces and special chars with underscore
+    sanitized = re.sub(r'[^\w\s-]', '', name).strip()
+    sanitized = re.sub(r'[\s]+', '_', sanitized)
+    # Limit length
+    if len(sanitized) > max_length:
+        sanitized = sanitized[:max_length]
+    return sanitized.lower() or "brick"
 
 
 
@@ -108,12 +120,21 @@ class BrickCore:
         return brick
     
     def load_brick(self, brick_id: str, library_name: Optional[str] = None) -> Optional[SHACLBrick]:
-        """Load a brick from storage"""
+        """Load a brick from storage by ID"""
         lib_name = library_name or self.active_library
-        # Bricks are stored directly in the library directory, not in a nested bricks subdirectory
-        brick_file = os.path.join(self.repository_path, lib_name, f"{brick_id}.json")
+        library_path = os.path.join(self.repository_path, lib_name)
         
-        if not os.path.exists(brick_file):
+        if not os.path.exists(library_path):
+            return None
+        
+        # Find file ending with brick_id.json (supports both old and new name_UUID format)
+        brick_file = None
+        for filename in os.listdir(library_path):
+            if filename.endswith(f"_{brick_id}.json") or filename == f"{brick_id}.json":
+                brick_file = os.path.join(library_path, filename)
+                break
+        
+        if not brick_file or not os.path.exists(brick_file):
             return None
         
         try:
@@ -134,22 +155,30 @@ class BrickCore:
         
         # Validate brick
         if not brick_to_save.name.strip():
+            print(f"DEBUG: Brick name is empty")
+            return False
+        
+        if not brick_to_save.brick_id:
+            print(f"DEBUG: Brick ID is missing")
             return False
         
         if brick_to_save.object_type == "NodeShape" and not brick_to_save.target_class.strip():
+            print(f"DEBUG: NodeShape missing target_class")
             return False
         
         if brick_to_save.object_type == "PropertyShape" and not brick_to_save.property_path.strip():
+            print(f"DEBUG: PropertyShape missing property_path")
             return False
         
         # Update timestamp
         brick_to_save.update_timestamp()
         
-        # Save to file
+        # Save to file with name_UUID format
         lib_name = self.active_library
         # Bricks are stored directly in the library directory, not in a nested bricks subdirectory
         library_path = os.path.join(self.repository_path, lib_name)
-        brick_file = os.path.join(library_path, f"{brick_to_save.brick_id}.json")
+        safe_name = sanitize_filename(brick_to_save.name)
+        brick_file = os.path.join(library_path, f"{safe_name}_{brick_to_save.brick_id}.json")
         
         # Ensure directory exists
         os.makedirs(library_path, exist_ok=True)
@@ -193,11 +222,24 @@ class BrickCore:
     def delete_brick(self, brick_id: str, library_name: Optional[str] = None) -> bool:
         """Delete a brick"""
         lib_name = library_name or self.active_library
-        # Bricks are stored directly in the library directory, not in a nested bricks subdirectory
-        brick_file = os.path.join(self.repository_path, lib_name, f"{brick_id}.json")
+        library_path = os.path.join(self.repository_path, lib_name)
+        
+        # Find file ending with brick_id.json (supports both old and new name_UUID format)
+        brick_file = None
+        for filename in os.listdir(library_path):
+            if filename.endswith(f"_{brick_id}.json") or filename == f"{brick_id}.json":
+                brick_file = os.path.join(library_path, filename)
+                break
+        
+        if not brick_file:
+            return False
         
         try:
             os.remove(brick_file)
+            # Also try to delete corresponding TTL file
+            ttl_file = brick_file.replace('.json', '.ttl')
+            if os.path.exists(ttl_file):
+                os.remove(ttl_file)
             if self.current_brick and self.current_brick.brick_id == brick_id:
                 self.current_brick = None
             return True

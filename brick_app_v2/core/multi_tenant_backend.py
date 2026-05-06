@@ -4,38 +4,73 @@ Multi-Tenant Backend Architecture
 Provides isolated backend instances for multiple clients (Qt, Web, API)
 """
 
+import sys
+from pathlib import Path
 from typing import Dict, Any, Optional, List
+
 from .session_manager import SessionManager, BackendSession
 from .abstract_events import (
     MultiClientEventManager, EventType, ClientType, Event,
-    create_brick_created_event, create_brick_updated_event, 
+    create_brick_created_event, create_brick_updated_event,
     create_error_event, create_status_event
 )
+
+# Add parent directory to path for shared_libraries import
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from shared_libraries.library_manager import SharedLibraryManager
 
 
 class MultiTenantBackend:
     """Main multi-tenant backend coordinator"""
-    
+
     def __init__(self, repository_path: str = "brick_repositories"):
         self.repository_path = repository_path
-        
+
+        # Shared library manager for filesystem-based library discovery
+        self.library_manager = SharedLibraryManager()
+
         # Session management
         self.session_manager = SessionManager(repository_path)
-        
-        # Shared core for repository operations (doesn't require session)
-        from .brick_core_simple import BrickCore
-        self._shared_core = BrickCore(repository_path)
-        
+
         # Event management
         self.event_manager = MultiClientEventManager()
-        
+
         # Setup event forwarding
         self._setup_event_forwarding()
+
+        # Ensure shared libraries are discoverable by the repository
+        self._sync_shared_libraries()
     
     def _setup_event_forwarding(self):
         """Setup event forwarding from sessions to event manager"""
         # This will be called when sessions are created
         pass
+
+    def _sync_shared_libraries(self):
+        """Sync shared libraries - now handled by scanning filesystem directly"""
+        pass  # Library discovery is done via scan methods
+
+    def get_shared_library_info(self) -> Dict[str, Any]:
+        """Get information about shared libraries by scanning filesystem"""
+        try:
+            # Scan filesystem directly
+            brick_libs = self.library_manager.scan_brick_libraries()
+            schema_libs = self.library_manager.scan_schema_libraries()
+
+            return {
+                "status": "success",
+                "data": {
+                    "brick_libraries": brick_libs,
+                    "schema_libraries": schema_libs,
+                    "total_brick_libraries": len(brick_libs),
+                    "total_schema_libraries": len(schema_libs)
+                }
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Failed to get shared library info: {e}"
+            }
     
     def create_session(self, client_type: str, user_info: Dict[str, Any] = None) -> str:
         """Create a new backend session"""
@@ -157,67 +192,6 @@ class MultiTenantBackend:
         """Cleanup inactive sessions"""
         return self.session_manager.cleanup_inactive_sessions(max_age_hours)
     
-    # Repository operations using shared core (no session required)
-    def get_brick_libraries(self) -> Dict[str, Any]:
-        """Get all available brick libraries"""
-        try:
-            libraries = self._shared_core.get_libraries()
-            return {
-                "status": "success",
-                "libraries": libraries
-            }
-        except Exception as e:
-            return {
-                "status": "error",
-                "message": str(e)
-            }
-    
-    def get_library_bricks(self, library_name: str) -> Dict[str, Any]:
-        """Get all bricks in a specific library"""
-        try:
-            bricks = self._shared_core.get_all_bricks(library_name)
-            return {
-                "status": "success",
-                "bricks": [b.to_dict() for b in bricks]
-            }
-        except Exception as e:
-            return {
-                "status": "error",
-                "message": str(e)
-            }
-    
-    def get_all_bricks(self) -> Dict[str, Any]:
-        """Get all bricks across all libraries"""
-        try:
-            bricks = self._shared_core.get_all_bricks()
-            return {
-                "status": "success",
-                "bricks": [b.to_dict() for b in bricks]
-            }
-        except Exception as e:
-            return {
-                "status": "error",
-                "message": str(e)
-            }
-    
-    def get_repository_info(self) -> Dict[str, Any]:
-        """Get repository information"""
-        try:
-            libraries = self._shared_core.get_libraries()
-            all_bricks = self._shared_core.get_all_bricks()
-            return {
-                "status": "success",
-                "repository_path": self.repository_path,
-                "libraries": libraries,
-                "library_count": len(libraries),
-                "brick_count": len(all_bricks)
-            }
-        except Exception as e:
-            return {
-                "status": "error",
-                "message": str(e)
-            }
-    
     # Qt-specific convenience methods for backward compatibility
     def qt_create_new_brick(self, brick_type: str = "NodeShape") -> Dict[str, Any]:
         """Create new brick in Qt session (backward compatibility)"""
@@ -286,6 +260,81 @@ class MultiTenantBackend:
                          event_type: Optional[EventType] = None) -> List[Event]:
         """Get event history"""
         return self.event_manager.get_event_history(session_id, event_type)
+    
+    # Repository operations (shared across sessions)
+    def get_repository_info(self) -> Dict[str, Any]:
+        """Get repository information (shared)"""
+        qt_session = self.get_qt_session()
+        if qt_session:
+            return qt_session.brick_api.get_repository_info()
+        return {"status": "error", "message": "No session available"}
+    
+    def get_brick_libraries(self) -> Dict[str, Any]:
+        """Get brick libraries by scanning filesystem"""
+        try:
+            # Scan filesystem for brick libraries
+            libraries = self.library_manager.scan_brick_libraries()
+            return {
+                "status": "success",
+                "data": {
+                    "libraries": libraries,
+                    "count": len(libraries),
+                    "source": "filesystem"
+                }
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Failed to get brick libraries: {e}"
+            }
+    
+    def get_all_bricks(self) -> Dict[str, Any]:
+        """Get all bricks (shared)"""
+        qt_session = self.get_qt_session()
+        if qt_session:
+            return qt_session.brick_api.get_all_bricks()
+        return {"status": "error", "message": "No session available"}
+    
+    def get_library_bricks(self, library_name: str) -> Dict[str, Any]:
+        """Get bricks from specific library by scanning filesystem"""
+        try:
+            # Scan filesystem to find the library
+            brick_libs = self.library_manager.scan_brick_libraries()
+            for lib in brick_libs:
+                if lib["name"] == library_name:
+                    lib_path = Path(lib["absolute_path"])
+
+                    if lib_path.exists():
+                        # Load brick files from directory
+                        bricks = []
+                        for brick_file in lib_path.glob("*.json"):
+                            if brick_file.name == "metadata.json":
+                                continue
+                            try:
+                                with open(brick_file, 'r') as f:
+                                    import json
+                                    brick_data = json.load(f)
+                                    brick_data["library"] = library_name
+                                    brick_data["source_file"] = brick_file.name
+                                    bricks.append(brick_data)
+                            except Exception as e:
+                                print(f"Warning: Failed to load brick {brick_file}: {e}")
+
+                        return {
+                            "status": "success",
+                            "data": {
+                                "bricks": bricks,
+                                "count": len(bricks),
+                                "library": library_name,
+                                "source": "filesystem",
+                                "path": str(lib_path.absolute())
+                            }
+                        }
+
+            return {"status": "error", "message": f"Library {library_name} not found"}
+
+        except Exception as e:
+            return {"status": "error", "message": f"Failed to get library bricks: {e}"}
     
     # Utility methods
     def broadcast_message(self, message: str, exclude_session: str = None):

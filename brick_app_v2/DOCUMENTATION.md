@@ -39,7 +39,7 @@ uv sync
 
 # Run application
 uv run python main.py --gui
-uv run python main.py --web --port 5000
+uv run python main.py --web --port 5001
 ```
 
 **Using pip with pyproject.toml:**
@@ -49,7 +49,7 @@ pip install -e .
 
 # Run application
 python main.py --gui
-python main.py --web --port 5000
+python main.py --web --port 5001
 ```
 
 #### Option 2: Traditional Installation
@@ -78,7 +78,7 @@ BRICK_REPOSITORY_PATH=./shared_libraries
 
 # Web Interface Settings
 WEB_HOST=localhost
-WEB_PORT=5000
+WEB_PORT=5001
 WEB_DEBUG=false
 
 # Development Settings
@@ -103,21 +103,22 @@ python main.py --web --port $WEB_PORT
 ```bash
 # From main DASH_GUI directory
 python run_brick_app_qt.py              # Launch Qt GUI
-python run_brick_app_web.py             # Launch Web Interface
+python run_brick_app_web.py             # Launch Web Interface (default port 5001)
+python run_brick_app_web.py --port 5002 # Launch on custom port
 ```
 
 #### Option 2: Direct with uv
 ```bash
 cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
 uv run main.py --gui
-uv run main.py --web --port 5000
+uv run main.py --web --port 5001
 ```
 
 #### Option 3: Direct with Python
 ```bash
 cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
 python main.py --gui
-python main.py --web --port 5000
+python main.py --web --port 5001
 ```
 
 ## Frontend Options
@@ -162,25 +163,28 @@ python main.py --gui
 
 **Startup:**
 ```bash
-# Option 1: Launcher script
+# Option 1: Launcher script (default port 5001)
 python run_brick_app_web.py
+
+# Option 1b: Custom port
+python run_brick_app_web.py --port 5002
 
 # Option 2: Direct with uv
 cd brick_app_v2
-uv run main.py --web --port 5000
+uv run main.py --web --port 5001
 
 # Option 3: Direct with Python
 cd brick_app_v2
-python main.py --web --port 5000
+python main.py --web --port 5001
 ```
 
 **Access:**
 ```
-http://localhost:5000
+http://localhost:5001
 ```
 
 **Usage:**
-1. Open browser to localhost:5000
+1. Open browser to localhost:5001
 2. Select brick from sidebar
 3. Edit brick details, properties, constraints
 4. Save changes automatically
@@ -272,8 +276,8 @@ http://localhost:5000
 7. **Save**: Save brick to library
 
 #### Web Interface
-1. **Launch**: `python run_brick_app_web.py` or `cd brick_app_v2 && uv run main.py --web --port 5000`
-2. **Access**: Open `http://localhost:5000`
+1. **Launch**: `python run_brick_app_web.py` or `cd brick_app_v2 && uv run main.py --web --port 5001`
+2. **Access**: Open `http://localhost:5001`
 3. **Select**: Choose brick from sidebar
 4. **Edit**: Modify details in main panel
 5. **Properties**: Click "Add Property" for new properties
@@ -479,8 +483,9 @@ export PYTHONPATH=/home/heinz/1_Gits/DASH_GUI:$PYTHONPATH
 
 #### Port Conflicts
 ```bash
-# Use different port
-python run_brick_app_web.py  # Or: cd brick_app_v2 && uv run main.py --web --port 5001
+# Port 5000 or 5001 already in use? Use different port:
+python run_brick_app_web.py --port 5002
+# Or: cd brick_app_v2 && uv run main.py --web --port 5002
 ```
 
 #### Library Not Found
@@ -498,7 +503,7 @@ ls -la shared_libraries/bricks/
 
 #### Web Interface
 ```bash
-python main.py --web --debug --port 5000
+python main.py --web --debug --port 5001
 ```
 
 #### PyQt GUI

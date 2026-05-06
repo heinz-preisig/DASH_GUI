@@ -118,13 +118,18 @@ class BrickBusinessLogic:
             self.brick_core.update_current_brick(
                 name=brick_data.get("name", ""),
                 description=brick_data.get("description", ""),
+                object_type=brick_data.get("object_type", "NodeShape"),
                 target_class=brick_data.get("target_class", ""),
-                property_path=brick_data.get("property_path", "")
+                property_path=brick_data.get("property_path", ""),
+                properties=brick_data.get("properties", {})
             )
             
             # Save brick
             success = self.brick_core.save_brick()
             if success:
+                # Sync brick_id back to app_state_manager for TTL generation
+                if self.brick_core.current_brick:
+                    app_state_manager.update_brick_field("brick_id", self.brick_core.current_brick.brick_id)
                 app_state_manager.set_ui_state(UIState.BROWSE)
                 return True, "Brick saved successfully"
             else:
