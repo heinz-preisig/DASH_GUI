@@ -28,21 +28,51 @@ def sanitize_filename(name: str, max_length: int = 30) -> str:
 
 
 @dataclass
+class LeafProperty:
+    """Represents a leaf property (sh:property entry) within a NodeShape brick"""
+    path: str  # sh:path IRI
+    label: str = ""  # rdfs:label
+    datatype: Optional[str] = None  # xsd:string, xsd:decimal, etc.
+    node_kind: Optional[str] = None  # sh:IRI for dropdowns
+    in_values: List[str] = field(default_factory=list)  # sh:in (IRIs or literals)
+    has_value: Optional[str] = None  # sh:hasValue for static labels
+    min_count: int = 1
+    max_count: Optional[int] = 1
+    description: str = ""
+    min_inclusive: Optional[float] = None
+    max_inclusive: Optional[float] = None
+    single_line: Optional[bool] = None  # dash:singleLine
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'LeafProperty':
+        return cls(**data)
+
+
+@dataclass
 class SHACLBrick:
-    """Simple SHACL brick representation"""
+    """Modern SHACL brick representation - all bricks are NodeShapes with leaf properties"""
     brick_id: str
     name: str
     description: str
-    object_type: str  # "NodeShape" or "PropertyShape"
-    target_class: str = ""  # For NodeShape
-    property_path: str = ""  # For PropertyShape
-    properties: Dict[str, Any] = field(default_factory=dict)
-    constraints: List[Dict[str, Any]] = field(default_factory=list)
+    template_type: str = "custom"  # free_text, decimal_with_unit, dropdown_iri, date_field, static_label, file_upload, xone_choice, custom
+    namespace: str = "ex"  # IRI prefix
+    target_class: str = ""  # sh:targetClass IRI
+    leaf_properties: List[Dict[str, Any]] = field(default_factory=list)  # List of LeafProperty dicts
+    xone_alternatives: List[List[Dict[str, Any]]] = field(default_factory=list)  # For xone_choice template type
     tags: List[str] = field(default_factory=list)
     created_at: str = ""
     updated_at: str = ""
-    targets: List[Dict[str, Any]] = field(default_factory=list)  # For SHACL targets
-    metadata: Dict[str, Any] = field(default_factory=dict)  # Additional metadata
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    # Legacy fields for backward compatibility (will be removed in future)
+    object_type: str = "NodeShape"  # Always "NodeShape" in modern format
+    properties: Dict[str, Any] = field(default_factory=dict)
+    constraints: List[Dict[str, Any]] = field(default_factory=list)
+    targets: List[Dict[str, Any]] = field(default_factory=list)
+    property_path: str = ""
     
     def __post_init__(self):
         """Set timestamps after initialization"""
@@ -57,8 +87,11 @@ class SHACLBrick:
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'SHACLBrick':
-        """Create from dictionary"""
-        return cls(**data)
+        """Create from dictionary - filters out unknown fields for forward compatibility"""
+        # Filter to only valid dataclass fields
+        valid_fields = {f.name for f in cls.__dataclass_fields__.values()}
+        filtered_data = {k: v for k, v in data.items() if k in valid_fields}
+        return cls(**filtered_data)
     
     def update_timestamp(self):
         """Update the modification timestamp"""

@@ -109,6 +109,31 @@ class SchemaManagementMixin:
         except Exception as e:
             QMessageBox.critical(self, "Export Error", f"Failed to export SHACL: {e}")
 
+    def generate_web_form(self):
+        """Generate web form (DASH HTML) from schema"""
+        if not self.current_schema:
+            QMessageBox.warning(self, "No Schema", "Please create or open a schema first.")
+            return
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Generate Web Form", f"{self.current_schema.name}.html",
+            "HTML Files (*.html);;All Files (*)"
+        )
+        if not file_path:
+            return
+
+        try:
+            from schema_app_v2.core.dash_integration import DASHFormGenerator
+            generator = DASHFormGenerator(self.brick_integration)
+            html = generator.generate_dash_html_form(self.current_schema)
+            with open(file_path, 'w') as f:
+                f.write(html)
+            self.ui.statusbar.showMessage(f"Generated web form: {file_path}")
+            QMessageBox.information(self, "Success",
+                f"Web form saved to:\n{file_path}\n\nOpen in browser to view.")
+        except Exception as e:
+            QMessageBox.critical(self, "Generation Error", f"Failed to generate web form: {e}")
+
     def delete_schema(self):
         """Delete current schema"""
         if not self.current_schema:
@@ -271,6 +296,14 @@ class SchemaManagementMixin:
         self.current_schema = None
         self.state_manager.set_current_schema(None, has_unsaved_changes=False)
         self.refresh_schema_list()
+        
+        # Auto-select first schema if available
+        schemas = self.schema_core.get_all_schemas()
+        if schemas:
+            self.ui.schemaListWidget.setCurrentRow(0)
+            # Trigger selection change handler
+            self.on_schema_selection_changed()
+        
         self.ui.statusbar.showMessage(f"Library: {library_name}")
 
     def new_library(self):

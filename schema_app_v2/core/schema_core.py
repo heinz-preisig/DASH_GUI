@@ -22,13 +22,39 @@ class UIMetadata:
     help_text: str = ""  # Help text for UI
     is_collapsible: bool = True  # Can be collapsed in tree view
     is_visible: bool = True  # Visibility in UI
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return asdict(self)
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'UIMetadata':
+        """Create from dictionary"""
+        return cls(**data)
+
+
+@dataclass
+class SchemaEdge:
+    """Explicit directed edge in the schema tree: parent brick -> child brick.
+    Carries the SHACL path used in sh:property [sh:path ...; sh:node ...] blocks,
+    plus UI metadata (label, sequence, cardinality, etc.).
+    """
+    child_brick_id: str
+    path_iri: str  # sh:path IRI for this edge
+    label: str = ""  # rdfs:label on the sh:property block
+    parent_brick_id: Optional[str] = None  # None = root-level edge
+    min_count: int = 1
+    max_count: Optional[int] = 1
+    collapsible: bool = True
+    description: str = ""
+    sequence: int = 0  # sh:order
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary"""
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'SchemaEdge':
         """Create from dictionary"""
         return cls(**data)
 
@@ -43,7 +69,8 @@ class Schema:
     component_brick_ids: List[str]
     flow_config: Optional['FlowConfig'] = None
     inheritance_chain: List[str] = field(default_factory=list)  # Parent schema IDs
-    relationships: Dict[str, List[str]] = field(default_factory=dict)  # Brick relationships
+    relationships: Dict[str, List[str]] = field(default_factory=dict)  # Legacy brick relationships (parent -> children)
+    edges: List[SchemaEdge] = field(default_factory=list)  # Rich edge relationships with path, cardinality, metadata
     metadata: Dict[str, Any] = field(default_factory=dict)
     component_ui_metadata: Dict[str, UIMetadata] = field(default_factory=dict)  # UI metadata per component
     groups: Dict[str, Dict[str, Any]] = field(default_factory=dict)  # UI groups (id -> {label, description, sequence})
@@ -61,8 +88,10 @@ class Schema:
         data['component_ui_metadata'] = {
             k: v.to_dict() for k, v in self.component_ui_metadata.items()
         }
+        # Handle SchemaEdge serialization
+        data['edges'] = [edge.to_dict() for edge in self.edges]
         return data
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Schema':
         """Create from dictionary"""
@@ -76,11 +105,15 @@ class Schema:
             data['component_ui_metadata'] = {
                 k: UIMetadata.from_dict(v) for k, v in data['component_ui_metadata'].items()
             }
+        # Handle SchemaEdge deserialization
+        if data.get('edges'):
+            data['edges'] = [SchemaEdge.from_dict(e) for e in data['edges']]
         # Supply defaults for fields added after initial release
         data.setdefault('schema_refs', [])
         data.setdefault('groups', {})
         data.setdefault('inheritance_chain', [])
         data.setdefault('relationships', {})
+        data.setdefault('edges', [])
         data.setdefault('metadata', {})
         data.setdefault('component_ui_metadata', {})
         # Drop any keys not in the dataclass to stay forward-compatible
@@ -126,7 +159,50 @@ class Schema:
             if brick_id not in all_children:
                 root_components.append(brick_id)
         return root_components
-    
+
+    # SchemaEdge Methods (rich edge relationships)
+
+    def add_edge(self, edge: SchemaEdge):
+        """Add an edge to the schema"""
+        self.edges.append(edge)
+        self.update_timestamp()
+
+    def remove_edge(self, parent_brick_id: str, child_brick_id: str) -> bool:
+        """Remove an edge by parent and child brick IDs"""
+        for i, edge in enumerate(self.edges):
+            if edge.parent_brick_id == parent_brick_id and edge.child_brick_id == child_brick_id:
+                self.edges.pop(i)
+                self.update_timestamp()
+                return True
+        return False
+
+    def get_edges_from(self, parent_brick_id: str) -> List[SchemaEdge]:
+        """Get all outgoing edges from a parent brick"""
+        return [e for e in self.edges if e.parent_brick_id == parent_brick_id]
+
+    def get_edge_to(self, child_brick_id: str) -> Optional[SchemaEdge]:
+        """Get the edge that points to a child brick (returns first match)"""
+        for edge in self.edges:
+            if edge.child_brick_id == child_brick_id:
+                return edge
+        return None
+
+    def get_children_from_edges(self, parent_brick_id: str) -> List[str]:
+        """Get child brick IDs via edges (ordered by sequence)"""
+        edges = self.get_edges_from(parent_brick_id)
+        edges.sort(key=lambda e: e.sequence)
+        return [e.child_brick_id for e in edges]
+
+    def get_parent_from_edges(self, child_brick_id: str) -> Optional[str]:
+        """Get parent brick ID via edges"""
+        edge = self.get_edge_to(child_brick_id)
+        return edge.parent_brick_id if edge else None
+
+    def get_root_components_from_edges(self) -> List[str]:
+        """Get root components (those with no parent edge)"""
+        all_children = {e.child_brick_id for e in self.edges}
+        return [bid for bid in self.component_brick_ids if bid not in all_children]
+
     # Schema Reference Methods
 
     def add_schema_ref(self, schema_id: str, attach_to_brick_id: str,
@@ -297,28 +373,62 @@ class Schema:
     
     # Enhanced Parent-Child Methods for UI Metadata
     
-    def set_component_parent(self, child_brick_id: str, parent_brick_id: str) -> bool:
-        """Set parent component for UI nesting (separate from SHACL relationships)"""
+    def set_component_parent(self, child_brick_id: str, parent_brick_id: str, 
+                              path_iri: str = "", label: str = "") -> bool:
+        """Set parent component for UI nesting - uses SchemaEdge if available, else UIMetadata"""
         if child_brick_id not in self.component_brick_ids:
             return False
         if parent_brick_id not in self.component_brick_ids:
             return False
         
-        self.initialize_component_ui_metadata(child_brick_id)
-        self.component_ui_metadata[child_brick_id].parent_id = parent_brick_id
+        # If edges are being used, create/update an edge
+        if self.edges:
+            # Remove existing edge to this child if any
+            self.remove_edge(None, child_brick_id)
+            # Create new edge
+            edge = SchemaEdge(
+                child_brick_id=child_brick_id,
+                parent_brick_id=parent_brick_id,
+                path_iri=path_iri or f"ex:has{child_brick_id.replace('_', '').capitalize()}",
+                label=label or child_brick_id.replace('_', ' ').title()
+            )
+            self.add_edge(edge)
+        else:
+            # Legacy approach: use UIMetadata
+            self.initialize_component_ui_metadata(child_brick_id)
+            self.component_ui_metadata[child_brick_id].parent_id = parent_brick_id
+        
         self.update_timestamp()
         return True
     
     def remove_component_parent(self, child_brick_id: str) -> bool:
         """Remove parent from component (make it top-level in UI)"""
-        if child_brick_id not in self.component_ui_metadata:
-            return False
-        self.component_ui_metadata[child_brick_id].parent_id = None
-        self.update_timestamp()
-        return True
+        removed = False
+        
+        # If edges are being used, remove the edge
+        if self.edges:
+            edge = self.get_edge_to(child_brick_id)
+            if edge:
+                self.remove_edge(edge.parent_brick_id, child_brick_id)
+                removed = True
+        
+        # Also clear legacy UIMetadata
+        if child_brick_id in self.component_ui_metadata:
+            self.component_ui_metadata[child_brick_id].parent_id = None
+            removed = True
+        
+        if removed:
+            self.update_timestamp()
+        return removed
     
     def get_ui_children(self, parent_brick_id: str) -> List[str]:
-        """Get UI children of a component (sorted by sequence)"""
+        """Get UI children of a component (sorted by sequence) using SchemaEdge"""
+        # Use new edge-based approach if edges exist
+        if self.edges:
+            edges = self.get_edges_from(parent_brick_id)
+            edges.sort(key=lambda e: e.sequence)
+            return [e.child_brick_id for e in edges]
+        # Fallback to legacy UIMetadata approach
         children = []
         for brick_id in self.component_brick_ids:
             ui_metadata = self.get_component_ui_metadata(brick_id)
@@ -328,12 +438,21 @@ class Schema:
         return [brick_id for _, brick_id in children]
     
     def get_ui_parent(self, child_brick_id: str) -> Optional[str]:
-        """Get UI parent of a component"""
+        """Get UI parent of a component using SchemaEdge"""
+        # Use new edge-based approach if edges exist
+        if self.edges:
+            edge = self.get_edge_to(child_brick_id)
+            return edge.parent_brick_id if edge else None
+        # Fallback to legacy UIMetadata approach
         ui_metadata = self.get_component_ui_metadata(child_brick_id)
         return ui_metadata.parent_id if ui_metadata else None
     
     def get_ui_root_components(self) -> List[str]:
         """Get components with no UI parent (top-level in UI), sorted by sequence"""
+        # Use new edge-based approach if edges exist
+        if self.edges:
+            return self.get_root_components_from_edges()
+        # Fallback to legacy UIMetadata approach
         roots = []
         for brick_id in self.component_brick_ids:
             ui_metadata = self.get_component_ui_metadata(brick_id)

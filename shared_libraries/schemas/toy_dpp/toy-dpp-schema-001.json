@@ -1,0 +1,66 @@
+{
+  "schema_id": "toy-dpp-schema-001",
+  "name": "Toy Digital Product Passport",
+  "description": "EU Toy Safety Regulation \u2013 Annex VI DPP schema (bricks: toy_dpp library)",
+  "root_brick_id": "a1b2c3d4-0003-4000-8000-000000000003",
+  "component_brick_ids": [
+    "a1b2c3d4-0003-4000-8000-000000000003",
+    "a1b2c3d4-0001-4000-8000-000000000001",
+    "a1b2c3d4-0001-4000-8000-000000000001",
+    "a1b2c3d4-0002-4000-8000-000000000002",
+    "a1b2c3d4-0002-4000-8000-000000000002"
+  ],
+  "edges": [
+    {
+      "child_brick_id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "path_iri": "schema:manufacturer",
+      "label": "Manufacturer",
+      "parent_brick_id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "min_count": 1,
+      "max_count": 1,
+      "collapsible": true,
+      "description": "Manufacturer. Annex VI Part I (b).",
+      "sequence": 0
+    },
+    {
+      "child_brick_id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "path_iri": "schema:accountablePerson",
+      "label": "Responsible Operator",
+      "parent_brick_id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "min_count": 0,
+      "max_count": 1,
+      "collapsible": true,
+      "description": "Responsible operator (Article 11 / Annex VI Part I (c)). Only required if different from manufacturer.",
+      "sequence": 1
+    },
+    {
+      "child_brick_id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "path_iri": "schema:certification",
+      "label": "Notified Body",
+      "parent_brick_id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "min_count": 0,
+      "max_count": null,
+      "collapsible": true,
+      "description": "Notified body that intervened in conformity assessment. Annex VI Part I (j).",
+      "sequence": 2
+    }
+  ],
+  "namespace": "dpp",
+  "namespace_iri": "https://ec.europa.eu/dpp/toy#",
+  "extra_namespaces": {
+    "schema": "https://schema.org/"
+  },
+  "flow_config": null,
+  "inheritance_chain": [],
+  "relationships": {},
+  "metadata": {
+    "regulation": "EU Toy Safety Regulation",
+    "brick_library": "toy_dpp",
+    "annex": "VI"
+  },
+  "component_ui_metadata": {},
+  "groups": {},
+  "schema_refs": [],
+  "created_at": "2026-05-07T19:18:11.087010",
+  "updated_at": "2026-05-07T19:19:55.710756"
+}

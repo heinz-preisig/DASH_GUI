@@ -28,13 +28,12 @@ from business.brick_operations import brick_business_logic
 from core.brick_core_simple import sanitize_filename
 from ui.ui_abstraction import UIManager, BrickEditorComponent, BrickListComponent, LibraryComponent, PropertyListComponent
 from ui.property_formatters import (
-    format_property_display, format_property_enhanced_text,
+    format_property_enhanced_text,
     format_constraint_summary, get_datatype_icon
 )
 from ui.constraint_manager import show_constraint_manager
 from gui_components import (
-    PropertyEditorDialog, PropertyBrickBrowser, ConstraintEditorDialog,
-    SimpleOntologyBrowser
+    PropertyEditorDialog, ConstraintEditorDialog, SimpleOntologyBrowser
 )
 
 
@@ -86,9 +85,7 @@ class RefactoredBrickEditor(QMainWindow):
         # Library signals
         self.libraryComboBox.currentTextChanged.connect(self.on_library_changed)
         self.nodeBrickList.itemDoubleClicked.connect(self.on_node_brick_selected)
-        self.propertyBrickList.itemDoubleClicked.connect(self.on_property_brick_selected)
         self.newNode.clicked.connect(self.on_new_node)
-        self.newProperty.clicked.connect(self.on_new_property)
         self.deleteBrick.clicked.connect(self.on_delete_brick)
         self.newLibrary.clicked.connect(self.on_new_library)
         self.deleteLibrary.clicked.connect(self.on_delete_library)
@@ -96,7 +93,6 @@ class RefactoredBrickEditor(QMainWindow):
         
         # Brick selection signals for delete button visibility
         self.nodeBrickList.itemSelectionChanged.connect(self.on_brick_selection_changed)
-        self.propertyBrickList.itemSelectionChanged.connect(self.on_brick_selection_changed)
         
         # Editor signals
         self.namelineEdit.textChanged.connect(self.on_field_changed)
@@ -112,7 +108,6 @@ class RefactoredBrickEditor(QMainWindow):
         self.propertyList.itemSelectionChanged.connect(self.on_property_selection_changed)
         self.propertyList.itemDoubleClicked.connect(self.on_property_double_clicked)
         self.addProperty.clicked.connect(self.add_property)
-        self.addPropertyBrick.clicked.connect(self.add_property_brick)
         self.addConstraint.clicked.connect(self.add_constraint)
         self.deleteProperty.clicked.connect(self.delete_property)
         
@@ -274,6 +269,10 @@ class RefactoredBrickEditor(QMainWindow):
             self.libraryComboBox.clear()
             self.libraryComboBox.addItems(libraries)
             
+            # Sync business logic with first library
+            if libraries:
+                brick_business_logic.set_active_library(libraries[0])
+            
             # Load bricks
             self.load_library()
             
@@ -292,7 +291,6 @@ class RefactoredBrickEditor(QMainWindow):
             # Block signals during library loading to prevent recursion
             self.libraryComboBox.blockSignals(True)
             self.nodeBrickList.blockSignals(True)
-            self.propertyBrickList.blockSignals(True)
             
             # Save current selection
             current_library = self.libraryComboBox.currentText()
@@ -308,32 +306,25 @@ class RefactoredBrickEditor(QMainWindow):
             elif libraries:
                 self.libraryComboBox.setCurrentIndex(0)
             
-            # Load bricks from the active library
+            # Load bricks from the active library (all bricks are NodeShapes)
             bricks = brick_business_logic.get_bricks()
             self.nodeBrickList.clear()
-            self.propertyBrickList.clear()
             
             for brick in bricks:
-                display_text = f"{brick.get('name', 'Unknown')} ({brick.get('object_type', 'Unknown')})"
+                display_text = f"{brick.get('name', 'Unknown')}"
                 list_item = QListWidgetItem(display_text)
                 list_item.setData(Qt.ItemDataRole.UserRole, brick)
-                
-                if brick.get('object_type') == 'NodeShape':
-                    self.nodeBrickList.addItem(list_item)
-                else:
-                    self.propertyBrickList.addItem(list_item)
+                self.nodeBrickList.addItem(list_item)
             
             # Re-enable signals
             self.libraryComboBox.blockSignals(False)
             self.nodeBrickList.blockSignals(False)
-            self.propertyBrickList.blockSignals(False)
             
         except Exception as e:
             print(f"Error loading library: {e}")
             # Re-enable signals on error
             self.libraryComboBox.blockSignals(False)
             self.nodeBrickList.blockSignals(False)
-            self.propertyBrickList.blockSignals(False)
     
     def on_node_brick_selected(self, item):
         """Handle node brick selection"""
@@ -341,19 +332,9 @@ class RefactoredBrickEditor(QMainWindow):
         if brick_data:
             brick_business_logic.load_brick(brick_data.get('brick_id'))
     
-    def on_property_brick_selected(self, item):
-        """Handle property brick selection"""
-        brick_data = item.data(Qt.ItemDataRole.UserRole)
-        if brick_data:
-            brick_business_logic.load_brick(brick_data.get('brick_id'))
-    
     def on_new_node(self):
         """Handle new node brick button"""
         brick_business_logic.create_new_brick(BrickType.NODE_SHAPE)
-    
-    def on_new_property(self):
-        """Handle new property brick button"""
-        brick_business_logic.create_new_brick(BrickType.PROPERTY_SHAPE)
     
     def on_delete_brick(self):
         """Handle delete brick button"""
@@ -391,15 +372,9 @@ class RefactoredBrickEditor(QMainWindow):
         self.deleteBrick.setVisible(has_selection)
     
     def _get_selected_brick(self):
-        """Get currently selected brick from either list"""
-        # Check node brick list first
+        """Get currently selected brick"""
         if self.nodeBrickList.currentItem():
             return self.nodeBrickList.currentItem().data(Qt.ItemDataRole.UserRole)
-        
-        # Check property brick list
-        if self.propertyBrickList.currentItem():
-            return self.propertyBrickList.currentItem().data(Qt.ItemDataRole.UserRole)
-        
         return None
     
     # Editor Operations
@@ -415,13 +390,11 @@ class RefactoredBrickEditor(QMainWindow):
         app_state_manager.update_brick_field("property_path", brick_data.get("property_path", ""))
     
     def on_datatype_changed(self, datatype: str):
-        """Handle datatype combo change for PropertyShape bricks"""
-        current_type = app_state_manager.get_brick_type()
-        if current_type == BrickType.PROPERTY_SHAPE:
-            brick_state = app_state_manager.get_brick_state()
-            props = brick_state.properties.copy()
-            props['datatype'] = datatype
-            app_state_manager.update_brick_field("properties", props)
+        """Handle datatype combo change (stores in brick properties)"""
+        brick_state = app_state_manager.get_brick_state()
+        props = brick_state.properties.copy()
+        props['datatype'] = datatype
+        app_state_manager.update_brick_field("properties", props)
 
     def browse_ontology(self):
         """Handle ontology browser button click"""
@@ -491,37 +464,6 @@ class RefactoredBrickEditor(QMainWindow):
             property_data = dialog.get_property_data()
             if property_data.get('name'):
                 success, message = brick_business_logic.add_property(property_data)
-                if success:
-                    self._update_property_list()
-                else:
-                    QMessageBox.warning(self, "Error", message)
-    
-    def add_property_brick(self):
-        """Add an existing property brick to current node brick"""
-        # Only allow adding property bricks to node shapes
-        current_type = app_state_manager.get_brick_type()
-        if current_type != BrickType.NODE_SHAPE:
-            QMessageBox.warning(self, "Warning", "Property bricks can only be added to NodeShape bricks.")
-            return
-        
-        dialog = PropertyBrickBrowser(self, brick_business_logic.brick_core)
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            selected_brick = dialog.selected_item
-            if selected_brick:
-                # Add property brick as a reference with full integration
-                prop_name = selected_brick.get('name', 'Unknown')
-                prop_data = {
-                    'name': prop_name,  # Add the name field for validation
-                    'property_brick_id': selected_brick.get('brick_id', ''),
-                    'property_brick_name': selected_brick.get('name', 'Unknown'),
-                    'property_path': selected_brick.get('property_path', ''),
-                    'datatype': selected_brick.get('properties', {}).get('datatype', 'xsd:string'),
-                    'constraints': selected_brick.get('properties', {}).get('constraints', []),
-                    'is_property_brick': True,
-                    'description': selected_brick.get('description', '')
-                }
-                
-                success, message = brick_business_logic.add_property(prop_data)
                 if success:
                     self._update_property_list()
                 else:
@@ -646,11 +588,8 @@ class RefactoredBrickEditor(QMainWindow):
         display_text = format_property_enhanced_text(prop_name, prop_data)
         list_item.setText(display_text)
         
-        # Set visual styling based on property type
-        if isinstance(prop_data, dict) and prop_data.get('is_property_brick'):
-            # Property brick references get special styling with blue background only
-            list_item.setBackground(QBrush(QColor(230, 240, 255)))  # Light blue background
-        elif isinstance(prop_data, dict) and prop_data.get('constraints'):
+        # Set visual styling based on property constraints
+        if isinstance(prop_data, dict) and prop_data.get('constraints'):
             # Properties with constraints get subtle highlighting
             list_item.setBackground(QBrush(QColor(255, 248, 220)))  # Light yellow background
         

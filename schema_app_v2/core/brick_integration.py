@@ -49,8 +49,21 @@ class BrickIntegration:
         return self.brick_core.get_all_bricks(library_name)
     
     def get_brick_by_id(self, brick_id: str, library_name: Optional[str] = None) -> Optional[SHACLBrick]:
-        """Get a specific brick by ID"""
-        return self.brick_core.load_brick(brick_id, library_name)
+        """Get a specific brick by ID - searches all libraries if needed"""
+        # First try the specified or active library
+        brick = self.brick_core.load_brick(brick_id, library_name)
+        if brick:
+            return brick
+        
+        # If not found, search all libraries
+        for lib in self.brick_core.get_libraries():
+            if lib == library_name:
+                continue  # Already tried
+            brick = self.brick_core.load_brick(brick_id, lib)
+            if brick:
+                return brick
+        
+        return None
     
     def get_brick_libraries(self) -> List[str]:
         """Get all available brick libraries"""

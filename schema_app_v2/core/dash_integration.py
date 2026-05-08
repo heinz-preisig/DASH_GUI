@@ -183,7 +183,7 @@ class DASHFormGenerator:
     def _get_editor_for_datatype(self, datatype: str) -> str:
         """Get appropriate DASH editor for datatype"""
         datatype_mapping = {
-            "xsd:string": "dash:TextAreaEditor" if True else "dash:TextFieldEditor",  # Could check for multi-line
+            "xsd:string": "dash:TextAreaEditor",
             "xsd:integer": "dash:IntegerFieldEditor",
             "xsd:decimal": "dash:DecimalFieldEditor",
             "xsd:boolean": "dash:BooleanEditor",
@@ -274,14 +274,19 @@ class DASHFormGenerator:
         if ui_metadata and ui_metadata.help_text:
             html_lines.append(f'{indent}  <p class="help-text">{ui_metadata.help_text}</p>')
         
-        # Generate fields for PropertyShape or children for NodeShape
-        if brick.object_type == "PropertyShape":
+        # Generate fields from leaf_properties (modern format) or children via edges
+        if hasattr(brick, 'leaf_properties') and brick.leaf_properties:
+            # Modern format: generate fields from leaf_properties
+            self._generate_leaf_property_fields(brick, brick.leaf_properties, html_lines, depth + 1)
+        elif brick.object_type == "PropertyShape":
+            # Legacy format: PropertyShape with properties dict
             self._generate_property_fields(brick, ui_metadata, html_lines, depth + 1)
-        else:  # NodeShape
-            children = schema.get_ui_children(brick_id)
-            if children:
-                for child_id in children:
-                    self._generate_component_html(schema, child_id, library_name, html_lines, depth + 1)
+        
+        # Generate child components via edges (hierarchy)
+        children = schema.get_ui_children(brick_id)
+        if children:
+            for child_id in children:
+                self._generate_component_html(schema, child_id, library_name, html_lines, depth + 1)
         
         html_lines.append(f'{indent}</div>')
     
@@ -313,6 +318,67 @@ class DASHFormGenerator:
                         html_lines.append(f'{indent}  <input type="hidden" name="{field_name}_pattern" value="{constraint_value}">')
         
         html_lines.append(f'{indent}</div>')
+    
+    def _generate_leaf_property_fields(self, brick, leaf_properties: List[Dict[str, Any]], 
+                                        html_lines: List[str], depth: int):
+        """Generate HTML input fields from leaf_properties (modern brick format)"""
+        indent = "  " * (depth + 1)
+        
+        for prop in leaf_properties:
+            field_path = prop.get('path', '')
+            field_label = prop.get('label', field_path.split(':')[-1] if ':' in field_path else field_path)
+            field_name = field_path.replace(':', '_').replace('/', '_')
+            
+            # Determine input type based on datatype
+            datatype = prop.get('datatype', 'xsd:string')
+            input_type = self._get_html_input_type(datatype)
+            
+            html_lines.append(f'{indent}<div class="field-group">')
+            html_lines.append(f'{indent}  <label for="{field_name}">{field_label}:</label>')
+            
+            # Handle different input types
+            node_kind = prop.get('node_kind')
+            in_values = prop.get('in_values', [])
+            
+            if in_values:
+                # Dropdown/select
+                html_lines.append(f'{indent}  <select id="{field_name}" name="{field_name}" class="form-field">')
+                html_lines.append(f'{indent}    <option value="">-- Select --</option>')
+                for val in in_values:
+                    html_lines.append(f'{indent}    <option value="{val}">{val}</option>')
+                html_lines.append(f'{indent}  </select>')
+            elif node_kind == 'sh:IRI' or datatype == 'xsd:anyURI':
+                # URI input
+                html_lines.append(f'{indent}  <input type="url" id="{field_name}" name="{field_name}" class="form-field">')
+            elif input_type == 'checkbox':
+                # Boolean checkbox
+                html_lines.append(f'{indent}  <input type="checkbox" id="{field_name}" name="{field_name}" value="true" class="form-field">')
+            else:
+                # Text or number input
+                input_attrs = f'type="{input_type}" id="{field_name}" name="{field_name}" class="form-field"'
+                
+                # Add constraints as attributes
+                min_count = prop.get('min_count', 0)
+                max_count = prop.get('max_count')
+                min_inclusive = prop.get('min_inclusive')
+                max_inclusive = prop.get('max_inclusive')
+                
+                if min_count and min_count > 0:
+                    input_attrs += ' required'
+                if input_type == 'number':
+                    if min_inclusive is not None:
+                        input_attrs += f' min="{min_inclusive}"'
+                    if max_inclusive is not None:
+                        input_attrs += f' max="{max_inclusive}"'
+                
+                html_lines.append(f'{indent}  <input {input_attrs}>')
+            
+            # Add description/help text
+            description = prop.get('description', '')
+            if description:
+                html_lines.append(f'{indent}  <small class="field-help">{description}</small>')
+            
+            html_lines.append(f'{indent}</div>')
     
     def _get_html_input_type(self, datatype: str) -> str:
         """Get HTML input type for SHACL datatype"""
@@ -454,14 +520,38 @@ class DASHFormGenerator:
             "        });",
             "    });",
             "    ",
-            "    // Form validation",
+            "    // Form submission and data collection",
             "    const form = document.querySelector('.dash-form');",
             "    if (form) {",
             "        form.addEventListener('submit', function(e) {",
-            "            if (!validateForm()) {",
-            "                e.preventDefault();",
-            "            }",
+            "            e.preventDefault();",
+            "            if (!validateForm()) { return; }",
+            "            ",
+            "            const formData = collectFormData();",
+            "            const blob = new Blob([JSON.stringify(formData, null, 2)], {type: 'application/json'});",
+            "            const url = URL.createObjectURL(blob);",
+            "            const a = document.createElement('a');",
+            "            a.href = url;",
+            "            a.download = form.id + '_data.json';",
+            "            document.body.appendChild(a);",
+            "            a.click();",
+            "            document.body.removeChild(a);",
+            "            URL.revokeObjectURL(url);",
+            "            alert('Data saved to ' + form.id + '_data.json');",
             "        });",
+            "    }",
+            "    ",
+            "    function collectFormData() {",
+            "        const data = { schema_id: form.id, timestamp: new Date().toISOString(), components: {} };",
+            "        document.querySelectorAll('.component').forEach(function(comp) {",
+            "            const brickId = comp.dataset.brickId;",
+            "            const componentData = {};",
+            "            comp.querySelectorAll('.form-field').forEach(function(field) {",
+            "                componentData[field.name] = (field.type === 'checkbox') ? field.checked : field.value;",
+            "            });",
+            "            if (Object.keys(componentData).length > 0) { data.components[brickId] = componentData; }",
+            "        });",
+            "        return data;",
             "    }",
             "    ",
             "    function validateForm() {",

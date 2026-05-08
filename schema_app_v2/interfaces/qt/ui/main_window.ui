@@ -393,6 +393,13 @@
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="generateWebFormButton">
+            <property name="text">
+             <string>Generate Web Form</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <spacer name="horizontalSpacer">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>

@@ -647,39 +647,6 @@ class SHACLBrickGenerator:
         self.library.add_brick(brick)
         return brick
     
-    def create_brick_from_template(self, template_type: str, name: str, 
-                                 parameters: Dict[str, Any]) -> SHACLBrick:
-        """Create a brick from a predefined template"""
-        brick_id = f"{name.lower().replace(' ', '_')}_brick"
-        
-        if template_type == "person":
-            return self.create_nodeshape_brick(
-                brick_id, name, "Person shape with common properties",
-                target_class="foaf:Person",
-                properties={"nodeKind": SHACLObjectType.IRI.value},
-                tags=["person", "template"]
-            )
-        elif template_type == "organization":
-            return self.create_nodeshape_brick(
-                brick_id, name, "Organization shape",
-                target_class="foaf:Organization", 
-                properties={"nodeKind": SHACLObjectType.IRI.value},
-                tags=["organization", "template"]
-            )
-        elif template_type == "email_property":
-            return self.create_propertyshape_brick(
-                brick_id, name, "Email property with validation",
-                "foaf:mbox",
-                properties={"datatype": "xsd:string"},
-                constraints=[
-                    SHACLConstraint(SHACLObjectType.MIN_LENGTH.value, 5),
-                    SHACLConstraint(SHACLObjectType.PATTERN.value, "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
-                ],
-                tags=["email", "template", "validated"]
-            )
-        else:
-            raise ValueError(f"Unknown template type: {template_type}")
-    
     def brick_to_shacl(self, brick: SHACLBrick, base_uri: str = EX,
                         visited: Optional[set] = None) -> Graph:
         """Convert a brick to SHACL RDF graph

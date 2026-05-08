@@ -1,6 +1,0 @@
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix sh: <http://www.w3.org/ns/shacl#> .
-
-<http://example.org/9e8c6a4c-6a67-402d-a984-8aa5d95f265f> a sh:NodeShape ;
-    rdfs:label "Manager" .
-

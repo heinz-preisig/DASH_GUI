@@ -1,6 +1,0 @@
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix sh: <http://www.w3.org/ns/shacl#> .
-
-<http://example.org/1efc4dbd-a227-4032-9998-432d781cab25> a sh:PropertyShape ;
-    rdfs:label "TownName" .
-

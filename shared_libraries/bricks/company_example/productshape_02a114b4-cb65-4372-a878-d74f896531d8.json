@@ -1,0 +1,43 @@
+{
+  "brick_id": "02a114b4-cb65-4372-a878-d74f896531d8",
+  "name": "ProductShape",
+  "description": "A product with name and description",
+  "template_type": "free_text",
+  "namespace": "org",
+  "target_class": "org:Product",
+  "leaf_properties": [
+    {
+      "path": "org:productName",
+      "label": "Product Name",
+      "datatype": "xsd:string",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_count": 1,
+      "max_count": 1,
+      "description": "",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null
+    },
+    {
+      "path": "org:description",
+      "label": "Description",
+      "datatype": "xsd:string",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_count": 0,
+      "max_count": null,
+      "description": "",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [],
+  "created_at": "2026-05-07T10:21:56.226859",
+  "updated_at": "2026-05-07T10:21:56.230094",
+  "metadata": {}
+}

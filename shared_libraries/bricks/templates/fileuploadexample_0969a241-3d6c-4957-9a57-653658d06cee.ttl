@@ -1,0 +1,31 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dash: <http://datashapes.org/dash#> .
+@prefix css: <http://digipass.com/css#> .
+
+@prefix ex: <http://example.org/ex/> .
+
+ex:FileUploadExample a sh:NodeShape ;
+    sh:targetClass ex:FileAttachment ;
+    sh:property [
+        sh:path ex:stlFile ;
+        rdfs:label "STL File" ;
+        sh:datatype digipass:stl ;
+        sh:minCount 0 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path ex:image ;
+        rdfs:label "Image" ;
+        sh:datatype digipass:image ;
+        sh:minCount 0 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path ex:datasheet ;
+        rdfs:label "Datasheet" ;
+        sh:datatype xsd:anyURI ;
+        sh:minCount 0 ;
+        sh:maxCount 1 ;
+    ] .

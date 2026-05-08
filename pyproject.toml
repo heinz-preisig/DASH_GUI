@@ -1,7 +1,7 @@
 [project]
 name = "dash-gui"
 version = "0.1.0"
-description = "Add your description here"
+description = "SHACL schema + brick editor with DASH form generation"
 requires-python = ">=3.13"
 dependencies = [
     "dash>=4.1.0",
@@ -10,5 +10,15 @@ dependencies = [
     "pandas>=3.0.2",
     "pyqt6>=6.11.0",
     "rdflib>=7.6.0",
-    "sc-pylibs>=0.0.0.1",
+]
+
+[tool.uv.workspace]
+members = [
+    "brick_app_v2",
+    "schema_app_v2",
+]
+
+[dependency-groups]
+dev = [
+    "vulture>=2.16",
 ]

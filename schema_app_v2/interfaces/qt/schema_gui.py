@@ -150,6 +150,7 @@ class SchemaGUI(
         # Action buttons
         self.ui.saveButton.clicked.connect(self.save_schema)
         self.ui.exportShaclButton.clicked.connect(self.save_schema)
+        self.ui.generateWebFormButton.clicked.connect(self.generate_web_form)
     
     def register_widgets_with_state_manager(self):
         """Register UI widgets with state manager"""

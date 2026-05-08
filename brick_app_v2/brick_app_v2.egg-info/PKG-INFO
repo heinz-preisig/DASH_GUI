@@ -2,22 +2,7 @@ Metadata-Version: 2.4
 Name: brick-app-v2
 Version: 2.0.0
 Summary: A clean, modular SHACL brick editor
-Home-page: https://github.com/example/shacl-brick-app
-Author: SHACL System Developer
-Author-email: DASH GUI Team <team@dash-gui.org>
-Project-URL: Homepage, https://github.com/dash-gui/brick-app
-Project-URL: Repository, https://github.com/dash-gui/brick-app.git
-Project-URL: Issues, https://github.com/dash-gui/brick-app/issues
-Classifier: Development Status :: 4 - Beta
-Classifier: Intended Audience :: Developers
-Classifier: License :: OSI Approved :: MIT License
-Classifier: Operating System :: OS Independent
-Classifier: Programming Language :: Python :: 3
-Classifier: Programming Language :: Python :: 3.8
-Classifier: Programming Language :: Python :: 3.9
-Classifier: Programming Language :: Python :: 3.10
-Classifier: Programming Language :: Python :: 3.11
-Requires-Python: >=3.8
+Requires-Python: >=3.13
 Description-Content-Type: text/markdown
 Requires-Dist: flask>=3.0.3
 Requires-Dist: flask-cors>=5.0.0
@@ -27,9 +12,6 @@ Provides-Extra: dev
 Requires-Dist: pytest; extra == "dev"
 Requires-Dist: black; extra == "dev"
 Requires-Dist: flake8; extra == "dev"
-Dynamic: author
-Dynamic: home-page
-Dynamic: requires-python
 
 # SHACL Brick Generator - Step 1
 
@@ -87,7 +69,7 @@ cd brick_app_v2
 uv run main.py --gui
 
 # Run the Web Interface
-uv run main.py --web --port 5000
+uv run main.py --web --port 5001
 
 # Show help
 uv run main.py --help

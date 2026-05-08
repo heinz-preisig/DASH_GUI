@@ -1,0 +1,57 @@
+{
+  "brick_id": "0969a241-3d6c-4957-9a57-653658d06cee",
+  "name": "FileUploadExample",
+  "description": "File attachment fields with custom datatypes",
+  "template_type": "file_upload",
+  "namespace": "ex",
+  "target_class": "ex:FileAttachment",
+  "leaf_properties": [
+    {
+      "path": "ex:stlFile",
+      "label": "STL File",
+      "datatype": "digipass:stl",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_count": 0,
+      "max_count": 1,
+      "description": "",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null
+    },
+    {
+      "path": "ex:image",
+      "label": "Image",
+      "datatype": "digipass:image",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_count": 0,
+      "max_count": 1,
+      "description": "",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null
+    },
+    {
+      "path": "ex:datasheet",
+      "label": "Datasheet",
+      "datatype": "xsd:anyURI",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_count": 0,
+      "max_count": 1,
+      "description": "",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [],
+  "created_at": "2026-05-07T10:50:15.978928",
+  "updated_at": "2026-05-07T10:50:15.982700",
+  "metadata": {}
+}

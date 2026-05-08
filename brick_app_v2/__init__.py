@@ -28,46 +28,22 @@ from .core.brick_backend import (
     BrickEventProcessor
 )
 
-from .gui.brick_gui import BrickGUI
-
-# Schema components moved to separate schema_app_v2 module
-
 __all__ = [
     # Core classes
     "SHACLBrick",
-    "BrickLibrary", 
+    "BrickLibrary",
     "BrickRepository",
     "SHACLBrickGenerator",
     "SHACLObjectType",
     "SHACLConstraint",
     "SHACLTarget",
-    
+
     # Backend API
     "BrickBackendAPI",
     "BrickEventProcessor",
-    
-    # GUI
-    "BrickGUI",
-    
-    # Schema Backend API
-    "SchemaBackendAPI",
-    "SchemaEventProcessor",
-    
-    # Schema Core
-    "SchemaConstructor",
-    "InterfaceFlowType",
-    "SchemaComposition",
-    "DaisyChain",
-    "InterfaceStep",
-    
-    # Schema GUI
-    "SchemaGUI",
-    
+
     # Convenience functions
     "create_brick_system",
-    "run_gui",
-    "create_schema_system",
-    "run_schema_gui"
 ]
 
 def create_brick_system(repository_path=None):
@@ -75,29 +51,3 @@ def create_brick_system(repository_path=None):
     backend = BrickBackendAPI(repository_path)
     processor = BrickEventProcessor(backend)
     return backend, processor
-
-def run_gui(repository_path=None):
-    """Run the PyQt6 GUI for brick management"""
-    import sys
-    from PyQt6.QtWidgets import QApplication
-    
-    app = QApplication(sys.argv)
-    gui = BrickGUI(repository_path)
-    gui.show()
-    return app.exec()
-
-def create_schema_system(repository_path=None):
-    """Create a complete schema system with backend and event processor"""
-    backend = SchemaBackendAPI(repository_path)
-    processor = SchemaEventProcessor(backend)
-    return backend, processor
-
-def run_schema_gui(repository_path=None):
-    """Run the PyQt6 GUI for schema construction"""
-    import sys
-    from PyQt6.QtWidgets import QApplication
-    
-    app = QApplication(sys.argv)
-    gui = SchemaGUI(repository_path)
-    gui.show()
-    return app.exec()

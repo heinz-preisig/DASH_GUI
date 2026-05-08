@@ -1,0 +1,47 @@
+{
+  "brick_id": "03c79e4a-e4b3-484b-aac6-64aa79db80a0",
+  "name": "DecimalWithUnitExample",
+  "description": "Numeric value with a unit selector (e.g. temperature)",
+  "template_type": "decimal_with_unit",
+  "namespace": "ex",
+  "target_class": "ex:Measurement",
+  "leaf_properties": [
+    {
+      "path": "ex:value",
+      "label": "Value",
+      "datatype": "xsd:decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_count": 1,
+      "max_count": 1,
+      "description": "Numeric measurement value",
+      "min_inclusive": 0.0,
+      "max_inclusive": 1000.0,
+      "single_line": null
+    },
+    {
+      "path": "ex:unit",
+      "label": "Unit",
+      "datatype": null,
+      "node_kind": "sh:IRI",
+      "in_values": [
+        "unit:DegreeCelsius",
+        "unit:Kelvin",
+        "unit:DegreeFahrenheit"
+      ],
+      "has_value": null,
+      "min_count": 1,
+      "max_count": 1,
+      "description": "Unit of measurement",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [],
+  "created_at": "2026-05-07T10:50:15.978876",
+  "updated_at": "2026-05-07T10:50:15.982210",
+  "metadata": {}
+}

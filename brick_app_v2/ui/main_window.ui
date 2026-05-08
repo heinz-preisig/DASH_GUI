@@ -26,22 +26,12 @@
     <property name="title">
      <string>Brick Library</string>
     </property>
-    <widget class="QListWidget" name="propertyBrickList">
-     <property name="geometry">
-      <rect>
-       <x>340</x>
-       <y>160</y>
-       <width>251</width>
-       <height>151</height>
-      </rect>
-     </property>
-    </widget>
     <widget class="QListWidget" name="nodeBrickList">
      <property name="geometry">
       <rect>
        <x>10</x>
        <y>160</y>
-       <width>251</width>
+       <width>580</width>
        <height>151</height>
       </rect>
      </property>
@@ -95,13 +85,6 @@
          </size>
         </property>
        </spacer>
-      </item>
-      <item>
-       <widget class="QPushButton" name="newProperty">
-        <property name="text">
-         <string>new property</string>
-        </property>
-       </widget>
       </item>
      </layout>
     </widget>
@@ -335,13 +318,6 @@
       </rect>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
-      <item row="0" column="1">
-       <widget class="QPushButton" name="addPropertyBrick">
-        <property name="text">
-         <string>add property brick</string>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="3">
        <widget class="QPushButton" name="deleteProperty">
         <property name="text">
