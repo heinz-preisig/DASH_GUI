@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>UIMetadataPanel</class>
+ <widget class="QDialog" name="UIMetadataPanel">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>600</width>
+    <height>700</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>UI Metadata Editor</string>
+  </property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <item>
+    <widget class="QGroupBox" name="componentGroupBox">
+     <property name="title">
+      <string>Component</string>
+     </property>
+     <layout class="QVBoxLayout" name="componentLayout">
+      <item>
+       <layout class="QHBoxLayout" name="componentNameLayout">
+        <item>
+         <widget class="QLabel" name="componentLabel">
+          <property name="text">
+           <string>Component:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="componentNameLabel">
+          <property name="text">
+           <string>None</string>
+          </property>
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTabWidget" name="metadataTabWidget">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="sequenceTab">
+      <attribute name="title">
+       <string>Sequence</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="sequenceLayout">
+       <item>
+        <widget class="QLabel" name="sequenceHelpLabel">
+         <property name="text">
+          <string>Set the display order of this component in the form.</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="sequenceInputLayout">
+         <item>
+          <widget class="QLabel" name="sequenceValueLabel">
+           <property name="text">
+            <string>Sequence:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="sequenceSpinBox">
+           <property name="minimum">
+            <number>0</number>
+           </property>
+           <property name="maximum">
+            <number>9999</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QPushButton" name="moveUpButton">
+         <property name="text">
+          <string>Move Up</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="moveDownButton">
+         <property name="text">
+          <string>Move Down</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="sequenceSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="groupingTab">
+      <attribute name="title">
+       <string>Grouping</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="groupingLayout">
+       <item>
+        <widget class="QLabel" name="groupingHelpLabel">
+         <property name="text">
+          <string>Assign this component to a group for visual organization in the form.</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="groupSelectLayout">
+         <item>
+          <widget class="QLabel" name="groupLabel">
+           <property name="text">
+            <string>Group:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="groupComboBox">
+           <property name="editable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="createGroupButton">
+           <property name="text">
+            <string>Create New</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupDetailsGroupBox">
+         <property name="title">
+          <string>Group Details</string>
+         </property>
+         <layout class="QVBoxLayout" name="groupDetailsLayout">
+          <item>
+           <layout class="QHBoxLayout" name="groupLabelLayout">
+            <item>
+             <widget class="QLabel" name="groupDisplayLabel">
+              <property name="text">
+               <string>Label:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="groupLabelLineEdit">
+              <property name="placeholderText">
+               <string>Group display label</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="groupDescLayout">
+            <item>
+             <widget class="QLabel" name="groupDescLabel">
+              <property name="text">
+               <string>Description:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="groupDescLineEdit">
+              <property name="placeholderText">
+               <string>Group description</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="groupSeqLayout">
+            <item>
+             <widget class="QLabel" name="groupSeqLabel">
+              <property name="text">
+               <string>Sequence:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="groupSeqSpinBox">
+              <property name="minimum">
+               <number>0</number>
+              </property>
+              <property name="maximum">
+               <number>9999</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="removeFromGroupButton">
+         <property name="text">
+          <string>Remove from Group</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="groupingSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="nestingTab">
+      <attribute name="title">
+       <string>Nesting</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="nestingLayout">
+       <item>
+        <widget class="QLabel" name="nestingHelpLabel">
+         <property name="text">
+          <string>Set a parent component to create nested structures (e.g., Address within Company).</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="parentSelectLayout">
+         <item>
+          <widget class="QLabel" name="parentLabel">
+           <property name="text">
+            <string>Parent:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="parentComboBox">
+           <property name="toolTip">
+            <string>Select parent component (empty for top-level)</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QPushButton" name="removeParentButton">
+         <property name="text">
+          <string>Remove Parent (Make Top-Level)</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="treePreviewGroupBox">
+         <property name="title">
+          <string>Tree Preview</string>
+         </property>
+         <layout class="QVBoxLayout" name="treePreviewLayout">
+          <item>
+           <widget class="QTreeWidget" name="treePreviewWidget">
+            <property name="headerHidden">
+             <bool>true</bool>
+            </property>
+            <column>
+             <property name="text">
+              <string notr="true">1</string>
+             </property>
+            </column>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="nestingSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="displayTab">
+      <attribute name="title">
+       <string>Display</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="displayLayout">
+       <item>
+        <widget class="QLabel" name="displayHelpLabel">
+         <property name="text">
+          <string>Customize how this component appears in the UI.</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="labelLayout">
+         <item>
+          <widget class="QLabel" name="displayLabelLabel">
+           <property name="text">
+            <string>Label:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="displayLabelLineEdit">
+           <property name="placeholderText">
+            <string>Custom label (optional)</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="helpTextLayout">
+         <item>
+          <widget class="QLabel" name="helpTextLabel">
+           <property name="text">
+            <string>Help Text:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTextEdit" name="helpTextEdit">
+           <property name="placeholderText">
+            <string>Help text to display to users</string>
+           </property>
+           <property name="maximumHeight">
+            <number>80</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="optionsGroupBox">
+         <property name="title">
+          <string>Options</string>
+         </property>
+         <layout class="QVBoxLayout" name="optionsLayout">
+          <item>
+           <widget class="QCheckBox" name="collapsibleCheckBox">
+            <property name="text">
+             <string>Collapsible in tree view</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="visibleCheckBox">
+            <property name="text">
+             <string>Visible in UI</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="displaySpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>UIMetadataPanel</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>UIMetadataPanel</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

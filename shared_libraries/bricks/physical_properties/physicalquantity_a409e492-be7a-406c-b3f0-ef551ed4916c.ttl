@@ -1,0 +1,6 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+<http://example.org/a409e492-be7a-406c-b3f0-ef551ed4916c> a sh:NodeShape ;
+    rdfs:label "PhysicalQuantity" .
+

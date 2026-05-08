@@ -1,0 +1,29 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Component: 6233d5e0-2ffb-4d7d-b68e-25475e727335 (depth 0)
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+OrganisationName a sh:PropertyShape ;
+    sh:path http://xmlns.com/foaf/0.1/name .
+
+# Schema References (sh:node)
+# Reference: FullAddress attached to OrganisationName via ex:fulladdress
+<OrganisationNameShape> sh:property [
+    sh:path ex:fulladdress ;
+    sh:node <FullAddressShape> ;
+] .
+# <FullAddressShape> is defined in schema: a5194c8b-2938-4b89-9bef-d52cee37d299
+
+# Schema Metadata
+# Schema ID: e4b0f0f2-c45f-4dd0-a62a-bb824c781529
+# Schema Name: Glass
+# Description: 
+# Created: 2026-05-06T17:05:10.283327
+# Updated: 2026-05-06T17:18:53.180599
+# Root Brick: 
+# Component Bricks: 1
+# Components: 6233d5e0-2ffb-4d7d-b68e-25475e727335

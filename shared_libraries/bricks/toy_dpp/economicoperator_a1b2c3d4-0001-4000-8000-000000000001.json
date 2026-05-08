@@ -1,0 +1,23 @@
+{
+  "brick_id": "a1b2c3d4-0001-4000-8000-000000000001",
+  "name": "EconomicOperator",
+  "description": "Reusable brick for any economic operator (manufacturer, authorised representative, responsible operator). Annex VI Part I (b)(c).",
+  "template_type": "free_text",
+  "namespace": "dpp",
+  "target_class": "https://schema.org/Organization",
+  "leaf_properties": [
+    {"path": "https://schema.org/legalName",   "label": "Legal Name",                "datatype": "xsd:string",  "node_kind": null, "in_values": [], "has_value": null, "min_count": 1, "max_count": 1, "description": "Full legal name of the operator",                                              "min_inclusive": null, "max_inclusive": null, "single_line": true},
+    {"path": "https://schema.org/streetAddress","label": "Street Address",            "datatype": "xsd:string",  "node_kind": null, "in_values": [], "has_value": null, "min_count": 1, "max_count": 1, "description": "Street address including number",                                             "min_inclusive": null, "max_inclusive": null, "single_line": true},
+    {"path": "https://schema.org/addressLocality","label": "City / Locality",         "datatype": "xsd:string",  "node_kind": null, "in_values": [], "has_value": null, "min_count": 1, "max_count": 1, "description": "City or locality",                                                            "min_inclusive": null, "max_inclusive": null, "single_line": true},
+    {"path": "https://schema.org/postalCode",  "label": "Postal Code",               "datatype": "xsd:string",  "node_kind": null, "in_values": [], "has_value": null, "min_count": 1, "max_count": 1, "description": "Postal / ZIP code",                                                           "min_inclusive": null, "max_inclusive": null, "single_line": true},
+    {"path": "https://schema.org/addressCountry","label": "Country",                  "datatype": "xsd:string",  "node_kind": null, "in_values": [], "has_value": null, "min_count": 1, "max_count": 1, "description": "ISO 3166-1 alpha-2 country code",                                            "min_inclusive": null, "max_inclusive": null, "single_line": true},
+    {"path": "https://schema.org/identifier",  "label": "Unique Operator Identifier","datatype": "xsd:string",  "node_kind": null, "in_values": [], "has_value": null, "min_count": 1, "max_count": 1, "description": "Unique operator identifier. Annex VI Part I (b)(c).",                         "min_inclusive": null, "max_inclusive": null, "single_line": true},
+    {"path": "https://schema.org/email",       "label": "Email",                     "datatype": "xsd:string",  "node_kind": null, "in_values": [], "has_value": null, "min_count": 0, "max_count": 1, "description": "Contact email address",                                                       "min_inclusive": null, "max_inclusive": null, "single_line": true},
+    {"path": "https://schema.org/url",         "label": "Website URL",               "datatype": "xsd:anyURI", "node_kind": null, "in_values": [], "has_value": null, "min_count": 0, "max_count": 1, "description": "Website URL of the operator",                                                  "min_inclusive": null, "max_inclusive": null, "single_line": true}
+  ],
+  "xone_alternatives": [],
+  "tags": ["dpp", "operator", "manufacturer", "toy-regulation"],
+  "created_at": "2026-05-07T16:00:00.000000",
+  "updated_at": "2026-05-07T16:00:00.000000",
+  "metadata": {"regulation": "EU Toy Safety Regulation", "annex": "VI Part I (b)(c)"}
+}

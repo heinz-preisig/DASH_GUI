@@ -7,6 +7,7 @@ It's designed to be interface-agnostic and can be used by GUI, web, or CLI inter
 
 import json
 import os
+import re
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -14,23 +15,64 @@ from typing import Dict, List, Any, Optional, Union
 from dataclasses import dataclass, field, asdict
 
 
+def sanitize_filename(name: str, max_length: int = 30) -> str:
+    """Sanitize name for use in filename"""
+    # Replace spaces and special chars with underscore
+    sanitized = re.sub(r'[^\w\s-]', '', name).strip()
+    sanitized = re.sub(r'[\s]+', '_', sanitized)
+    # Limit length
+    if len(sanitized) > max_length:
+        sanitized = sanitized[:max_length]
+    return sanitized.lower() or "brick"
+
+
+
+@dataclass
+class LeafProperty:
+    """Represents a leaf property (sh:property entry) within a NodeShape brick"""
+    path: str  # sh:path IRI
+    label: str = ""  # rdfs:label
+    datatype: Optional[str] = None  # xsd:string, xsd:decimal, etc.
+    node_kind: Optional[str] = None  # sh:IRI for dropdowns
+    in_values: List[str] = field(default_factory=list)  # sh:in (IRIs or literals)
+    has_value: Optional[str] = None  # sh:hasValue for static labels
+    min_count: int = 1
+    max_count: Optional[int] = 1
+    description: str = ""
+    min_inclusive: Optional[float] = None
+    max_inclusive: Optional[float] = None
+    single_line: Optional[bool] = None  # dash:singleLine
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'LeafProperty':
+        return cls(**data)
+
 
 @dataclass
 class SHACLBrick:
-    """Simple SHACL brick representation"""
+    """Modern SHACL brick representation - all bricks are NodeShapes with leaf properties"""
     brick_id: str
     name: str
     description: str
-    object_type: str  # "NodeShape" or "PropertyShape"
-    target_class: str = ""  # For NodeShape
-    property_path: str = ""  # For PropertyShape
-    properties: Dict[str, Any] = field(default_factory=dict)
-    constraints: List[Dict[str, Any]] = field(default_factory=list)
+    template_type: str = "custom"  # free_text, decimal_with_unit, dropdown_iri, date_field, static_label, file_upload, xone_choice, custom
+    namespace: str = "ex"  # IRI prefix
+    target_class: str = ""  # sh:targetClass IRI
+    leaf_properties: List[Dict[str, Any]] = field(default_factory=list)  # List of LeafProperty dicts
+    xone_alternatives: List[List[Dict[str, Any]]] = field(default_factory=list)  # For xone_choice template type
     tags: List[str] = field(default_factory=list)
     created_at: str = ""
     updated_at: str = ""
-    targets: List[Dict[str, Any]] = field(default_factory=list)  # For SHACL targets
-    metadata: Dict[str, Any] = field(default_factory=dict)  # Additional metadata
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    # Legacy fields for backward compatibility (will be removed in future)
+    object_type: str = "NodeShape"  # Always "NodeShape" in modern format
+    properties: Dict[str, Any] = field(default_factory=dict)
+    constraints: List[Dict[str, Any]] = field(default_factory=list)
+    targets: List[Dict[str, Any]] = field(default_factory=list)
+    property_path: str = ""
     
     def __post_init__(self):
         """Set timestamps after initialization"""
@@ -45,8 +87,11 @@ class SHACLBrick:
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'SHACLBrick':
-        """Create from dictionary"""
-        return cls(**data)
+        """Create from dictionary - filters out unknown fields for forward compatibility"""
+        # Filter to only valid dataclass fields
+        valid_fields = {f.name for f in cls.__dataclass_fields__.values()}
+        filtered_data = {k: v for k, v in data.items() if k in valid_fields}
+        return cls(**filtered_data)
     
     def update_timestamp(self):
         """Update the modification timestamp"""
@@ -59,21 +104,14 @@ class BrickCore:
     def __init__(self, repository_path: str = None, use_shared_libraries: bool = True):
         # Use shared libraries by default
         if use_shared_libraries and repository_path is None:
-            # Import shared library manager
             import sys
-            # Go up three levels from brick_app_v2/core to the project root, then to shared_libraries
-            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            shared_libs_path = os.path.join(project_root, 'shared_libraries')
-            shared_libs_path = os.path.abspath(shared_libs_path)
+            from pathlib import Path
+            project_root = Path(__file__).resolve().parent.parent.parent
+            shared_libs_path = str(project_root / 'shared_libraries')
             if shared_libs_path not in sys.path:
                 sys.path.insert(0, shared_libs_path)
-            
-            # Import the shared library manager
-            exec(open(os.path.join(shared_libs_path, 'library_manager.py')).read(), globals())
-            # Use the absolute path to the shared libraries directory
-            from pathlib import Path
-            self.repository_path = Path(shared_libs_path) / 'bricks'
-            self.repository_path = str(self.repository_path.absolute())
+            from library_manager import shared_library_manager
+            self.repository_path = shared_library_manager.get_brick_library_path()
             self.shared_library_manager = shared_library_manager
         else:
             # Use provided repository path
@@ -108,12 +146,21 @@ class BrickCore:
         return brick
     
     def load_brick(self, brick_id: str, library_name: Optional[str] = None) -> Optional[SHACLBrick]:
-        """Load a brick from storage"""
+        """Load a brick from storage by ID"""
         lib_name = library_name or self.active_library
-        # Bricks are stored directly in the library directory, not in a nested bricks subdirectory
-        brick_file = os.path.join(self.repository_path, lib_name, f"{brick_id}.json")
+        library_path = os.path.join(self.repository_path, lib_name)
         
-        if not os.path.exists(brick_file):
+        if not os.path.exists(library_path):
+            return None
+        
+        # Find file ending with brick_id.json (supports both old and new name_UUID format)
+        brick_file = None
+        for filename in os.listdir(library_path):
+            if filename.endswith(f"_{brick_id}.json") or filename == f"{brick_id}.json":
+                brick_file = os.path.join(library_path, filename)
+                break
+        
+        if not brick_file or not os.path.exists(brick_file):
             return None
         
         try:
@@ -134,22 +181,30 @@ class BrickCore:
         
         # Validate brick
         if not brick_to_save.name.strip():
+            print(f"DEBUG: Brick name is empty")
+            return False
+        
+        if not brick_to_save.brick_id:
+            print(f"DEBUG: Brick ID is missing")
             return False
         
         if brick_to_save.object_type == "NodeShape" and not brick_to_save.target_class.strip():
+            print(f"DEBUG: NodeShape missing target_class")
             return False
         
         if brick_to_save.object_type == "PropertyShape" and not brick_to_save.property_path.strip():
+            print(f"DEBUG: PropertyShape missing property_path")
             return False
         
         # Update timestamp
         brick_to_save.update_timestamp()
         
-        # Save to file
+        # Save to file with name_UUID format
         lib_name = self.active_library
         # Bricks are stored directly in the library directory, not in a nested bricks subdirectory
         library_path = os.path.join(self.repository_path, lib_name)
-        brick_file = os.path.join(library_path, f"{brick_to_save.brick_id}.json")
+        safe_name = sanitize_filename(brick_to_save.name)
+        brick_file = os.path.join(library_path, f"{safe_name}_{brick_to_save.brick_id}.json")
         
         # Ensure directory exists
         os.makedirs(library_path, exist_ok=True)
@@ -157,10 +212,24 @@ class BrickCore:
         try:
             with open(brick_file, 'w') as f:
                 json.dump(brick_to_save.to_dict(), f, indent=2)
-            return True
         except Exception as e:
             print(f"DEBUG: Save failed with error: {e}")
             return False
+
+        # Write .ttl alongside .json
+        try:
+            from brick_app_v2.core.brick_generator import SHACLBrickGenerator, BrickLibrary
+            temp_lib = BrickLibrary(lib_name, "", "System")
+            temp_lib.add_brick(brick_to_save)
+            generator = SHACLBrickGenerator(temp_lib)
+            graph = generator.brick_to_shacl(brick_to_save)
+            ttl_file = os.path.splitext(brick_file)[0] + ".ttl"
+            with open(ttl_file, 'w') as f:
+                f.write(graph.serialize(format="turtle"))
+        except Exception as e:
+            print(f"DEBUG: TTL generation failed: {e}")
+
+        return True
     
     def get_all_bricks(self, library_name: Optional[str] = None) -> List[SHACLBrick]:
         """Get all bricks from a library"""
@@ -193,11 +262,24 @@ class BrickCore:
     def delete_brick(self, brick_id: str, library_name: Optional[str] = None) -> bool:
         """Delete a brick"""
         lib_name = library_name or self.active_library
-        # Bricks are stored directly in the library directory, not in a nested bricks subdirectory
-        brick_file = os.path.join(self.repository_path, lib_name, f"{brick_id}.json")
+        library_path = os.path.join(self.repository_path, lib_name)
+        
+        # Find file ending with brick_id.json (supports both old and new name_UUID format)
+        brick_file = None
+        for filename in os.listdir(library_path):
+            if filename.endswith(f"_{brick_id}.json") or filename == f"{brick_id}.json":
+                brick_file = os.path.join(library_path, filename)
+                break
+        
+        if not brick_file:
+            return False
         
         try:
             os.remove(brick_file)
+            # Also try to delete corresponding TTL file
+            ttl_file = brick_file.replace('.json', '.ttl')
+            if os.path.exists(ttl_file):
+                os.remove(ttl_file)
             if self.current_brick and self.current_brick.brick_id == brick_id:
                 self.current_brick = None
             return True
@@ -246,6 +328,65 @@ class BrickCore:
         
         del self.current_brick.constraints[index]
         self.current_brick.update_timestamp()
+    
+    def add_constraint_to_property(self, prop_name: str, constraint_data: Dict[str, Any]) -> tuple[bool, str]:
+        """Add constraint to a specific property"""
+        if not self.current_brick:
+            return False, "No brick is currently being edited"
+        
+        if prop_name not in self.current_brick.properties:
+            return False, f"Property '{prop_name}' not found"
+        
+        prop = self.current_brick.properties[prop_name]
+        if not isinstance(prop, dict):
+            return False, f"Property '{prop_name}' has invalid data type"
+        
+        if 'constraints' not in prop:
+            prop['constraints'] = []
+        
+        prop['constraints'].append(constraint_data)
+        self.current_brick.update_timestamp()
+        return True, "Constraint added successfully"
+    
+    def update_constraint_on_property(self, prop_name: str, index: int, constraint_data: Dict[str, Any]) -> tuple[bool, str]:
+        """Update constraint at specific index on a property"""
+        if not self.current_brick:
+            return False, "No brick is currently being edited"
+        
+        if prop_name not in self.current_brick.properties:
+            return False, f"Property '{prop_name}' not found"
+        
+        prop = self.current_brick.properties[prop_name]
+        if not isinstance(prop, dict):
+            return False, f"Property '{prop_name}' has invalid data type"
+        
+        constraints = prop.get('constraints', [])
+        if not (0 <= index < len(constraints)):
+            return False, f"Invalid constraint index {index}"
+        
+        constraints[index] = constraint_data
+        self.current_brick.update_timestamp()
+        return True, "Constraint updated successfully"
+    
+    def remove_constraint_from_property(self, prop_name: str, index: int) -> tuple[bool, str]:
+        """Remove constraint at specific index from a property"""
+        if not self.current_brick:
+            return False, "No brick is currently being edited"
+        
+        if prop_name not in self.current_brick.properties:
+            return False, f"Property '{prop_name}' not found"
+        
+        prop = self.current_brick.properties[prop_name]
+        if not isinstance(prop, dict):
+            return False, f"Property '{prop_name}' has invalid data type"
+        
+        constraints = prop.get('constraints', [])
+        if not (0 <= index < len(constraints)):
+            return False, f"Invalid constraint index {index}"
+        
+        constraints.pop(index)
+        self.current_brick.update_timestamp()
+        return True, "Constraint removed successfully"
     
     def get_libraries(self) -> List[str]:
         """Get list of all libraries"""

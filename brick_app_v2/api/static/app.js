@@ -90,9 +90,29 @@ function selectBrick(brick) {
     updateStatus(`Selected: ${brick.name}`);
 }
 
+// Generate custom IRI for a brick's property path from its name
+function generateIriForBrick() {
+    const name = document.getElementById('brickName').value.trim();
+    if (!name) {
+        showMessage('Please enter a brick name first', 'error');
+        return;
+    }
+    const fragment = name.toLowerCase().replace(/[^\w\s-]/g, '').trim().split(/\s+/).reduce(
+        (acc, w, i) => acc + (i === 0 ? w : w.charAt(0).toUpperCase() + w.slice(1)), ''
+    );
+    const iri = `http://example.org/shaclbuild#${fragment}`;
+    document.getElementById('brickPropertyPath').value = iri;
+    showMessage(`Generated IRI: ${iri}`, 'success');
+}
+
 // Display brick details
 function displayBrickDetails(brick) {
     const detailsElement = document.getElementById('brickDetails');
+    const isPropertyShape = brick.object_type === 'PropertyShape';
+    const datatype = (brick.properties && brick.properties.datatype) || 'xsd:string';
+    const datatypeOptions = ['xsd:string','xsd:integer','xsd:decimal','xsd:boolean','xsd:date','xsd:dateTime','xsd:anyURI','xsd:float','xsd:double']
+        .map(t => `<option value="${t}" ${datatype === t ? 'selected' : ''}>${t}</option>`).join('');
+
     detailsElement.innerHTML = `
         <div class="form-group">
             <label>Name</label>
@@ -104,16 +124,34 @@ function displayBrickDetails(brick) {
         </div>
         <div class="form-group">
             <label>Type</label>
-            <select id="brickType">
-                <option value="NodeShape" ${brick.object_type === 'NodeShape' ? 'selected' : ''}>NodeShape</option>
-                <option value="PropertyShape" ${brick.object_type === 'PropertyShape' ? 'selected' : ''}>PropertyShape</option>
+            <select id="brickType" onchange="onBrickTypeChanged(this.value)">
+                <option value="NodeShape" ${!isPropertyShape ? 'selected' : ''}>NodeShape</option>
+                <option value="PropertyShape" ${isPropertyShape ? 'selected' : ''}>PropertyShape</option>
             </select>
         </div>
-        <div class="form-group">
+        <div id="targetClassRow" class="form-group" style="display:${isPropertyShape ? 'none' : 'block'}">
             <label>Target Class</label>
             <input type="text" id="brickTarget" value="${brick.target_class || ''}">
         </div>
+        <div id="propertyPathRow" class="form-group" style="display:${isPropertyShape ? 'block' : 'none'}">
+            <label>Property Path (IRI)</label>
+            <div style="display:flex; gap:0.5rem;">
+                <input type="text" id="brickPropertyPath" value="${brick.property_path || ''}" style="flex:1;">
+                <button class="btn btn-secondary" onclick="generateIriForBrick()">Generate IRI</button>
+            </div>
+        </div>
+        <div id="datatypeRow" class="form-group" style="display:${isPropertyShape ? 'block' : 'none'}">
+            <label>Datatype</label>
+            <select id="brickDatatype">${datatypeOptions}</select>
+        </div>
     `;
+}
+
+function onBrickTypeChanged(type) {
+    const isProperty = type === 'PropertyShape';
+    document.getElementById('targetClassRow').style.display = isProperty ? 'none' : 'block';
+    document.getElementById('propertyPathRow').style.display = isProperty ? 'block' : 'none';
+    document.getElementById('datatypeRow').style.display = isProperty ? 'block' : 'none';
 }
 
 // Display properties
@@ -121,15 +159,18 @@ function displayProperties(brick) {
     const propertiesElement = document.getElementById('propertiesSection');
     const properties = brick.properties || {};
     
-    if (Object.keys(properties).length === 0) {
+    const propertyEntries = Object.values(properties).filter(p => typeof p === 'object' && p !== null);
+    if (propertyEntries.length === 0) {
         propertiesElement.innerHTML = '<p>No properties defined.</p>';
         return;
     }
     
     let html = '<ul class="properties-list">';
     for (const [path, property] of Object.entries(properties)) {
+        // Skip scalar metadata entries (e.g., datatype stored at brick level for PropertyShape)
+        if (typeof property !== 'object' || property === null) continue;
         // Handle SHACL property structure
-        const propPath = typeof property === 'object' ? property.path : path;
+        const propPath = property.path || path;
         const propDatatype = typeof property === 'object' ? property.datatype : 'xsd:string';
         const propDefaultValue = typeof property === 'object' ? property.defaultValue : '';
         const propDescription = typeof property === 'object' ? property.description : '';
@@ -226,27 +267,49 @@ function displayConstraints(brick) {
 
 // Create new brick
 function createNewBrick() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <h3 class="modal-header">New Brick</h3>
+            <div class="form-group">
+                <label>Brick Type</label>
+                <select id="newBrickType">
+                    <option value="NodeShape">NodeShape</option>
+                    <option value="PropertyShape">PropertyShape</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="confirmCreateNewBrick()">Create</button>
+                <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function confirmCreateNewBrick() {
+    const type = document.getElementById('newBrickType').value;
+    document.querySelector('.modal').remove();
+
     currentBrick = {
         brick_id: 'new_' + Date.now(),
-        name: 'New Brick',
+        name: type === 'PropertyShape' ? 'New Property' : 'New Node',
         description: '',
-        object_type: 'NodeShape',
+        object_type: type,
         target_class: '',
+        property_path: '',
         properties: {},
         constraints: [],
         library: 'default'
     };
-    
+
     displayBrickDetails(currentBrick);
     displayProperties(currentBrick);
     displayConstraints(currentBrick);
-    
-    // Clear selection
-    document.querySelectorAll('.brick-item').forEach(item => {
-        item.classList.remove('selected');
-    });
-    
-    updateStatus('Creating new brick');
+
+    document.querySelectorAll('.brick-item').forEach(item => item.classList.remove('selected'));
+    updateStatus(`Creating new ${type}`);
 }
 
 // Save current brick
@@ -260,7 +323,14 @@ async function saveCurrentBrick() {
     currentBrick.name = document.getElementById('brickName').value;
     currentBrick.description = document.getElementById('brickDescription').value;
     currentBrick.object_type = document.getElementById('brickType').value;
-    currentBrick.target_class = document.getElementById('brickTarget').value;
+    if (currentBrick.object_type === 'PropertyShape') {
+        currentBrick.property_path = document.getElementById('brickPropertyPath').value;
+        const datatype = document.getElementById('brickDatatype').value;
+        if (!currentBrick.properties) currentBrick.properties = {};
+        currentBrick.properties.datatype = datatype;
+    } else {
+        currentBrick.target_class = document.getElementById('brickTarget').value;
+    }
     
     try {
         // First create a session if we don't have one
@@ -454,9 +524,9 @@ function saveProperty(originalKey = '') {
         return;
     }
     
-    // Validate path format
-    if (!path.match(/^[a-zA-Z][a-zA-Z0-9_:-]*$/)) {
-        showMessage('Property path must be a valid identifier (e.g., foaf:name, schema:email)', 'error');
+    // Validate path: accept prefixed names (foaf:name), full IRIs (http://...), or custom URIs
+    if (!path.match(/^(https?:\/\/|urn:)|^[a-zA-Z][a-zA-Z0-9_-]*:[a-zA-Z]/)) {
+        showMessage('Property path must be a prefixed name (e.g., foaf:name) or a full IRI (e.g., http://example.org/shaclbuild#myProp)', 'error');
         return;
     }
     
@@ -477,6 +547,10 @@ function saveProperty(originalKey = '') {
         created_at: new Date().toISOString()
     };
     
+    // Store name field alongside path for display
+    currentBrick.properties[path].name = path.includes('#') ? path.split('#').pop() :
+        path.includes('/') ? path.split('/').pop() : path;
+
     // Add default value if provided
     if (defaultValue) {
         // Validate default value based on datatype

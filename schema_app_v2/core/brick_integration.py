@@ -8,45 +8,19 @@ import sys
 from typing import List, Optional, Dict, Any
 from pathlib import Path
 
-# Calculate project root and add paths
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-brick_app_path = os.path.join(project_root, 'brick_app_v2')
-shared_libs_path = os.path.join(project_root, 'shared_libraries')
+# Project root is three levels up from this file (schema_app_v2/core/brick_integration.py)
+_project_root = Path(__file__).resolve().parent.parent.parent
+_brick_app_path = str(_project_root / 'brick_app_v2')
+_shared_libs_path = str(_project_root / 'shared_libraries')
 
-# Add both paths to sys.path
-if brick_app_path not in sys.path:
-    sys.path.insert(0, brick_app_path)
-if shared_libs_path not in sys.path:
-    sys.path.insert(0, shared_libs_path)
+for _p in [_brick_app_path, _shared_libs_path]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 try:
-    # Direct import using exec to avoid module path issues
-    brick_core_path = os.path.join(brick_app_path, 'core', 'brick_core_simple.py')
-    ontology_path = os.path.join(brick_app_path, 'core', 'ontology_manager.py')
-    library_manager_path = os.path.join(shared_libs_path, 'library_manager.py')
-    
-    # Import brick_core_simple
-    with open(brick_core_path, 'r') as f:
-        brick_core_code = f.read()
-    brick_core_namespace = {}
-    exec(brick_core_code, brick_core_namespace)
-    BrickCore = brick_core_namespace['BrickCore']
-    SHACLBrick = brick_core_namespace['SHACLBrick']
-    
-    # Import ontology_manager
-    with open(ontology_path, 'r') as f:
-        ontology_code = f.read()
-    ontology_namespace = {}
-    exec(ontology_code, ontology_namespace)
-    OntologyManager = ontology_namespace['OntologyManager']
-    
-    # Import library_manager
-    with open(library_manager_path, 'r') as f:
-        library_code = f.read()
-    library_namespace = {}
-    exec(library_code, library_namespace)
-    shared_library_manager = library_namespace['shared_library_manager']
-    
+    from brick_app_v2.core.brick_core_simple import BrickCore, SHACLBrick
+    from brick_app_v2.core.ontology_manager import OntologyManager
+    from library_manager import shared_library_manager
 except Exception as e:
     print(f"Warning: Could not import brick_app_v2 modules: {e}")
     BrickCore = None
@@ -62,13 +36,11 @@ class BrickIntegration:
         if BrickCore is None:
             raise ImportError("brick_app_v2 is not available. Please ensure it's properly installed.")
         
-        # Use shared libraries by default
+        # Always derive path from shared_library_manager — single source of truth
         if use_shared_libraries and brick_repository_path is None:
-            # Use the same path as brick_app_v2 - direct path to shared_libraries/bricks
-            brick_repository_path = os.path.join(shared_libs_path, 'bricks')
-            self.brick_core = BrickCore(repository_path=brick_repository_path, use_shared_libraries=False)
+            self.brick_core = BrickCore(use_shared_libraries=True)
         else:
-            self.brick_core = BrickCore(brick_repository_path, use_shared_libraries=False)
+            self.brick_core = BrickCore(repository_path=brick_repository_path, use_shared_libraries=False)
         
         self.ontology_manager = OntologyManager()
         
@@ -77,8 +49,21 @@ class BrickIntegration:
         return self.brick_core.get_all_bricks(library_name)
     
     def get_brick_by_id(self, brick_id: str, library_name: Optional[str] = None) -> Optional[SHACLBrick]:
-        """Get a specific brick by ID"""
-        return self.brick_core.load_brick(brick_id, library_name)
+        """Get a specific brick by ID - searches all libraries if needed"""
+        # First try the specified or active library
+        brick = self.brick_core.load_brick(brick_id, library_name)
+        if brick:
+            return brick
+        
+        # If not found, search all libraries
+        for lib in self.brick_core.get_libraries():
+            if lib == library_name:
+                continue  # Already tried
+            brick = self.brick_core.load_brick(brick_id, lib)
+            if brick:
+                return brick
+        
+        return None
     
     def get_brick_libraries(self) -> List[str]:
         """Get all available brick libraries"""
@@ -205,7 +190,8 @@ class BrickIntegration:
         except Exception:
             return []
     
-    def export_brick_as_shacl(self, brick_id: str, library_name: Optional[str] = None) -> Optional[str]:
+    def export_brick_as_shacl(self, brick_id: str, library_name: Optional[str] = None, 
+                           sequence: Optional[int] = None) -> Optional[str]:
         """Export a brick as SHACL Turtle format"""
         brick = self.get_brick_by_id(brick_id, library_name)
         if not brick:
@@ -256,6 +242,10 @@ class BrickIntegration:
                     shacl_lines.append(f"    sh:minInclusive {constraint_value} ;")
                 elif constraint_type == "maxInclusive":
                     shacl_lines.append(f"    sh:maxInclusive {constraint_value} ;")
+        
+        # Add sh:order if sequence is provided
+        if sequence is not None:
+            shacl_lines.append(f"    sh:order {sequence} ;")
         
         # Remove trailing semicolon from last line
         if shacl_lines and shacl_lines[-1].endswith(" ;"):

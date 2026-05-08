@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Product Catalog - DASH Form</title>
+    <style>
+
+        .dash-form {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .component {
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        
+        .component.depth-0 {
+            background-color: #ffffff;
+            border-color: #007bff;
+        }
+        
+        .component.depth-1 {
+            margin-left: 20px;
+            background-color: #f0f8ff;
+        }
+        
+        .component.depth-2 {
+            margin-left: 40px;
+            background-color: #e6f3ff;
+        }
+        
+        .component-label {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        
+        .field-group {
+            margin: 10px 0;
+        }
+        
+        .field-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-field {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        
+        .form-field:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        
+        .help-text {
+            font-style: italic;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .form-actions {
+            margin-top: 20px;
+            text-align: right;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .collapsible {
+            position: relative;
+        }
+        
+        .collapsible::before {
+            content: "▼";
+            position: absolute;
+            left: -15px;
+            top: 10px;
+            cursor: pointer;
+        }
+        
+        .collapsed::before {
+            content: "▶";
+        }
+        
+    </style>
+</head>
+<body>
+<form id="1c141382-9bb0-4483-8cbc-7f2520700acc" class="dash-form">
+  <h2>Product Catalog</h2>
+  <p class="form-description">Complex product schema with nested structures</p>
+  <div class="form-actions">
+    <button type="submit" class="btn-primary">Save</button>
+    <button type="reset" class="btn-secondary">Reset</button>
+  </div>
+</form>
+</body>
+</html>
+<script>
+// DASH Form JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle collapsible components
+    const collapsibles = document.querySelectorAll('.collapsible');
+    collapsibles.forEach(function(elem) {
+        elem.addEventListener('click', function(e) {
+            if (e.target === elem || elem.contains(e.target)) {
+                elem.classList.toggle('collapsed');
+            }
+        });
+    });
+    
+    // Form validation
+    const form = document.querySelector('.dash-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (!validateForm()) {
+                e.preventDefault();
+            }
+        });
+    }
+    
+    function validateForm() {
+        const fields = document.querySelectorAll('.form-field');
+        let isValid = true;
+        
+        fields.forEach(function(field) {
+            const name = field.name;
+            const value = field.value;
+            
+            // Check minLength
+            const minLength = document.querySelector(name + '_minLength');
+            if (minLength && value.length < parseInt(minLength.value)) {
+                field.setCustomValidity('Minimum length is ' + minLength.value);
+                isValid = false;
+            }
+            
+            // Check maxLength
+            const maxLength = document.querySelector(name + '_maxLength');
+            if (maxLength && value.length > parseInt(maxLength.value)) {
+                field.setCustomValidity('Maximum length is ' + maxLength.value);
+                isValid = false;
+            }
+            
+            // Check pattern
+            const pattern = document.querySelector(name + '_pattern');
+            if (pattern && !new RegExp(pattern.value).test(value)) {
+                field.setCustomValidity('Invalid format');
+                isValid = false;
+            }
+        });
+        
+        return isValid;
+    }
+});
+</script>

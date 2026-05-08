@@ -1,0 +1,15 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dash: <http://datashapes.org/dash#> .
+@prefix css: <http://digipass.com/css#> .
+
+value a sh:NodeShape ;
+    sh:targetClass https://schema.org/value ;
+    sh:property [
+        sh:path https://schema.org/value ;
+        rdfs:label "value" ;
+        sh:datatype xsd:decimal ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] .

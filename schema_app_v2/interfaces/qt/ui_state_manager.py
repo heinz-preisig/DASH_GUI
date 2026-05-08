@@ -41,7 +41,7 @@ class UIStateManager(QObject):
         self._all_components = [
             "libraryComboBox", "brickLibraryComboBox", "schemaListWidget", "newSchemaButton", 
             "deleteSchemaButton", "nameLineEdit", "descriptionLineEdit", "rootBrickComboBox",
-            "addComponentButton", "removeComponentButton", "componentBricksListWidget",
+            "addComponentButton", "addSchemaRefButton", "removeComponentButton", "componentBricksListWidget",
             "flowTypeComboBox", "editFlowButton", "saveButton", "exportShaclButton",
             "brickListWidget", "brickSearchLineEdit", "bricksGroupBox", "schemaDetailsGroupBox"
         ]
@@ -54,14 +54,14 @@ class UIStateManager(QObject):
             SchemaState.SCHEMA_SELECTED: [
                 "libraryComboBox", "brickLibraryComboBox", "schemaListWidget", "newSchemaButton",
                 "deleteSchemaButton", "nameLineEdit", "descriptionLineEdit", "rootBrickComboBox",
-                "addComponentButton", "removeComponentButton", "componentBricksListWidget",
+                "addComponentButton", "addSchemaRefButton", "removeComponentButton", "componentBricksListWidget",
                 "flowTypeComboBox", "editFlowButton", "exportShaclButton",
                 "brickListWidget", "brickSearchLineEdit", "bricksGroupBox", "schemaDetailsGroupBox"
             ],
             SchemaState.SCHEMA_MODIFIED: [
                 "libraryComboBox", "brickLibraryComboBox", "schemaListWidget", "newSchemaButton",
                 "deleteSchemaButton", "nameLineEdit", "descriptionLineEdit", "rootBrickComboBox",
-                "addComponentButton", "removeComponentButton", "componentBricksListWidget",
+                "addComponentButton", "addSchemaRefButton", "removeComponentButton", "componentBricksListWidget",
                 "flowTypeComboBox", "editFlowButton", "saveButton", "exportShaclButton",
                 "brickListWidget", "brickSearchLineEdit", "bricksGroupBox", "schemaDetailsGroupBox"
             ],
@@ -73,16 +73,15 @@ class UIStateManager(QObject):
                 # Show schema details and component management, but hide available bricks
                 "libraryComboBox", "brickLibraryComboBox", "schemaListWidget", "newSchemaButton",
                 "deleteSchemaButton", "nameLineEdit", "descriptionLineEdit", "rootBrickComboBox",
-                "addComponentButton", "removeComponentButton", "componentBricksListWidget",
+                "addComponentButton", "addSchemaRefButton", "removeComponentButton", "componentBricksListWidget",
                 "flowTypeComboBox", "editFlowButton", "exportShaclButton",
-                "schemaDetailsGroupBox"  # Show schema details for component editing
+                "schemaDetailsGroupBox"
                 # Note: brickListWidget, brickSearchLineEdit, bricksGroupBox intentionally hidden
             ],
             SchemaState.FLOW_EDITING: [
-                # Same as SCHEMA_SELECTED but with save disabled
                 "libraryComboBox", "brickLibraryComboBox", "schemaListWidget", "newSchemaButton",
                 "deleteSchemaButton", "nameLineEdit", "descriptionLineEdit", "rootBrickComboBox",
-                "addComponentButton", "removeComponentButton", "componentBricksListWidget",
+                "addComponentButton", "addSchemaRefButton", "removeComponentButton", "componentBricksListWidget",
                 "flowTypeComboBox", "editFlowButton", "exportShaclButton",
                 "brickListWidget", "brickSearchLineEdit", "bricksGroupBox", "schemaDetailsGroupBox"
             ]
@@ -98,23 +97,14 @@ class UIStateManager(QObject):
     
     def set_state(self, new_state: SchemaState) -> bool:
         """Set new application state with validation"""
-        print(f"DEBUG: State transition requested: {self._current_state} -> {new_state}")
-        
-        # Allow same state during initialization
         if self._current_state != new_state and not self._is_valid_transition(self._current_state, new_state):
-            print(f"DEBUG: Invalid state transition: {self._current_state} -> {new_state}")
             return False
         
         old_state = self._current_state
         self._current_state = new_state
-        print(f"DEBUG: Setting state to {new_state}")
         
-        # Apply state-specific widget configuration
         self._apply_state_configuration(new_state)
-        
-        # Emit state change signal
         self.state_changed.emit(old_state, new_state)
-        print(f"DEBUG: State transition completed: {old_state} -> {new_state}")
         
         return True
     
@@ -140,51 +130,27 @@ class UIStateManager(QObject):
     
     def _apply_state_configuration(self, state: SchemaState):
         """Apply widget visibility configuration for specific state"""
-        print(f"DEBUG: Applying state configuration: {state.name}")
-        print(f"DEBUG: Visible components: {self._state_visibility.get(state, [])}")
-        
-        # Step 1: Hide ALL components first
         self._hide_all_components()
-        print("DEBUG: Hidden all components")
-        
-        # Step 2: Show only components that should be visible for this state
         visible_components = self._state_visibility.get(state, [])
         self._show_components(visible_components)
-        print(f"DEBUG: Showing {len(visible_components)} components: {visible_components}")
         
-        # Step 3: Handle special case for save button (enabled/disabled but visible)
-        if state in [SchemaState.SCHEMA_SELECTED, SchemaState.COMPONENT_ADDING, SchemaState.FLOW_EDITING]:
-            save_button = self._widgets.get("saveButton")
-            if save_button:
-                save_button.setEnabled(False)
-                print("DEBUG: Save button disabled")
-        elif state == SchemaState.SCHEMA_MODIFIED:
-            save_button = self._widgets.get("saveButton")
-            if save_button:
-                save_button.setEnabled(True)
-                print("DEBUG: Save button enabled")
+        # Visibility is the sole indicator of whether a button can be pressed.
     
     def _hide_all_components(self):
         """Hide all GUI components"""
-        print("DEBUG: Hiding all components")
         for component_name in self._all_components:
             widget = self._widgets.get(component_name)
             if widget:
                 widget.setVisible(False)
                 widget.setEnabled(False)
-                print(f"DEBUG: Hidden {component_name}")
     
     def _show_components(self, component_names: list):
         """Show specific components"""
-        print(f"DEBUG: Showing {len(component_names)} components: {component_names}")
         for component_name in component_names:
             widget = self._widgets.get(component_name)
             if widget:
                 widget.setVisible(True)
                 widget.setEnabled(True)
-                print(f"DEBUG: Shown {component_name}")
-            else:
-                print(f"DEBUG: Widget {component_name} not found in registry!")
     
     def _configure_widgets(self, config: Dict[str, Any]):
         """Configure widgets based on state configuration"""

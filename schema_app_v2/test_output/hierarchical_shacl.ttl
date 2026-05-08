@@ -1,0 +1,32 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Hierarchical SHACL Schema Export
+# Components are organized in tree structure with sh:node references
+
+# Parent Component: company
+# Type: unknown
+
+# Parent Component: address
+# Type: unknown
+
+# Parent Component: properties
+# Type: unknown
+
+# Parent Component: physicalProperties
+# Type: unknown
+
+# Parent Component: looks
+# Type: unknown
+
+# Schema Metadata
+# Schema ID: 1c141382-9bb0-4483-8cbc-7f2520700acc
+# Schema Name: Product Catalog
+# Description: Complex product schema with nested structures
+# Created: 2026-05-04T11:19:30.474738
+# Updated: 2026-05-04T11:19:30.474815
+# Root Brick: ProductNode
+# Component Bricks: 18
+# Components: productName, productDescription, company, companyName, companyLogo, address, streetAddress, houseNumber, zipCode, town, country, properties, physicalProperties, weight, dimensions, looks, color, material

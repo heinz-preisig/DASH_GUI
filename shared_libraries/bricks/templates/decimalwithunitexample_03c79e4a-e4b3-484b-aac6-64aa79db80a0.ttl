@@ -1,0 +1,33 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dash: <http://datashapes.org/dash#> .
+@prefix css: <http://digipass.com/css#> .
+
+@prefix ex: <http://example.org/ex/> .
+
+ex:DecimalWithUnitExample a sh:NodeShape ;
+    sh:targetClass ex:Measurement ;
+    sh:property [
+        sh:path ex:value ;
+        rdfs:label "Value" ;
+        sh:datatype xsd:decimal ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:description "Numeric measurement value" ;
+        sh:minInclusive 0.0 ;
+        sh:maxInclusive 1000.0 ;
+    ] ;
+    sh:property [
+        sh:path ex:unit ;
+        rdfs:label "Unit" ;
+        sh:nodeKind sh:IRI ;
+        sh:in (
+            unit:DegreeCelsius
+            unit:Kelvin
+            unit:DegreeFahrenheit
+        ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:description "Unit of measurement" ;
+    ] .

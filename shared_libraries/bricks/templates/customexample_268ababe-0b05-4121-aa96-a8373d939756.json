@@ -1,0 +1,75 @@
+{
+  "brick_id": "268ababe-0b05-4121-aa96-a8373d939756",
+  "name": "CustomExample",
+  "description": "Custom \u2014 mix any leaf property types freely",
+  "template_type": "custom",
+  "namespace": "ex",
+  "target_class": "ex:CustomThing",
+  "leaf_properties": [
+    {
+      "path": "ex:name",
+      "label": "Name",
+      "datatype": "xsd:string",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_count": 1,
+      "max_count": 1,
+      "description": "",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": true
+    },
+    {
+      "path": "ex:score",
+      "label": "Score",
+      "datatype": "xsd:decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_count": 1,
+      "max_count": 1,
+      "description": "",
+      "min_inclusive": 0.0,
+      "max_inclusive": 100.0,
+      "single_line": null
+    },
+    {
+      "path": "ex:status",
+      "label": "Status",
+      "datatype": null,
+      "node_kind": "sh:IRI",
+      "in_values": [
+        "ex:Active",
+        "ex:Inactive",
+        "ex:Pending"
+      ],
+      "has_value": null,
+      "min_count": 1,
+      "max_count": 1,
+      "description": "",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null
+    },
+    {
+      "path": "ex:createdOn",
+      "label": "Created",
+      "datatype": "xsd:date",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_count": 1,
+      "max_count": 1,
+      "description": "",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [],
+  "created_at": "2026-05-07T10:50:15.978956",
+  "updated_at": "2026-05-07T10:50:15.982930",
+  "metadata": {}
+}

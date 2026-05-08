@@ -160,6 +160,15 @@ class BrickEditorComponent(UIComponent):
         
         if hasattr(self.main_window, 'ontologyPathBrowser'):
             self.main_window.ontologyPathBrowser.setVisible(ui_state.show_property_path_fields)
+        
+        if hasattr(self.main_window, 'generateIriBtn'):
+            self.main_window.generateIriBtn.setVisible(ui_state.show_property_path_fields)
+        
+        if hasattr(self.main_window, 'datatypeLabel'):
+            self.main_window.datatypeLabel.setVisible(ui_state.show_property_path_fields)
+        
+        if hasattr(self.main_window, 'datatypeCombo'):
+            self.main_window.datatypeCombo.setVisible(ui_state.show_property_path_fields)
     
     def get_data(self) -> Dict[str, Any]:
         """Get data from editor fields"""
@@ -177,6 +186,9 @@ class BrickEditorComponent(UIComponent):
         if hasattr(self.main_window, 'propertyPathEdit'):
             data['property_path'] = self.main_window.propertyPathEdit.text()
         
+        if hasattr(self.main_window, 'datatypeCombo'):
+            data['datatype'] = self.main_window.datatypeCombo.currentText()
+        
         return data
     
     def set_data(self, data: Dict[str, Any]):
@@ -192,6 +204,11 @@ class BrickEditorComponent(UIComponent):
         
         if 'property_path' in data and hasattr(self.main_window, 'propertyPathEdit'):
             self.main_window.propertyPathEdit.setText(data['property_path'])
+        
+        if 'datatype' in data and hasattr(self.main_window, 'datatypeCombo'):
+            index = self.main_window.datatypeCombo.findText(data['datatype'])
+            if index >= 0:
+                self.main_window.datatypeCombo.setCurrentIndex(index)
 
 
 class BrickListComponent(UIComponent):

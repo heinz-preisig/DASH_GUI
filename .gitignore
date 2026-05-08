@@ -213,9 +213,6 @@ Thumbs.db
 # Application specific
 # test_*.py  # Test scripts can be ignored
 
-# Configuration files with local settings
-config_local.json
-settings_local.py
 
 # Database files
 *.db
@@ -225,6 +222,8 @@ settings_local.py
 # Cache directories
 .cache/
 cache/
+!ontologies/cache/
+!ontologies/cache/**
 
 # Build artifacts
 build/

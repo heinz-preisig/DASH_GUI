@@ -101,7 +101,7 @@
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
-y>274</y>
+     <y>274</y>
     </hint>
    </hints>
   </connection>
@@ -117,7 +117,7 @@ y>274</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
-    <y>274</y>
+     <y>274</y>
     </hint>
    </hints>
   </connection>

@@ -1,12 +1,7 @@
 import sys
+import re
 from pathlib import Path
-from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, 
-    QWidget, QLabel, QLineEdit, QTextEdit, QComboBox, 
-    QPushButton, QListWidget, QListWidgetItem, QGroupBox, QFormLayout,
-    QMessageBox, QFileDialog, QDialog, QDialogButtonBox,
-    QGridLayout, QRadioButton, QSpinBox, QCheckBox
-)
+from PyQt6.QtWidgets import QDialog, QMessageBox, QListWidgetItem
 from PyQt6.QtCore import Qt
 from PyQt6.uic import loadUi
 
@@ -41,6 +36,7 @@ class SimpleOntologyBrowser(QDialog):
         self.ontology_combo.currentTextChanged.connect(self.on_ontology_changed)
         self.mode_combo.currentTextChanged.connect(self.on_mode_changed)
         self.search_edit.textChanged.connect(self.on_search_changed)
+        self.search_all_check.stateChanged.connect(self.on_search_all_toggled)
         self.results_list.itemDoubleClicked.connect(self.on_item_selected)
         self.cancelButton.clicked.connect(self.reject)
         
@@ -86,7 +82,7 @@ class ConstraintEditorDialog(QDialog):
         loadUi(str(ui_path), self)
         
         # Connect signals
-        self.constraint_type_combo.currentTextChanged.connect(self.on_constraint_type_changed)
+        self.constraintTypeCombo.currentTextChanged.connect(self.on_constraint_type_changed)
         self.okButton.clicked.connect(self.on_accept_clicked)
         self.cancelButton.clicked.connect(self.reject)
         
@@ -95,29 +91,7 @@ class ConstraintEditorDialog(QDialog):
 
 class PropertyEditorDialog(QDialog):
     """Property editor dialog - loads from property_editor.ui"""
-    
-    def __init__(self, parent=None, ontology_manager=None):
-        super().__init__(parent)
-        self.ontology_manager = ontology_manager
-        
-        # Load UI from file
-        ui_path = Path(__file__).parent / "ui" / "property_editor.ui"
-        loadUi(str(ui_path), self)
-        
-        # Make datatype combo editable
-        self.datatype_combo.setEditable(True)
-        
-        # Add missing datatypes if not present
-        datatypes = ["xsd:string", "xsd:integer", "xsd:decimal", "xsd:boolean",
-                    "xsd:date", "xsd:dateTime", "xsd:time", "xsd:anyURI"]
-        for dt in datatypes:
-            if self.datatype_combo.findText(dt) == -1:
-                self.datatype_combo.addItem(dt)
-        
-        # Connect signals
-        self.browse_btn.clicked.connect(self.browse_property_path)
-        self.okButton.clicked.connect(self.accept)
-        self.cancelButton.clicked.connect(self.reject)
+    pass
 
 
 # Business logic methods for SimpleOntologyBrowser
@@ -205,27 +179,82 @@ def on_search_changed(self):
 SimpleOntologyBrowser.on_search_changed = on_search_changed
 
 
+def on_search_all_toggled(self):
+    """Handle 'Search all ontologies' checkbox toggle"""
+    search_all = self.search_all_check.isChecked()
+    self.ontology_combo.setEnabled(not search_all)
+    if search_all:
+        self.apply_search_filter()
+    else:
+        self.load_ontology_items()
+
+SimpleOntologyBrowser.on_search_all_toggled = on_search_all_toggled
+
+
 def apply_search_filter(self):
     """Apply search filter to items"""
     search_text = self.search_edit.text().lower().strip()
-    
+    search_all = self.search_all_check.isChecked()
+
     self.results_list.clear()
-    
-    for item in self.all_items:
-        name_match = search_text == "" or search_text in item['name'].lower()
-        
-        if name_match:
-            display_text = item['name']
-            list_item = QListWidgetItem(display_text)
-            list_item.setData(Qt.ItemDataRole.UserRole, item)
-            self.results_list.addItem(list_item)
+
+    if search_all and search_text:
+        mode = self.mode_combo.currentText().lower()
+        match_count = 0
+        for ont_name, ont_data in sorted(self.ontology_manager.ontologies.items(), key=lambda x: x[0].lower()):
+            if mode == "classes":
+                items_dict = ont_data.get('classes', {})
+            else:
+                items_dict = ont_data.get('properties', {})
+
+            ont_matches = []
+            for uri, data in items_dict.items():
+                if isinstance(data, dict) and 'name' in data:
+                    item = {'name': data['name'], 'uri': uri,
+                            'description': data.get('description', ''),
+                            'comment': data.get('comment', ''),
+                            'ontology': ont_name}
+                else:
+                    item = {'name': str(data), 'uri': uri,
+                            'description': '', 'comment': '', 'ontology': ont_name}
+
+                if search_text in item['name'].lower() or search_text in uri.lower():
+                    ont_matches.append(item)
+
+            if ont_matches:
+                ont_matches.sort(key=lambda x: x['name'].lower())
+                header_item = QListWidgetItem(f"── {ont_name} ({len(ont_matches)}) ──")
+                header_item.setFlags(Qt.ItemFlag.NoItemFlags)
+                header_item.setForeground(self.palette().mid())
+                self.results_list.addItem(header_item)
+                for item in ont_matches:
+                    display_text = f"  {item['name']}  [{item['uri']}]"
+                    list_item = QListWidgetItem(display_text)
+                    list_item.setData(Qt.ItemDataRole.UserRole, item)
+                    self.results_list.addItem(list_item)
+                    match_count += 1
+
+        self.match_count_label.setText(f"{match_count} match{'es' if match_count != 1 else ''} across all ontologies" if match_count else "No matches found")
+    else:
+        for item in self.all_items:
+            name_match = search_text == "" or search_text in item['name'].lower() or search_text in item['uri'].lower()
+            if name_match:
+                display_text = item['name']
+                list_item = QListWidgetItem(display_text)
+                list_item.setData(Qt.ItemDataRole.UserRole, item)
+                self.results_list.addItem(list_item)
+        count = self.results_list.count()
+        self.match_count_label.setText(f"{count} match{'es' if count != 1 else ''}" if search_text else "")
 
 SimpleOntologyBrowser.apply_search_filter = apply_search_filter
 
 
 def on_item_selected(self, item):
     """Handle item double-click"""
-    self.selected_item = item.data(Qt.ItemDataRole.UserRole)
+    data = item.data(Qt.ItemDataRole.UserRole)
+    if data is None:
+        return
+    self.selected_item = data
     self.accept()
 
 SimpleOntologyBrowser.on_item_selected = on_item_selected
@@ -348,7 +377,7 @@ PropertyBrickBrowser.on_select_clicked = on_select_clicked
 # Business logic methods for ConstraintEditorDialog
 def on_constraint_type_changed(self):
     """Handle constraint type change"""
-    constraint_type = self.constraint_type_combo.currentText()
+    constraint_type = self.constraintTypeCombo.currentText()
     
     # Hide all value widgets first
     self.numericValueWidget.setVisible(False)
@@ -377,7 +406,7 @@ ConstraintEditorDialog.on_constraint_type_changed = on_constraint_type_changed
 
 def on_accept_clicked(self):
     """Handle OK button click"""
-    constraint_type = self.constraint_type_combo.currentText()
+    constraint_type = self.constraintTypeCombo.currentText()
     
     # Get value based on which widget is visible
     if self.numericValueWidget.isVisible():
@@ -428,23 +457,29 @@ def set_constraint_data(self, constraint_data):
         constraint_value = constraint_data.get('value', '1')
         
         # Find and select the constraint type
-        for i in range(self.constraint_type_combo.count()):
-            if self.constraint_type_combo.itemText(i) == constraint_type:
-                self.constraint_type_combo.setCurrentIndex(i)
+        found = False
+        for i in range(self.constraintTypeCombo.count()):
+            if self.constraintTypeCombo.itemText(i) == constraint_type:
+                self.constraintTypeCombo.setCurrentIndex(i)
+                found = True
                 break
         
+        # Update widget visibility based on constraint type
+        self.on_constraint_type_changed()
+        
         # Set value based on which widget should be visible
-        if constraint_type in ["minCount", "maxCount", "minLength", "maxLength"]:
-            self.numericValueSpinBox.setValue(int(constraint_value))
-        elif constraint_type == "pattern":
-            self.patternValueEdit.setPlainText(str(constraint_value))
-        elif constraint_type == "datatype":
-            self.datatypeCombo.setCurrentText(str(constraint_value))
-        elif constraint_type in ["in", "notIn"]:
-            self.valueListWidget.clear()
-            for val in str(constraint_value).split(','):
-                if val.strip():
-                    self.valueListWidget.addItem(val.strip())
+        if found:
+            if constraint_type in ["minCount", "maxCount", "minLength", "maxLength"]:
+                self.numericValueSpinBox.setValue(int(constraint_value))
+            elif constraint_type == "pattern":
+                self.patternValueEdit.setPlainText(str(constraint_value))
+            elif constraint_type == "datatype":
+                self.datatypeCombo.setCurrentText(str(constraint_value))
+            elif constraint_type in ["in", "notIn"]:
+                self.valueListWidget.clear()
+                for val in str(constraint_value).split(','):
+                    if val.strip():
+                        self.valueListWidget.addItem(val.strip())
 
 ConstraintEditorDialog.set_constraint_data = set_constraint_data
 
@@ -517,3 +552,107 @@ def set_property_data(self, property_data):
     self.description_edit.setPlainText(property_data.get('description', ''))
 
 PropertyEditorDialog.set_property_data = set_property_data
+
+
+# PropertyEditorDialog __init__ and additional methods
+DEFAULT_NAMESPACE = "http://example.org/shaclbuild#"
+
+def property_editor_init(self, parent=None, ontology_manager=None):
+    """Initialize property editor dialog"""
+    super(PropertyEditorDialog, self).__init__(parent)
+    self.ontology_manager = ontology_manager
+    
+    # Load UI from file
+    ui_path = Path(__file__).parent / "ui" / "property_editor.ui"
+    loadUi(str(ui_path), self)
+    
+    # Make datatype combo editable
+    self.datatype_combo.setEditable(True)
+    
+    # Add missing datatypes if not present
+    datatypes = ["xsd:string", "xsd:integer", "xsd:decimal", "xsd:boolean",
+                "xsd:date", "xsd:dateTime", "xsd:time", "xsd:anyURI"]
+    for dt in datatypes:
+        if self.datatype_combo.findText(dt) == -1:
+            self.datatype_combo.addItem(dt)
+    
+    # Set default namespace if field is empty
+    if hasattr(self, 'namespace_edit') and not self.namespace_edit.text().strip():
+        self.namespace_edit.setText(DEFAULT_NAMESPACE)
+    
+    # Connect signals
+    self.browse_btn.clicked.connect(self.browse_property_path)
+    self.okButton.clicked.connect(self.accept)
+    self.cancelButton.clicked.connect(self.reject)
+    
+    # Connect new custom IRI generation signals
+    if hasattr(self, 'generate_iri_btn'):
+        self.generate_iri_btn.clicked.connect(self.generate_custom_iri)
+    if hasattr(self, 'use_custom_namespace'):
+        self.use_custom_namespace.stateChanged.connect(self.on_custom_namespace_toggled)
+
+PropertyEditorDialog.__init__ = property_editor_init
+
+
+def on_custom_namespace_toggled(self, state):
+    """Enable/disable namespace field based on checkbox"""
+    if hasattr(self, 'namespace_edit') and hasattr(self, 'namespaceLabel'):
+        enabled = state == Qt.CheckState.Checked.value
+        self.namespace_edit.setEnabled(enabled)
+        self.namespaceLabel.setEnabled(enabled)
+
+PropertyEditorDialog.on_custom_namespace_toggled = on_custom_namespace_toggled
+
+
+def generate_custom_iri(self):
+    """Generate a custom IRI from the property name and namespace"""
+    name = self.name_edit.text().strip()
+    if not name:
+        QMessageBox.warning(self, "Warning", "Please enter a property name first")
+        return
+    
+    # Get namespace - use custom if enabled, otherwise default
+    if hasattr(self, 'use_custom_namespace') and self.use_custom_namespace.isChecked() and hasattr(self, 'namespace_edit'):
+        namespace = self.namespace_edit.text().strip()
+    else:
+        namespace = DEFAULT_NAMESPACE
+    
+    if not namespace:
+        namespace = DEFAULT_NAMESPACE
+        if hasattr(self, 'namespace_edit'):
+            self.namespace_edit.setText(namespace)
+    
+    # Ensure namespace ends with # or /
+    if not namespace.endswith(('#', '/')):
+        namespace += '#'
+    
+    # Convert property name to valid IRI fragment (camelCase)
+    # Remove invalid characters and convert to camelCase
+    iri_fragment = self._name_to_iri_fragment(name)
+    
+    # Generate full IRI
+    full_iri = f"{namespace}{iri_fragment}"
+    self.path_edit.setText(full_iri)
+
+PropertyEditorDialog.generate_custom_iri = generate_custom_iri
+
+
+def _name_to_iri_fragment(self, name: str) -> str:
+    """Convert a property name to a valid IRI fragment"""
+    # Remove or replace invalid characters
+    # Keep alphanumeric, spaces, hyphens, and underscores
+    cleaned = re.sub(r'[^\w\s-]', '', name)
+    
+    # Split into words
+    words = cleaned.split()
+    
+    if not words:
+        return "property"
+    
+    # Convert to camelCase (first word lowercase, rest capitalized)
+    first_word = words[0].lower()
+    rest_words = [word.capitalize() for word in words[1:]]
+    
+    return first_word + ''.join(rest_words)
+
+PropertyEditorDialog._name_to_iri_fragment = _name_to_iri_fragment

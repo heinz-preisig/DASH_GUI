@@ -25,10 +25,15 @@ sys.path.insert(0, str(app_dir / 'ui'))
 # Import new architecture components
 from state.app_state import app_state_manager, UIState, BrickType
 from business.brick_operations import brick_business_logic
+from core.brick_core_simple import sanitize_filename
 from ui.ui_abstraction import UIManager, BrickEditorComponent, BrickListComponent, LibraryComponent, PropertyListComponent
+from ui.property_formatters import (
+    format_property_enhanced_text,
+    format_constraint_summary, get_datatype_icon
+)
+from ui.constraint_manager import show_constraint_manager
 from gui_components import (
-    PropertyEditorDialog, PropertyBrickBrowser, ConstraintEditorDialog,
-    SimpleOntologyBrowser
+    PropertyEditorDialog, ConstraintEditorDialog, SimpleOntologyBrowser
 )
 
 
@@ -60,7 +65,7 @@ class RefactoredBrickEditor(QMainWindow):
         
         # Setup window
         self.setWindowTitle("Refactored SHACL Brick Editor")
-        self.setGeometry(100, 100, 650, 950)
+        # self.setGeometry(100, 100, 650, 950)
         
         # Connect signals
         self._connect_signals()
@@ -80,32 +85,31 @@ class RefactoredBrickEditor(QMainWindow):
         # Library signals
         self.libraryComboBox.currentTextChanged.connect(self.on_library_changed)
         self.nodeBrickList.itemDoubleClicked.connect(self.on_node_brick_selected)
-        self.propertyBrickList.itemDoubleClicked.connect(self.on_property_brick_selected)
-        self.newBrick.clicked.connect(self.on_new_brick)
+        self.newNode.clicked.connect(self.on_new_node)
         self.deleteBrick.clicked.connect(self.on_delete_brick)
         self.newLibrary.clicked.connect(self.on_new_library)
         self.deleteLibrary.clicked.connect(self.on_delete_library)
+        self.downloadOntology.clicked.connect(self.on_download_ontology)
         
         # Brick selection signals for delete button visibility
         self.nodeBrickList.itemSelectionChanged.connect(self.on_brick_selection_changed)
-        self.propertyBrickList.itemSelectionChanged.connect(self.on_brick_selection_changed)
         
         # Editor signals
-        self.radioNode.toggled.connect(self.on_type_changed)
-        self.radioProperty.toggled.connect(self.on_type_changed)
         self.namelineEdit.textChanged.connect(self.on_field_changed)
         self.targetLineEdit.textChanged.connect(self.on_field_changed)
         self.propertyPathEdit.textChanged.connect(self.on_field_changed)
         self.description.textChanged.connect(self.on_field_changed)
         self.ontologyTargetBrowser.clicked.connect(self.browse_ontology)
         self.ontologyPathBrowser.clicked.connect(self.browse_ontology)
+        self.generateIriBtn.clicked.connect(self.generate_property_path_iri)
+        self.datatypeCombo.currentTextChanged.connect(self.on_datatype_changed)
         
         # Property signals
         self.propertyList.itemSelectionChanged.connect(self.on_property_selection_changed)
         self.propertyList.itemDoubleClicked.connect(self.on_property_double_clicked)
         self.addProperty.clicked.connect(self.add_property)
-        self.addPropertyBrick.clicked.connect(self.add_property_brick)
         self.addConstraint.clicked.connect(self.add_constraint)
+        self.deleteProperty.clicked.connect(self.delete_property)
         
         # Control signals
         self.saveBrick.clicked.connect(self.save_brick)
@@ -181,24 +185,25 @@ class RefactoredBrickEditor(QMainWindow):
             self.description.blockSignals(True)
             self.targetLineEdit.blockSignals(True)
             self.propertyPathEdit.blockSignals(True)
-            self.radioNode.blockSignals(True)
-            self.radioProperty.blockSignals(True)
-            
             # Update fields
             self.namelineEdit.setText(brick_state.name)
             self.description.setPlainText(brick_state.description)
             
-            # Update radio buttons
-            if brick_state.object_type == "NodeShape":
-                self.radioNode.setChecked(True)
-            else:
-                self.radioProperty.setChecked(True)
+            # Update type label
+            self.currentTypeLabel.setText(brick_state.object_type)
             
             # Update type-specific fields
             if brick_state.object_type == "NodeShape":
                 self.targetLineEdit.setText(brick_state.target_class)
             else:
                 self.propertyPathEdit.setText(brick_state.property_path)
+                # Restore datatype from properties
+                datatype = brick_state.properties.get('datatype', 'xsd:string')
+                self.datatypeCombo.blockSignals(True)
+                index = self.datatypeCombo.findText(datatype)
+                if index >= 0:
+                    self.datatypeCombo.setCurrentIndex(index)
+                self.datatypeCombo.blockSignals(False)
             
             # Update property list
             self._update_property_list()
@@ -208,8 +213,6 @@ class RefactoredBrickEditor(QMainWindow):
             self.description.blockSignals(False)
             self.targetLineEdit.blockSignals(False)
             self.propertyPathEdit.blockSignals(False)
-            self.radioNode.blockSignals(False)
-            self.radioProperty.blockSignals(False)
             
         except Exception as e:
             print(f"Error updating UI with brick data: {e}")
@@ -219,8 +222,6 @@ class RefactoredBrickEditor(QMainWindow):
                 self.description.blockSignals(False)
                 self.targetLineEdit.blockSignals(False)
                 self.propertyPathEdit.blockSignals(False)
-                self.radioNode.blockSignals(False)
-                self.radioProperty.blockSignals(False)
             except:
                 pass
     
@@ -268,6 +269,10 @@ class RefactoredBrickEditor(QMainWindow):
             self.libraryComboBox.clear()
             self.libraryComboBox.addItems(libraries)
             
+            # Sync business logic with first library
+            if libraries:
+                brick_business_logic.set_active_library(libraries[0])
+            
             # Load bricks
             self.load_library()
             
@@ -286,7 +291,6 @@ class RefactoredBrickEditor(QMainWindow):
             # Block signals during library loading to prevent recursion
             self.libraryComboBox.blockSignals(True)
             self.nodeBrickList.blockSignals(True)
-            self.propertyBrickList.blockSignals(True)
             
             # Save current selection
             current_library = self.libraryComboBox.currentText()
@@ -302,32 +306,25 @@ class RefactoredBrickEditor(QMainWindow):
             elif libraries:
                 self.libraryComboBox.setCurrentIndex(0)
             
-            # Load bricks from the active library
+            # Load bricks from the active library (all bricks are NodeShapes)
             bricks = brick_business_logic.get_bricks()
             self.nodeBrickList.clear()
-            self.propertyBrickList.clear()
             
             for brick in bricks:
-                display_text = f"{brick.get('name', 'Unknown')} ({brick.get('object_type', 'Unknown')})"
+                display_text = f"{brick.get('name', 'Unknown')}"
                 list_item = QListWidgetItem(display_text)
                 list_item.setData(Qt.ItemDataRole.UserRole, brick)
-                
-                if brick.get('object_type') == 'NodeShape':
-                    self.nodeBrickList.addItem(list_item)
-                else:
-                    self.propertyBrickList.addItem(list_item)
+                self.nodeBrickList.addItem(list_item)
             
             # Re-enable signals
             self.libraryComboBox.blockSignals(False)
             self.nodeBrickList.blockSignals(False)
-            self.propertyBrickList.blockSignals(False)
             
         except Exception as e:
             print(f"Error loading library: {e}")
             # Re-enable signals on error
             self.libraryComboBox.blockSignals(False)
             self.nodeBrickList.blockSignals(False)
-            self.propertyBrickList.blockSignals(False)
     
     def on_node_brick_selected(self, item):
         """Handle node brick selection"""
@@ -335,15 +332,9 @@ class RefactoredBrickEditor(QMainWindow):
         if brick_data:
             brick_business_logic.load_brick(brick_data.get('brick_id'))
     
-    def on_property_brick_selected(self, item):
-        """Handle property brick selection"""
-        brick_data = item.data(Qt.ItemDataRole.UserRole)
-        if brick_data:
-            brick_business_logic.load_brick(brick_data.get('brick_id'))
-    
-    def on_new_brick(self):
-        """Handle new brick button"""
-        brick_business_logic.create_new_brick()
+    def on_new_node(self):
+        """Handle new node brick button"""
+        brick_business_logic.create_new_brick(BrickType.NODE_SHAPE)
     
     def on_delete_brick(self):
         """Handle delete brick button"""
@@ -370,7 +361,7 @@ class RefactoredBrickEditor(QMainWindow):
                 self.load_library()
             else:
                 QMessageBox.warning(self, "Error", message)
-    
+
     def on_brick_selection_changed(self):
         """Handle brick selection change"""
         self.update_delete_button_visibility()
@@ -381,27 +372,12 @@ class RefactoredBrickEditor(QMainWindow):
         self.deleteBrick.setVisible(has_selection)
     
     def _get_selected_brick(self):
-        """Get currently selected brick from either list"""
-        # Check node brick list first
+        """Get currently selected brick"""
         if self.nodeBrickList.currentItem():
             return self.nodeBrickList.currentItem().data(Qt.ItemDataRole.UserRole)
-        
-        # Check property brick list
-        if self.propertyBrickList.currentItem():
-            return self.propertyBrickList.currentItem().data(Qt.ItemDataRole.UserRole)
-        
         return None
     
     # Editor Operations
-    def on_type_changed(self):
-        """Handle brick type radio button change"""
-        if self.radioNode.isChecked():
-            brick_type = BrickType.NODE_SHAPE
-        else:
-            brick_type = BrickType.PROPERTY_SHAPE
-        
-        app_state_manager.set_brick_type(brick_type)
-    
     def on_field_changed(self):
         """Handle field changes"""
         # Get current field values
@@ -413,6 +389,13 @@ class RefactoredBrickEditor(QMainWindow):
         app_state_manager.update_brick_field("target_class", brick_data.get("target_class", ""))
         app_state_manager.update_brick_field("property_path", brick_data.get("property_path", ""))
     
+    def on_datatype_changed(self, datatype: str):
+        """Handle datatype combo change (stores in brick properties)"""
+        brick_state = app_state_manager.get_brick_state()
+        props = brick_state.properties.copy()
+        props['datatype'] = datatype
+        app_state_manager.update_brick_field("properties", props)
+
     def browse_ontology(self):
         """Handle ontology browser button click"""
         try:
@@ -427,10 +410,23 @@ class RefactoredBrickEditor(QMainWindow):
                 selected_item = dialog.selected_item
                 if selected_item:
                     # Set the appropriate field with the selected URI
+                    uri = selected_item['uri']
                     if current_type == BrickType.NODE_SHAPE:
-                        app_state_manager.update_brick_field("target_class", selected_item['uri'])
+                        app_state_manager.update_brick_field("target_class", uri)
                     else:
-                        app_state_manager.update_brick_field("property_path", selected_item['uri'])
+                        app_state_manager.update_brick_field("property_path", uri)
+                    
+                    # Auto-set name from last element of URI if name is empty/default
+                    current_name = app_state_manager.get_brick_dict().get('name', '')
+                    if not current_name or current_name.startswith('New '):
+                        # Extract last element from URI (e.g., http://schema.org/ns#Address -> Address)
+                        name = uri
+                        if '#' in uri:
+                            name = uri.split('#')[-1]
+                        elif '/' in uri:
+                            name = uri.split('/')[-1]
+                        if name:
+                            app_state_manager.update_brick_field("name", name)
         except Exception as e:
             print(f"Error browsing ontology: {e}")
     
@@ -440,6 +436,27 @@ class RefactoredBrickEditor(QMainWindow):
         # This will be handled by state updates
         pass
     
+    def generate_property_path_iri(self):
+        """Generate a custom IRI for the property path from the brick name"""
+        from gui_components import DEFAULT_NAMESPACE
+        import re
+        name = self.namelineEdit.text().strip()
+        if not name:
+            QMessageBox.warning(self, "Warning", "Please enter a brick name first")
+            return
+
+        # Convert name to camelCase IRI fragment
+        cleaned = re.sub(r'[^\w\s-]', '', name)
+        words = cleaned.split()
+        if not words:
+            QMessageBox.warning(self, "Warning", "Name contains no valid characters")
+            return
+        iri_fragment = words[0].lower() + ''.join(w.capitalize() for w in words[1:])
+
+        full_iri = f"{DEFAULT_NAMESPACE}{iri_fragment}"
+        self.propertyPathEdit.setText(full_iri)
+        app_state_manager.update_brick_field("property_path", full_iri)
+
     def add_property(self):
         """Add a property using property editor"""
         dialog = PropertyEditorDialog(self, ontology_manager=brick_business_logic.ontology_manager)
@@ -447,37 +464,6 @@ class RefactoredBrickEditor(QMainWindow):
             property_data = dialog.get_property_data()
             if property_data.get('name'):
                 success, message = brick_business_logic.add_property(property_data)
-                if success:
-                    self._update_property_list()
-                else:
-                    QMessageBox.warning(self, "Error", message)
-    
-    def add_property_brick(self):
-        """Add an existing property brick to current node brick"""
-        # Only allow adding property bricks to node shapes
-        current_type = app_state_manager.get_brick_type()
-        if current_type != BrickType.NODE_SHAPE:
-            QMessageBox.warning(self, "Warning", "Property bricks can only be added to NodeShape bricks.")
-            return
-        
-        dialog = PropertyBrickBrowser(self, brick_business_logic.brick_core)
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            selected_brick = dialog.selected_item
-            if selected_brick:
-                # Add property brick as a reference with full integration
-                prop_name = selected_brick.get('name', 'Unknown')
-                prop_data = {
-                    'name': prop_name,  # Add the name field for validation
-                    'property_brick_id': selected_brick.get('brick_id', ''),
-                    'property_brick_name': selected_brick.get('name', 'Unknown'),
-                    'property_path': selected_brick.get('property_path', ''),
-                    'datatype': selected_brick.get('properties', {}).get('datatype', 'xsd:string'),
-                    'constraints': selected_brick.get('properties', {}).get('constraints', []),
-                    'is_property_brick': True,
-                    'description': selected_brick.get('description', '')
-                }
-                
-                success, message = brick_business_logic.add_property(prop_data)
                 if success:
                     self._update_property_list()
                 else:
@@ -496,11 +482,37 @@ class RefactoredBrickEditor(QMainWindow):
             constraint_data = dialog.get_constraint_data()
             if constraint_data:
                 prop_name = property_data.get('name')
-                success, message = brick_business_logic.add_constraint(prop_name, constraint_data)
+                success, message = brick_business_logic.add_constraint(prop_name, constraint_data, property_data)
                 if success:
                     self._update_property_list()
                 else:
                     QMessageBox.warning(self, "Error", message)
+    
+    def delete_property(self):
+        """Delete selected property from current brick"""
+        property_data = self._get_selected_property()
+        if not property_data:
+            QMessageBox.warning(self, "Warning", "Please select a property to delete.")
+            return
+        
+        prop_name = property_data.get('name')
+        if not prop_name:
+            QMessageBox.warning(self, "Error", "Selected property has no name.")
+            return
+        
+        # Confirm deletion
+        reply = QMessageBox.question(
+            self, "Delete Property",
+            f"Are you sure you want to delete the property '{prop_name}'?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            success, message = brick_business_logic.remove_property(prop_name)
+            if success:
+                self._update_property_list()
+            else:
+                QMessageBox.warning(self, "Error", message)
     
     def on_property_double_clicked(self, item):
         """Handle property double-click - show constraint management dialog"""
@@ -512,7 +524,7 @@ class RefactoredBrickEditor(QMainWindow):
             return
         
         # Show constraint management dialog
-        self.show_constraint_manager(prop_data)
+        show_constraint_manager(self, prop_data, self._update_property_list)
     
     def _get_selected_property(self):
         """Get currently selected property"""
@@ -573,401 +585,19 @@ class RefactoredBrickEditor(QMainWindow):
         list_item.setData(Qt.ItemDataRole.UserRole, full_prop_data)
         
         # Use enhanced text formatting that works with QListWidget
-        display_text = self._format_property_enhanced_text(prop_name, prop_data)
+        display_text = format_property_enhanced_text(prop_name, prop_data)
         list_item.setText(display_text)
         
-        # Set visual styling based on property type
-        if isinstance(prop_data, dict) and prop_data.get('is_property_brick'):
-            # Property brick references get special styling with blue background only
-            list_item.setBackground(QBrush(QColor(230, 240, 255)))  # Light blue background
-        elif isinstance(prop_data, dict) and prop_data.get('constraints'):
+        # Set visual styling based on property constraints
+        if isinstance(prop_data, dict) and prop_data.get('constraints'):
             # Properties with constraints get subtle highlighting
             list_item.setBackground(QBrush(QColor(255, 248, 220)))  # Light yellow background
         
         return list_item
     
-    def _format_property_display(self, prop_name: str, prop_data):
-        """Format property information as rich HTML for better readability"""
-        if isinstance(prop_data, dict):
-            # Check if this is a property brick reference
-            if prop_data.get('is_property_brick'):
-                return self._format_property_brick_display(prop_name, prop_data)
-            else:
-                return self._format_regular_property_display(prop_name, prop_data)
-        elif isinstance(prop_data, str):
-            # Handle string prop_data (likely a simple property path)
-            return f"""
-            <div style="margin: 2px 0;">
-                <div style="font-weight: bold; color: #2c3e50;">{prop_name}</div>
-                <div style="font-size: 11px; color: #7f8c8d; margin-left: 10px;">📁 {prop_data}</div>
-            </div>
-            """
-        else:
-            # Handle other types
-            return f"""
-            <div style="margin: 2px 0;">
-                <div style="font-weight: bold; color: #2c3e50;">{prop_name}</div>
-                <div style="font-size: 11px; color: #7f8c8d; margin-left: 10px;">📄 {str(prop_data)}</div>
-            </div>
-            """
-    
-    def _format_property_brick_display(self, prop_name: str, prop_data):
-        """Format property brick reference with enhanced display"""
-        property_path = prop_data.get('property_path', '')
-        description = prop_data.get('description', '')
-        constraints = prop_data.get('constraints', [])
-        
-        constraint_info = ""
-        if constraints:
-            constraint_count = len(constraints)
-            constraint_info = f'<div style="font-size: 10px; color: #e74c3c; margin-left: 10px;">🔒 {constraint_count} constraint{"s" if constraint_count != 1 else ""}</div>'
-        
-        description_info = ""
-        if description:
-            # Truncate long descriptions
-            desc_text = description[:50] + "..." if len(description) > 50 else description
-            description_info = f'<div style="font-size: 10px; color: #27ae60; margin-left: 10px;">📝 {desc_text}</div>'
-        
-        return f"""
-        <div style="margin: 3px 0; padding: 2px;">
-            <div style="font-weight: bold; color: #2980b9;">🧱 {prop_name}</div>
-            <div style="font-size: 11px; color: #34495e; margin-left: 10px;">📁 {property_path}</div>
-            {description_info}
-            {constraint_info}
-        </div>
-        """
-    
-    def _format_regular_property_display(self, prop_name: str, prop_data):
-        """Format regular property with enhanced display"""
-        property_path = prop_data.get('path', '')
-        datatype = prop_data.get('datatype', '')
-        constraints = prop_data.get('constraints', [])
-        
-        # Build detail lines
-        details = []
-        
-        if property_path:
-            details.append(f'<div style="font-size: 11px; color: #7f8c8d; margin-left: 10px;">📁 {property_path}</div>')
-        
-        if datatype:
-            # Show datatype with icon
-            datatype_icon = self._get_datatype_icon(datatype)
-            details.append(f'<div style="font-size: 11px; color: #8e44ad; margin-left: 10px;">{datatype_icon} {datatype}</div>')
-        
-        # Show constraints with better formatting
-        if constraints:
-            constraint_count = len(constraints)
-            constraint_summary = self._format_constraint_summary(constraints)
-            details.append(f'<div style="font-size: 10px; color: #e74c3c; margin-left: 10px;">🔒 {constraint_count} constraint{"s" if constraint_count != 1 else ""}: {constraint_summary}</div>')
-        
-        details_html = "".join(details)
-        
-        return f"""
-        <div style="margin: 2px 0; padding: 2px;">
-            <div style="font-weight: bold; color: #2c3e50;">📋 {prop_name}</div>
-            {details_html}
-        </div>
-        """
-    
-    def _get_datatype_icon(self, datatype) -> str:
-        """Get appropriate icon for datatype"""
-        # Handle dict datatype
-        if isinstance(datatype, dict):
-            datatype_str = datatype.get('value', str(datatype))
-        else:
-            datatype_str = str(datatype)
-        
-        datatype_lower = datatype_str.lower()
-        if 'string' in datatype_lower:
-            return '📝'
-        elif 'int' in datatype_lower or 'decimal' in datatype_lower:
-            return '🔢'
-        elif 'bool' in datatype_lower:
-            return '☑️'
-        elif 'date' in datatype_lower or 'time' in datatype_lower:
-            return '📅'
-        elif 'uri' in datatype_lower:
-            return '🔗'
-        else:
-            return '📄'
-    
-    def _format_constraint_summary(self, constraints):
-        """Create a concise summary of constraints"""
-        if not constraints:
-            return ""
-        
-        constraint_types = []
-        for constraint in constraints[:3]:  # Show max 3 constraints
-            constraint_type = constraint.get('type', 'unknown')
-            constraint_value = constraint.get('value', '')
-            
-            # Format constraint type nicely
-            type_mapping = {
-                'minLength': 'min len',
-                'maxLength': 'max len',
-                'minInclusive': 'min',
-                'maxInclusive': 'max',
-                'minExclusive': 'min excl',
-                'maxExclusive': 'max excl',
-                'pattern': 'pattern',
-                'datatype': 'type'
-            }
-            
-            nice_type = type_mapping.get(constraint_type, constraint_type)
-            constraint_types.append(f"{nice_type}={constraint_value}")
-        
-        if len(constraints) > 3:
-            constraint_types.append("...")
-        
-        return ", ".join(constraint_types)
-    
-    def _html_to_formatted_text(self, html_text):
-        """Convert HTML to formatted plain text for QListWidget display"""
-        import re
-        
-        # Remove HTML tags but keep the content with proper formatting
-        # Extract text content and preserve structure
-        
-        # Remove div tags and replace with newlines
-        text = re.sub(r'<div[^>]*>', '', html_text)
-        text = re.sub(r'</div>', '\n', text)
-        
-        # Remove other HTML tags
-        text = re.sub(r'<[^>]+>', '', text)
-        
-        # Clean up extra whitespace and newlines
-        lines = text.split('\n')
-        formatted_lines = []
-        
-        for line in lines:
-            line = line.strip()
-            if line:
-                # Add indentation for sub-items
-                if line.startswith('📁') or line.startswith('📝') or line.startswith('🔒') or line.startswith('🔢'):
-                    formatted_lines.append('  ' + line)
-                else:
-                    formatted_lines.append(line)
-        
-        return '\n'.join(formatted_lines)
-    
-    def _format_property_enhanced_text(self, prop_name: str, prop_data):
-        """Format property information as enhanced plain text for QListWidget"""
-        if isinstance(prop_data, dict):
-            # Check if this is a property brick reference
-            if prop_data.get('is_property_brick'):
-                return self._format_property_brick_text(prop_name, prop_data)
-            else:
-                return self._format_regular_property_text(prop_name, prop_data)
-        elif isinstance(prop_data, str):
-            # Handle string prop_data (likely a simple property path)
-            return f"{prop_name}\n  📁 {prop_data}"
-        else:
-            # Handle other types
-            return f"{prop_name}\n  📄 {str(prop_data)}"
-    
-    def _format_property_brick_text(self, prop_name: str, prop_data):
-        """Format property brick reference with enhanced text display"""
-        property_path = prop_data.get('property_path', '')
-        description = prop_data.get('description', '')
-        constraints = prop_data.get('constraints', [])
-        
-        lines = [f"🧱 {prop_name}"]
-        
-        if property_path:
-            lines.append(f"  📁 {property_path}")
-        
-        if description:
-            # Truncate long descriptions
-            desc_text = description[:50] + "..." if len(description) > 50 else description
-            lines.append(f"  📝 {desc_text}")
-        
-        if constraints:
-            constraint_count = len(constraints)
-            constraint_summary = self._format_constraint_summary(constraints)
-            lines.append(f"  🔒 {constraint_count} constraint{'s' if constraint_count != 1 else ''}: {constraint_summary}")
-        
-        return "\n".join(lines)
-    
-    def _format_regular_property_text(self, prop_name: str, prop_data):
-        """Format regular property with enhanced text display"""
-        property_path = prop_data.get('path', '')
-        datatype = prop_data.get('datatype', '')
-        constraints = prop_data.get('constraints', [])
-        
-        lines = [f"📋 {prop_name}"]
-        
-        if property_path:
-            lines.append(f"  📁 {property_path}")
-        
-        if datatype:
-            # Show datatype with icon
-            # Handle dict datatype
-            if isinstance(datatype, dict):
-                datatype_str = datatype.get('value', str(datatype))
-            else:
-                datatype_str = str(datatype)
-            datatype_icon = self._get_datatype_icon(datatype)
-            lines.append(f"  {datatype_icon} {datatype_str}")
-        
-        # Show constraints with better formatting
-        if constraints:
-            constraint_count = len(constraints)
-            constraint_summary = self._format_constraint_summary(constraints)
-            lines.append(f"  🔒 {constraint_count} constraint{'s' if constraint_count != 1 else ''}: {constraint_summary}")
-        
-        return "\n".join(lines)
-    
-    def show_constraint_manager(self, prop_data):
-        """Show constraint management dialog for a property"""
-        from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QListWidget, QListWidgetItem, QPushButton, QLabel, QMessageBox
-        
-        dialog = QDialog(self)
-        dialog.setWindowTitle(f"Constraints for {prop_data.get('name', 'Property')}")
-        dialog.setGeometry(300, 300, 500, 400)
-        
-        layout = QVBoxLayout()
-        
-        # Property info
-        info_label = QLabel(f"Property: {prop_data.get('name', 'Unknown')}")
-        if 'path' in prop_data and prop_data['path']:
-            info_label.setText(f"{info_label.text()} | Path: {prop_data['path']}")
-        layout.addWidget(info_label)
-        
-        # Constraints list
-        constraints_list = QListWidget()
-        constraints = prop_data.get('constraints', [])
-        
-        if constraints:
-            for i, constraint in enumerate(constraints):
-                constraint_text = f"{constraint.get('type', 'Unknown')}: {constraint.get('value', 'No value')}"
-                list_item = QListWidgetItem(constraint_text)
-                list_item.setData(Qt.ItemDataRole.UserRole, i)  # Store index
-                constraints_list.addItem(list_item)
-        else:
-            constraints_list.addItem(QListWidgetItem("No constraints defined"))
-        
-        layout.addWidget(constraints_list)
-        
-        # Buttons
-        button_layout = QHBoxLayout()
-        
-        add_btn = QPushButton("Add Constraint")
-        edit_btn = QPushButton("Edit Constraint")
-        delete_btn = QPushButton("Delete Constraint")
-        close_btn = QPushButton("Close")
-        
-        button_layout.addWidget(add_btn)
-        button_layout.addWidget(edit_btn)
-        button_layout.addWidget(delete_btn)
-        button_layout.addWidget(close_btn)
-        layout.addLayout(button_layout)
-        
-        dialog.setLayout(layout)
-        
-        # Button functions
-        def add_new_constraint():
-            constraint_dialog = ConstraintEditorDialog(self, prop_data)
-            if constraint_dialog.exec() == QDialog.DialogCode.Accepted:
-                new_constraint = constraint_dialog.get_constraint_data()
-                if new_constraint:
-                    if 'constraints' not in prop_data:
-                        prop_data['constraints'] = []
-                    prop_data['constraints'].append(new_constraint)
-                    # Update brick state
-                    success, message = brick_business_logic.add_constraint(prop_data.get('name'), new_constraint)
-                    if success:
-                        self._update_property_list()
-                        refresh_constraint_list()
-                    else:
-                        QMessageBox.warning(self, "Error", message)
-        
-        def refresh_constraint_list():
-            constraints_list.clear()
-            constraints = prop_data.get('constraints', [])
-            
-            if constraints:
-                for i, constraint in enumerate(constraints):
-                    constraint_text = f"{constraint.get('type', 'Unknown')}: {constraint.get('value', 'No value')}"
-                    list_item = QListWidgetItem(constraint_text)
-                    list_item.setData(Qt.ItemDataRole.UserRole, i)  # Store index
-                    constraints_list.addItem(list_item)
-            else:
-                constraints_list.addItem(QListWidgetItem("No constraints defined"))
-        
-        def edit_selected_constraint():
-            current_item = constraints_list.currentItem()
-            if not current_item or not constraints:
-                QMessageBox.warning(dialog, "Warning", "Please select a constraint to edit.")
-                return
-            
-            constraint_index = current_item.data(Qt.ItemDataRole.UserRole)
-            if constraint_index is not None and constraint_index < len(constraints):
-                # Edit existing constraint
-                constraint_dialog = ConstraintEditorDialog(self, prop_data)
-                constraint_dialog.set_constraint_data(constraints[constraint_index])
-                if constraint_dialog.exec() == QDialog.DialogCode.Accepted:
-                    updated_constraint = constraint_dialog.get_constraint_data()
-                    if updated_constraint:
-                        constraints[constraint_index] = updated_constraint
-                        # Update brick state
-                        prop_name = prop_data.get('name')
-                        if prop_name:
-                            success, message = brick_business_logic.add_constraint(prop_name, updated_constraint)
-                            if success:
-                                self._update_property_list()
-                                refresh_constraint_list()
-                            else:
-                                QMessageBox.warning(self, "Error", message)
-        
-        def delete_selected_constraint():
-            current_item = constraints_list.currentItem()
-            if not current_item or not constraints:
-                QMessageBox.warning(dialog, "Warning", "Please select a constraint to delete.")
-                return
-            
-            constraint_index = current_item.data(Qt.ItemDataRole.UserRole)
-            if constraint_index is not None and constraint_index < len(constraints):
-                # Confirm deletion
-                constraint = constraints[constraint_index]
-                reply = QMessageBox.question(
-                    dialog, "Delete Constraint",
-                    f"Are you sure you want to delete the constraint '{constraint.get('type', 'Unknown')}'?",
-                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-                )
-                
-                if reply == QMessageBox.StandardButton.Yes:
-                    constraints.pop(constraint_index)
-                    # Update brick state
-                    prop_name = prop_data.get('name')
-                    if prop_name:
-                        # Remove constraint by updating property without that constraint
-                        success, message = brick_business_logic.remove_constraint(prop_name, constraint_index)
-                        if success:
-                            self._update_property_list()
-                            refresh_constraint_list()
-                        else:
-                            QMessageBox.warning(self, "Error", message)
-        
-        # Connect buttons
-        add_btn.clicked.connect(add_new_constraint)
-        edit_btn.clicked.connect(edit_selected_constraint)
-        delete_btn.clicked.connect(delete_selected_constraint)
-        close_btn.clicked.connect(dialog.reject)
-        
-        # Enable/disable buttons based on selection
-        def update_button_states():
-            has_selection = constraints_list.currentItem() is not None and constraints
-            edit_btn.setEnabled(has_selection)
-            delete_btn.setEnabled(has_selection)
-        
-        constraints_list.itemSelectionChanged.connect(update_button_states)
-        update_button_states()  # Initial state
-        
-        dialog.exec()
-    
     # Control Operations
     def save_brick(self):
-        """Save current brick"""
+        """Save current brick (JSON + SHACL .ttl written by BrickCore)"""
         success, message = brick_business_logic.save_current_brick()
         if success:
             QMessageBox.information(self, "Success", message)
@@ -999,16 +629,14 @@ class RefactoredBrickEditor(QMainWindow):
                 return
             
             try:
-                # For now, just show a message
-                QMessageBox.information(self, "Success", 
-                    f"Library '{library_name}' would be created here!")
-                
-                # Reload libraries
+                brick_business_logic.brick_core.shared_library_manager.create_library(
+                    lib_type="bricks",
+                    name=library_name,
+                    description=f"Brick library '{library_name}'"
+                )
                 self._load_initial_data()
-                
-                # Switch to the new library
                 self.libraryComboBox.setCurrentText(library_name)
-                
+                self.statusBar().showMessage(f"Created library: {library_name}")
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to create library: {e}")
     
@@ -1082,6 +710,238 @@ class RefactoredBrickEditor(QMainWindow):
                 
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to delete library: {e}")
+
+    def on_download_ontology(self):
+        """Handle download ontology button click"""
+        dialog = OntologySearchDialog(self, brick_business_logic.ontology_manager)
+        dialog.exec()
+
+
+class OntologySearchDialog(QDialog):
+    """Dialog for searching and downloading ontologies"""
+    
+    def __init__(self, parent=None, ontology_manager=None):
+        super().__init__(parent)
+        self.ontology_manager = ontology_manager
+        self.selected_ontology = None
+        
+        # Load UI
+        from pathlib import Path
+        ui_file = Path(__file__).parent / "ui" / "ontology_search_dialog.ui"
+        loadUi(str(ui_file), self)
+        
+        # Connect signals
+        self.searchButton.clicked.connect(self.on_search)
+        self.resultsList.itemClicked.connect(self.on_result_selected)
+        self.downloadButton.clicked.connect(self.on_download)
+        self.cancelButton.clicked.connect(self.reject)
+        self.tabWidget.currentChanged.connect(self._update_download_button)
+        self.urlLineEdit.textChanged.connect(self._update_download_button)
+        
+        # Disable download button initially
+        self.downloadButton.setEnabled(False)
+        
+        self.search_results = []
+    
+    def on_search(self):
+        """Search LOV for ontologies"""
+        query = self.searchLineEdit.text().strip()
+        if not query:
+            return
+        
+        self.resultsList.clear()
+        self.infoLabel.setText("Searching...")
+        self.search_results = []
+        
+        try:
+            # Search LOV API
+            import urllib.request
+            import urllib.parse
+            import json
+            
+            url = f"https://lov.linkeddata.es/dataset/lov/api/v2/vocabulary/search?q={urllib.parse.quote(query)}"
+            
+            req = urllib.request.Request(url, headers={'Accept': 'application/json'})
+            with urllib.request.urlopen(req, timeout=10) as response:
+                data = json.loads(response.read().decode('utf-8'))
+            
+            # Parse results - LOV API returns data in _source field
+            for result in data.get('results', []):
+                vocab = result.get('_source', {})
+                prefix = vocab.get('prefix', 'unknown')
+                
+                # Title is in a field like "http://purl.org/dc/terms/title@en"
+                title = None
+                for key in vocab.keys():
+                    if 'title' in key.lower():
+                        title = vocab.get(key)
+                        break
+                if not title:
+                    title = prefix
+                
+                uri = vocab.get('uri', '')
+                
+                item_text = f"{prefix}: {title}"
+                self.resultsList.addItem(item_text)
+                self.search_results.append({
+                    'prefix': prefix,
+                    'title': title,
+                    'uri': uri
+                })
+            
+            if not self.search_results:
+                self.infoLabel.setText("No results found. Try different keywords.")
+            else:
+                self.infoLabel.setText(f"Found {len(self.search_results)} ontologies. Select one to download.")
+                
+        except Exception as e:
+            self.infoLabel.setText(f"Search failed: {str(e)}")
+    
+    def on_result_selected(self, item):
+        """Handle result selection"""
+        index = self.resultsList.currentRow()
+        if 0 <= index < len(self.search_results):
+            self.selected_ontology = self.search_results[index]
+            self.infoLabel.setText(f"Selected: {self.selected_ontology['prefix']}\n{self.selected_ontology['uri']}")
+            self.downloadButton.setEnabled(True)
+
+    def _update_download_button(self):
+        """Enable Download button based on the active tab"""
+        if self.tabWidget.currentIndex() == 1:
+            # URL tab: enable when URL field is non-empty
+            self.downloadButton.setEnabled(bool(self.urlLineEdit.text().strip()))
+        else:
+            # Search tab: enable only when a result is selected
+            self.downloadButton.setEnabled(self.selected_ontology is not None)
+
+    def on_download(self):
+        """Download the selected or URL ontology"""
+        try:
+            if self.tabWidget.currentIndex() == 0:
+                # Search tab - download selected
+                if not self.selected_ontology:
+                    QMessageBox.warning(self, "Warning", "Please select an ontology first.")
+                    return
+                
+                prefix = self.selected_ontology['prefix']
+                uri = self.selected_ontology['uri']
+                
+                # Get download URL from LOV
+                import urllib.request
+                import urllib.parse
+                import json
+                
+                url = f"https://lov.linkeddata.es/dataset/lov/api/v2/vocabulary/info?vocab={prefix}"
+                req = urllib.request.Request(url, headers={'Accept': 'application/json'})
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    data = json.loads(response.read().decode('utf-8'))
+                
+                # Find download URL - try graphs first, then fall back to homepage
+                download_url = None
+                print(f"DEBUG: Looking for download URL in data with keys: {list(data.keys())}")
+                for graph in data.get('graphs', []):
+                    for dist in graph.get('distributions', []):
+                        download_url = dist.get('downloadURL')
+                        if download_url:
+                            print(f"DEBUG: Found download URL in distributions: {download_url}")
+                            break
+                    if download_url:
+                        break
+                
+                # Fallback to homepage if no distribution URL found
+                if not download_url:
+                    download_url = data.get('homepage')
+                    if download_url:
+                        print(f"DEBUG: Using homepage as fallback: {download_url}")
+                
+                # Fallback to versions fileURL
+                if not download_url:
+                    versions = data.get('versions', [])
+                    if versions:
+                        download_url = versions[0].get('fileURL')
+                        if download_url:
+                            print(f"DEBUG: Using versions fileURL as fallback: {download_url}")
+                
+                if not download_url:
+                    print(f"DEBUG: No download URL found. data.get('homepage')={data.get('homepage')}")
+                    QMessageBox.critical(self, "Error", "Could not find download URL for this ontology.")
+                    return
+                
+                # Download to cache
+                self._download_ontology(prefix, download_url)
+                
+            else:
+                # URL tab - download from direct URL
+                url = self.urlLineEdit.text().strip()
+                name = self.nameLineEdit.text().strip()
+                
+                if not url:
+                    QMessageBox.warning(self, "Warning", "Please enter a URL.")
+                    return
+                
+                if not name:
+                    name = url.split('/')[-1].split('.')[0] or "ontology"
+                
+                self._download_ontology(name, url)
+                
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Download failed: {str(e)}")
+    
+    def _download_ontology(self, name: str, url: str):
+        """Download ontology from URL to cache"""
+        import urllib.request
+        import urllib.error
+        from pathlib import Path
+        
+        # Build request — prefer RDF/XML then Turtle so GeoNames-style servers respond correctly
+        req = urllib.request.Request(
+            url,
+            headers={
+                'Accept': 'application/rdf+xml,text/turtle;q=0.9,application/n-triples;q=0.8,*/*;q=0.5',
+                'User-Agent': 'Mozilla/5.0 (compatible; BrickApp/2.0; ontology downloader)'
+            }
+        )
+        
+        # Download with extended timeout; urllib follows redirects automatically
+        with urllib.request.urlopen(req, timeout=60) as response:
+            content = response.read()
+            content_type = response.headers.get('Content-Type', '')
+            final_url = response.url if hasattr(response, 'url') else url
+        
+        # Reject HTML responses (server returned an error/landing page, not the ontology)
+        if content[:200].lstrip().startswith(b'<!') or b'<html' in content[:200].lower():
+            raise ValueError(
+                f"Server returned an HTML page instead of RDF data.\n"
+                f"Try downloading the file manually and use the URL tab to point to the direct .rdf/.ttl file.\n"
+                f"Final URL was: {final_url}"
+            )
+        
+        # Determine file extension from Content-Type or URL
+        if 'turtle' in content_type or final_url.endswith('.ttl') or url.endswith('.ttl'):
+            ext = '.ttl'
+        elif 'xml' in content_type or 'rdf' in content_type or final_url.endswith('.rdf') or url.endswith('.rdf'):
+            ext = '.rdf'
+        elif content.lstrip().startswith(b'@') or content.lstrip().startswith(b'<http'):
+            ext = '.ttl'  # Likely Turtle
+        elif content.lstrip().startswith(b'<?xml') or content.lstrip().startswith(b'<rdf'):
+            ext = '.rdf'  # Likely RDF/XML
+        else:
+            ext = '.rdf'  # Default for unknown
+        
+        # Save to cache
+        cache_path = Path(self.ontology_manager.cache_path)
+        cache_path.mkdir(parents=True, exist_ok=True)
+        
+        output_file = cache_path / f"{name}{ext}"
+        with open(output_file, 'wb') as f:
+            f.write(content)
+        
+        # Reload ontologies
+        self.ontology_manager.load_cached_ontologies()
+        
+        QMessageBox.information(self, "Success", 
+            f"Ontology '{name}' downloaded successfully!\nSaved to: {output_file}")
+        self.accept()
 
 
 def main():

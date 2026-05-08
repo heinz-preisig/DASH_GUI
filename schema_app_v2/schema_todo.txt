@@ -1,111 +1,51 @@
-# Schema App v2 - Status & TODO
+# Schema App v2 - TODO & Status
+# Last updated: May 8, 2026
 
-## Current Status
+## Completed
+- [x] Multi-tenant backend (abstract_events, session_manager, multi_tenant_backend)
+- [x] All Qt dialogs backed by .ui files
+- [x] UIStateManager + SchemaState automaton
+- [x] schema_core.py: UIMetadata, groups, parent-child tree, schema_refs (sh:node embedding)
+- [x] shacl_export.py: flat + hierarchical Turtle export; auto-save .ttl on every Save
+- [x] dash_integration.py: DASHFormGenerator → config dict + standalone HTML form
+- [x] SchemaGUI mixin refactor (May 2026):
+      schema_gui.py reduced to ~250 lines (wiring only)
+      - mixins/schema_management.py  — CRUD, export, validate, extend, daisy-chain, library, preview
+      - mixins/component_list.py     — flat list, add/remove brick, add schema ref, context menu
+      - mixins/component_tree.py     — tree rendering, groups, parent-child, schema-ref expansion
+      - mixins/brick_panel.py        — brick library, search, details
+      - mixins/flow_management.py    — flow type, flow editor dialog, flow steps list
+- [x] Component tree view with list/tree toggle (componentViewStack)
+      Root ◆ node, ▼ group branches, recursive parent-child, ⬡ schema refs (read-only, grey)
+      Context menus: set parent, move to group, remove, move up/down
+- [x] Schema references: add (pick schema → pick attach brick → enter property path),
+      shown in both list (blue ⬡) and tree (grey italic ⬡), removable via menu/button
+- [x] PyQt6 migration (ItemDataRole, DialogCode, etc.)
+- [x] test_tree_structure.py — tree validation, navigation, SHACL export, DASH form generation
 
-### Multi-Tenant Backend Architecture (NEW)
-**Implemented multi-tenant backend for multiple frontend support:**
-- `core/abstract_events.py` - Event system for multi-client support (Qt, Web, API)
-- `core/session_manager.py` - Session management with isolated state
-- `core/multi_tenant_backend.py` - Multi-tenant backend coordinator
-- Both Qt and web interfaces now use the backend
-- Session isolation for concurrent users
-- Event-driven architecture for real-time updates
+## TODO — High Priority
+- [ ] Drag-drop in tree view: drag brick onto group/parent without context menu
+      (QTreeWidget dropEvent override, update schema_core parent/group on drop)
+- [ ] Schema ref inline editing: allow changing property_path after creation
+- [ ] DASH form dynamic repeated elements: sh:maxCount > 1 → JS add/remove row
+- [ ] DASH nested schema ref sections as collapsible sub-forms in HTML output
+- [ ] Web interface parity: Flask API endpoints for schema_refs + tree structure
 
-### UI Files
-All dialogs use Qt Designer .ui files:
-- schema_gui.py → main_window.ui
-- flow_editor_dialog.py → flow_editor.ui
-- help_dialog.py → main_window_help.ui
-- add_component_dialog.py → add_component_dialog.ui (NEW)
+## TODO — Medium Priority
+- [ ] Pytest suite: schema_core.py tree/ref methods + headless Qt fixture for mixins
+- [ ] Error handling: missing referenced schema → graceful tree placeholder (not crash)
+- [ ] validate_schema(): check all component brick_ids actually exist in library
+- [ ] BrickIntegration: cache get_available_bricks() to avoid re-reading disk each call
+- [ ] Lazy tree expansion for schemas with > 50 components
 
-### Architecture
-- **NEW**: Multi-tenant backend with session isolation
-- Core logic separated in core/ directory
-- Qt interface in interfaces/qt/ - uses backend via qt_session
-- Web interface in interfaces/web/ - uses backend via web_session
-- State management via ui_state_manager.py (UIStateManager with SchemaState automaton)
+## TODO — Low Priority
+- [ ] Schema templates (pre-filled root + suggested components)
+- [ ] Import from JSON Schema / XML Schema
+- [ ] Version history / undo for schemas
+- [ ] Collaboration / multi-user editing
 
-### Data Persistence
-- Uses shared_libraries mechanism
-- Backend provides isolated SchemaCore instances per session
-- Shared data access through shared_libraries
-
-## Key Components
-
-### Core Files
-- schema_core.py - Schema management
-- flow_engine.py - Flow configuration
-- brick_integration.py - Brick library integration
-- schema_helper.py - User-friendly helpers
-- shacl_export.py - SHACL export
-- **NEW**: abstract_events.py - Event system
-- **NEW**: session_manager.py - Session management
-- **NEW**: multi_tenant_backend.py - Multi-tenant backend
-
-### UI Files
-- schema_gui.py - Main Qt GUI (uses backend)
-- add_component_dialog.py - Component selection dialog (uses .ui file)
-- flow_editor_dialog.py - Flow editor dialog (uses .ui file)
-- help_dialog.py - Help system (uses .ui file)
-- ui_components.py - UI loading utilities
-- ui_state_manager.py - State machine/automaton
-
-### UI Files (.ui)
-- ui/main_window.ui
-- ui/flow_editor.ui
-- ui/main_window_help.ui
-- ui/add_component_dialog.ui
-
-## Architecture Notes
-
-### Multi-Frontend Support
-- **NEW**: Multi-tenant backend with session management
-- Qt interface uses dedicated qt_session
-- Web interface uses dedicated web_session
-- Each session has isolated SchemaCore, FlowEngine, BrickIntegration instances
-- Shared data through shared_libraries
-- Event system for cross-session communication
-
-### State Management
-- UIStateManager with SchemaState automaton
-- States: INITIAL, SCHEMA_SELECTED, SCHEMA_MODIFIED, SCHEMA_SAVING, COMPONENT_ADDING, FLOW_EDITING
-- Validates state transitions
-- Controls widget visibility based on state
-- Emits signals for state changes
-
-### Backend Architecture
-- MultiTenantBackend coordinates sessions
-- SessionManager creates and manages sessions
-- SchemaBackendSession provides isolated backend per session
-- EventRouter routes events to appropriate handlers
-- Support for Qt, Web, and API client types
-
-## Event System
-
-### Event Types
-- SCHEMA_CREATED, SCHEMA_UPDATED, SCHEMA_LOADED, SCHEMA_SAVED, SCHEMA_DELETED
-- COMPONENT_ADDED, COMPONENT_REMOVED
-- ROOT_BRICK_SET, FLOW_UPDATED
-- LIBRARY_CHANGED
-- ERROR_OCCURRED, DIALOG_REQUESTED, STATUS_MESSAGE
-
-### Event Handlers
-- QtEventHandler - Emits Qt signals
-- WebEventHandler - Sends via WebSocket
-- APIEventHandler - HTTP callbacks
-- EventRouter - Routes events based on client type
-
-## Completed Tasks
-- [x] All dialogs using .ui files
-- [x] Created add_component_dialog.ui
-- [x] Refactored add_component_dialog.py to load from .ui
-- [x] Archived obsolete GUI backup files
-- [x] Verified .ui file compliance
-- [x] Implemented multi-tenant backend architecture
-- [x] Updated Qt interface to use backend
-- [x] Updated web interface to use backend
-- [x] Added event system for multi-client support
-
-## Run Scripts
-- run_schema_app.py - Schema app launcher
-- run_schema_app_v2.py - Schema app v2 launcher (alternative)
+## Run
+  python main.py                              # Qt interface
+  python test_tree_structure.py              # tree + DASH tests
+  python test_shacl_export.py
+  python test_ui_metadata.py

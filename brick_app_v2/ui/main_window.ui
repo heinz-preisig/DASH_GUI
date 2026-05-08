@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>635</width>
+    <width>700</width>
     <height>900</height>
    </rect>
   </property>
@@ -17,41 +17,21 @@
    <widget class="QGroupBox" name="libraryPanel">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>10</x>
       <y>20</y>
-      <width>581</width>
-      <height>281</height>
+      <width>661</width>
+      <height>321</height>
      </rect>
     </property>
     <property name="title">
      <string>Brick Library</string>
     </property>
-    <widget class="QComboBox" name="libraryComboBox">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>80</y>
-       <width>241</width>
-       <height>25</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QListWidget" name="propertyBrickList">
-     <property name="geometry">
-      <rect>
-       <x>310</x>
-       <y>120</y>
-       <width>251</width>
-       <height>151</height>
-      </rect>
-     </property>
-    </widget>
     <widget class="QListWidget" name="nodeBrickList">
      <property name="geometry">
       <rect>
-       <x>20</x>
-       <y>120</y>
-       <width>251</width>
+       <x>10</x>
+       <y>160</y>
+       <width>580</width>
        <height>151</height>
       </rect>
      </property>
@@ -59,19 +39,32 @@
     <widget class="QWidget" name="horizontalLayoutWidget_5">
      <property name="geometry">
       <rect>
-       <x>310</x>
-       <y>69</y>
-       <width>176</width>
+       <x>70</x>
+       <y>110</y>
+       <width>461</width>
        <height>41</height>
       </rect>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_5">
       <item>
-       <widget class="QPushButton" name="newBrick">
+       <widget class="QPushButton" name="newNode">
         <property name="text">
-         <string>new brick</string>
+         <string>new node</string>
         </property>
        </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
       </item>
       <item>
        <widget class="QPushButton" name="deleteBrick">
@@ -80,18 +73,47 @@
         </property>
        </widget>
       </item>
+      <item>
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
      </layout>
     </widget>
     <widget class="QWidget" name="horizontalLayoutWidget_4">
      <property name="geometry">
       <rect>
-       <x>20</x>
+       <x>5</x>
        <y>30</y>
-       <width>241</width>
+       <width>601</width>
        <height>41</height>
       </rect>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <item>
+       <widget class="QComboBox" name="libraryComboBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>100</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>200</width>
+          <height>16777215</height>
+         </size>
+        </property>
+       </widget>
+      </item>
       <item>
        <widget class="QPushButton" name="newLibrary">
         <property name="text">
@@ -106,16 +128,23 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QPushButton" name="downloadOntology">
+        <property name="text">
+         <string>download ontology</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </widget>
    <widget class="QGroupBox" name="editorPanel">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>310</y>
-      <width>581</width>
-      <height>541</height>
+      <x>10</x>
+      <y>350</y>
+      <width>661</width>
+      <height>521</height>
      </rect>
     </property>
     <property name="title">
@@ -126,8 +155,8 @@
       <rect>
        <x>10</x>
        <y>100</y>
-       <width>491</width>
-       <height>281</height>
+       <width>601</width>
+       <height>331</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="gridLayout">
@@ -142,6 +171,16 @@
        <widget class="QPushButton" name="ontologyPathBrowser">
         <property name="text">
          <string>browse</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="4">
+       <widget class="QPushButton" name="generateIriBtn">
+        <property name="text">
+         <string>generate IRI</string>
+        </property>
+        <property name="toolTip">
+         <string>Generate a custom IRI from the brick name (no ontology required)</string>
         </property>
        </widget>
       </item>
@@ -167,6 +206,52 @@
       </item>
       <item row="0" column="2" colspan="2">
        <widget class="QLineEdit" name="namelineEdit"/>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="datatypeLabel">
+        <property name="text">
+         <string>Datatype</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="2" colspan="2">
+       <widget class="QComboBox" name="datatypeCombo">
+        <item>
+         <property name="text">
+          <string>xsd:string</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>xsd:integer</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>xsd:decimal</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>xsd:boolean</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>xsd:date</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>xsd:dateTime</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>xsd:anyURI</string>
+         </property>
+        </item>
+       </widget>
       </item>
       <item row="4" column="0">
        <widget class="QLabel" name="propertyLabel">
@@ -208,75 +293,63 @@
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <widget class="QRadioButton" name="radioNode">
+       <widget class="QLabel" name="typeLabel">
         <property name="text">
-         <string>Node</string>
+         <string>Type:</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QRadioButton" name="radioProperty">
+       <widget class="QLabel" name="currentTypeLabel">
         <property name="text">
-         <string>Property</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-    <widget class="QWidget" name="horizontalLayoutWidget_2">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>460</y>
-       <width>481</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
-      <item>
-       <widget class="QPushButton" name="saveBrick">
-        <property name="text">
-         <string>save</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="cancelBrickEdit">
-        <property name="text">
-         <string>cancel</string>
+         <string>NodeShape</string>
         </property>
        </widget>
       </item>
      </layout>
     </widget>
-    <widget class="QWidget" name="horizontalLayoutWidget_3">
+    <widget class="QWidget" name="gridLayoutWidget">
      <property name="geometry">
       <rect>
-       <x>20</x>
-       <y>399</y>
+       <x>120</x>
+       <y>430</y>
        <width>481</width>
-       <height>41</height>
+       <height>80</height>
       </rect>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_3">
-      <item>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="3">
+       <widget class="QPushButton" name="deleteProperty">
+        <property name="text">
+         <string>delete property</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
        <widget class="QPushButton" name="addProperty">
         <property name="text">
          <string>add property</string>
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QPushButton" name="addPropertyBrick">
-        <property name="text">
-         <string>add property brick</string>
-        </property>
-       </widget>
-      </item>
-      <item>
+      <item row="0" column="2">
        <widget class="QPushButton" name="addConstraint">
         <property name="text">
          <string>add constraint</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QPushButton" name="saveBrick">
+        <property name="text">
+         <string>save</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QPushButton" name="cancelBrickEdit">
+        <property name="text">
+         <string>cancel</string>
         </property>
        </widget>
       </item>
