@@ -122,8 +122,20 @@ class BrickWebAPI:
         @self.app.route('/api/libraries', methods=['GET'])
         def get_libraries():
             """Get all brick libraries"""
-            result = self.backend.get_brick_libraries()
-            return jsonify(result)
+            names = self.backend.brick_core.get_libraries()
+            return jsonify({"status": "success", "data": names})
+
+        @self.app.route('/api/libraries', methods=['POST'])
+        def create_library():
+            """Create a new brick library"""
+            data = request.get_json() or {}
+            name = data.get('library_name', '').strip()
+            if not name:
+                return jsonify({"status": "error", "message": "library_name is required"}), 400
+            import os as _os
+            lib_path = _os.path.join(self.backend.brick_core.repository_path, name)
+            _os.makedirs(lib_path, exist_ok=True)
+            return jsonify({"status": "success", "data": {"name": name}})
 
         @self.app.route('/api/libraries/filesystem', methods=['GET'])
         def get_filesystem_libraries():
@@ -134,8 +146,8 @@ class BrickWebAPI:
         @self.app.route('/api/libraries/<library_name>/bricks', methods=['GET'])
         def get_library_bricks(library_name):
             """Get bricks from a specific library"""
-            result = self.backend.get_library_bricks(library_name)
-            return jsonify(result)
+            bricks = self.backend.brick_core.get_all_bricks(library_name)
+            return jsonify({"status": "success", "data": [b.to_dict() for b in bricks]})
         
         @self.app.route('/api/bricks', methods=['GET'])
         def get_all_bricks():
@@ -143,125 +155,60 @@ class BrickWebAPI:
             result = self.backend.get_all_bricks()
             return jsonify(result)
         
-        # Brick operations (session-specific)
+        @self.app.route('/api/session/<session_id>/brick/<brick_id>', methods=['DELETE'])
+        def delete_brick(session_id, brick_id):
+            """Delete a specific brick"""
+            ok = self.backend.brick_core.delete_brick(brick_id)
+            if ok:
+                return jsonify({"status": "success", "message": "Brick deleted"})
+            return jsonify({"status": "error", "message": "Brick not found"}), 404
+
+        # Brick operations
         @self.app.route('/api/session/<session_id>/brick', methods=['POST'])
         def create_brick(session_id):
-            """Create a new brick in session"""
-            backend_session = self.backend.get_session(session_id)
-            if not backend_session:
-                return jsonify({
-                    "status": "error",
-                    "message": "Session not found"
-                }), 404
-            
+            """Create a new brick"""
             data = request.get_json() or {}
             brick_type = data.get('brick_type', 'NodeShape')
-            
-            brick_data = backend_session.editor_backend.create_new_brick(brick_type)
-            
-            return jsonify({
-                "status": "success",
-                "data": brick_data
-            })
+            brick = self.backend.brick_core.create_brick(brick_type)
+            return jsonify({"status": "success", "data": brick.to_dict()})
         
         @self.app.route('/api/session/<session_id>/brick', methods=['GET'])
         def get_current_brick(session_id):
-            """Get current brick from session"""
-            backend_session = self.backend.get_session(session_id)
-            if not backend_session:
-                return jsonify({
-                    "status": "error",
-                    "message": "Session not found"
-                }), 404
-            
-            brick_data = backend_session.editor_backend.get_current_brick()
-            
-            return jsonify({
-                "status": "success",
-                "data": brick_data
-            })
+            """Get current brick"""
+            brick = self.backend.brick_core.current_brick
+            return jsonify({"status": "success", "data": brick.to_dict() if brick else {}})
         
         @self.app.route('/api/session/<session_id>/brick', methods=['PUT'])
         def update_current_brick(session_id):
-            """Update current brick in session"""
-            backend_session = self.backend.get_session(session_id)
-            if not backend_session:
-                return jsonify({
-                    "status": "error",
-                    "message": "Session not found"
-                }), 404
-            
+            """Update fields on the current brick"""
+            brick = self.backend.brick_core.current_brick
+            if not brick:
+                return jsonify({"status": "error", "message": "No brick loaded"}), 400
             data = request.get_json() or {}
-            brick_data = backend_session.editor_backend.get_current_brick()
-            
-            # Update fields
-            if 'name' in data:
-                brick_data['name'] = data['name']
-            if 'target_class' in data:
-                brick_data['target_class'] = data['target_class']
-            if 'description' in data:
-                brick_data['description'] = data['description']
-            if 'object_type' in data:
-                brick_data['object_type'] = data['object_type']
-            
-            backend_session.editor_backend.set_current_brick(brick_data)
-            
-            return jsonify({
-                "status": "success",
-                "data": brick_data
-            })
+            self.backend.brick_core.update_current_brick(**{k: v for k, v in data.items() if k in ('name', 'description', 'target_class', 'property_path', 'object_type')})
+            return jsonify({"status": "success", "data": self.backend.brick_core.current_brick.to_dict()})
         
         @self.app.route('/api/session/<session_id>/brick/save', methods=['POST'])
         def save_brick(session_id):
-            """Save current brick"""
-            backend_session = self.backend.get_session(session_id)
-            if not backend_session:
-                return jsonify({
-                    "status": "error",
-                    "message": "Session not found"
-                }), 404
-            
-            data = request.get_json() or {}
-            brick_data = data.get('brick_data')
-            
-            if brick_data:
-                # Update the current brick with the new data
-                backend_session.editor_backend.set_current_brick(brick_data)
-            
-            success, message = backend_session.editor_backend.save_current_brick()
-            
-            if success:
-                return jsonify({
-                    "status": "success",
-                    "message": "Brick saved successfully"
-                })
-            else:
-                return jsonify({
-                    "status": "error",
-                    "message": message
-                }), 400
+            """Save the current brick via brick_core"""
+            brick = self.backend.brick_core.current_brick
+            if not brick:
+                return jsonify({"status": "error", "message": "No brick loaded"}), 400
+            ok = self.backend.brick_core.save_brick(brick)
+            if ok:
+                return jsonify({"status": "success", "message": "Brick saved"})
+            return jsonify({"status": "error", "message": "Save failed — check name, target class / property path"}), 400
         
         @self.app.route('/api/session/<session_id>/brick/load/<brick_id>', methods=['POST'])
         def load_brick(session_id, brick_id):
-            """Load a brick into session"""
+            """Load a brick into the shared brick_core (and session if present)"""
+            brick = self.backend.brick_core.load_brick(brick_id)
+            if not brick:
+                return jsonify({"status": "error", "message": f"Brick '{brick_id}' not found"}), 404
             backend_session = self.backend.get_session(session_id)
-            if not backend_session:
-                return jsonify({
-                    "status": "error",
-                    "message": "Session not found"
-                }), 404
-            
-            brick_data = backend_session.editor_backend.load_brick(brick_id)
-            if brick_data:
-                return jsonify({
-                    "status": "success",
-                    "data": brick_data
-                })
-            else:
-                return jsonify({
-                    "status": "error",
-                    "message": "Brick not found"
-                }), 404
+            if backend_session:
+                backend_session.editor_backend.current_brick = brick
+            return jsonify({"status": "success", "data": brick.to_dict()})
         
         # Property operations
         @self.app.route('/api/session/<session_id>/brick/properties', methods=['POST'])

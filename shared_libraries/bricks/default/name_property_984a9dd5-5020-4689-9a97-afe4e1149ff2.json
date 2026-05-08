@@ -1,5 +1,5 @@
 {
-  "brick_id": "name_property",
+  "brick_id": "984a9dd5-5020-4689-9a97-afe4e1149ff2",
   "name": "Name Property",
   "description": "Name property with constraints",
   "object_type": "PropertyShape",
@@ -26,5 +26,8 @@
     "text",
     "common"
   ],
-  "metadata": {}
+  "metadata": {},
+  "created_at": "2026-05-08T15:47:32.445351",
+  "updated_at": "2026-05-08T15:47:32.445352",
+  "target_class": ""
 }

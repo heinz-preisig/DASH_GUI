@@ -1,28 +1,28 @@
 #!/usr/bin/env python3
 """
 Brick App v2 Web Launcher
-Web interface launcher for the SHACL brick generation system
+Run from the workspace root so shared_libraries imports resolve correctly.
 """
 
 import sys
-import os
-import subprocess
 import argparse
 from pathlib import Path
 
-# Parse arguments
+ROOT = Path(__file__).parent
+sys.path.insert(0, str(ROOT))
+
 parser = argparse.ArgumentParser(description='Brick App v2 Web Launcher')
-parser.add_argument('--port', type=int, default=5001, help='Port to run web interface on (default: 5001)')
+parser.add_argument('--port', type=int, default=5001, help='Port (default: 5001)')
+parser.add_argument('--debug', action='store_true', help='Enable Flask debug mode')
 args = parser.parse_args()
 
-# Change to brick_app_v2 directory for proper path resolution
-brick_app_dir = Path(__file__).parent / 'brick_app_v2'
-os.chdir(brick_app_dir)
-
 print('Starting Brick App v2 Web Interface...')
-print('SHACL brick generation system with clean architecture')
-print('Ready for web deployment with proper API endpoints')
-print(f'Port: {args.port}')
+print(f'  URL : http://localhost:{args.port}')
+print(f'  Debug: {args.debug}')
 
-# Run brick app web interface using uv
-subprocess.run(['uv', 'run', 'main.py', '--web', '--port', str(args.port)], check=True)
+from brick_app_v2.api.web_api import BrickWebAPI
+from brick_app_v2.core.multi_tenant_backend import MultiTenantBackend
+
+backend = MultiTenantBackend()
+web_api = BrickWebAPI(backend, host='localhost', port=args.port)
+web_api.run(debug=args.debug)

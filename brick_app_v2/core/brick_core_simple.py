@@ -146,31 +146,27 @@ class BrickCore:
         return brick
     
     def load_brick(self, brick_id: str, library_name: Optional[str] = None) -> Optional[SHACLBrick]:
-        """Load a brick from storage by ID"""
-        lib_name = library_name or self.active_library
-        library_path = os.path.join(self.repository_path, lib_name)
-        
-        if not os.path.exists(library_path):
-            return None
-        
-        # Find file ending with brick_id.json (supports both old and new name_UUID format)
-        brick_file = None
-        for filename in os.listdir(library_path):
-            if filename.endswith(f"_{brick_id}.json") or filename == f"{brick_id}.json":
-                brick_file = os.path.join(library_path, filename)
-                break
-        
-        if not brick_file or not os.path.exists(brick_file):
-            return None
-        
-        try:
-            with open(brick_file, 'r') as f:
-                data = json.load(f)
-            brick = SHACLBrick.from_dict(data)
-            self.current_brick = brick
-            return brick
-        except Exception:
-            return None
+        """Load a brick from storage by ID, searching all libraries if needed"""
+        search_libs = [library_name] if library_name else self.get_libraries()
+
+        for lib_name in search_libs:
+            library_path = os.path.join(self.repository_path, lib_name)
+            if not os.path.exists(library_path):
+                continue
+
+            for filename in os.listdir(library_path):
+                if filename.endswith(f"_{brick_id}.json") or filename == f"{brick_id}.json":
+                    brick_file = os.path.join(library_path, filename)
+                    try:
+                        with open(brick_file, 'r') as f:
+                            data = json.load(f)
+                        brick = SHACLBrick.from_dict(data)
+                        self.current_brick = brick
+                        self.active_library = lib_name
+                        return brick
+                    except Exception:
+                        continue
+        return None
     
     def save_brick(self, brick: Optional[SHACLBrick] = None) -> bool:
         """Save current brick to storage"""

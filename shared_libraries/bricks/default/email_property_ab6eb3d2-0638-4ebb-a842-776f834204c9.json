@@ -1,5 +1,5 @@
 {
-  "brick_id": "email_property",
+  "brick_id": "ab6eb3d2-0638-4ebb-a842-776f834204c9",
   "name": "Email Property",
   "description": "Email property with validation",
   "object_type": "PropertyShape",
@@ -27,7 +27,7 @@
     "common"
   ],
   "metadata": {},
-  "created_at": "2026-04-24T13:52:21.143096",
-  "updated_at": "2026-04-24T13:52:21.143097",
+  "created_at": "2026-05-08T15:47:32.445344",
+  "updated_at": "2026-05-08T15:47:32.445345",
   "target_class": ""
 }

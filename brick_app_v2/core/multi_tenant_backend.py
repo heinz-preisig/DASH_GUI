@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List
 
 from .session_manager import SessionManager, BackendSession
+from .brick_core_simple import BrickCore
 from .abstract_events import (
     MultiClientEventManager, EventType, ClientType, Event,
     create_brick_created_event, create_brick_updated_event,
@@ -28,6 +29,9 @@ class MultiTenantBackend:
 
         # Shared library manager for filesystem-based library discovery
         self.library_manager = SharedLibraryManager()
+
+        # Shared BrickCore — uses shared_libraries/bricks/ via SharedLibraryManager (same as Qt GUI)
+        self.brick_core = BrickCore()
 
         # Session management
         self.session_manager = SessionManager(repository_path)
@@ -336,6 +340,16 @@ class MultiTenantBackend:
         except Exception as e:
             return {"status": "error", "message": f"Failed to get library bricks: {e}"}
     
+    def create_library(self, name: str, description: str = "", author: str = "Web User") -> Dict[str, Any]:
+        """Create a new brick library on the filesystem"""
+        try:
+            ok = self.library_manager.create_library("brick", name, description)
+            if ok:
+                return {"status": "success", "data": {"name": name}}
+            return {"status": "error", "message": f"Failed to create library '{name}'"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
     # Utility methods
     def broadcast_message(self, message: str, exclude_session: str = None):
         """Broadcast a message to all sessions"""

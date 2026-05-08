@@ -1,5 +1,5 @@
 {
-  "brick_id": "person_nodeshape",
+  "brick_id": "15b57749-9ddd-4c7a-985c-6119c0ebb60e",
   "name": "Person NodeShape",
   "description": "Basic person shape with common properties",
   "object_type": "NodeShape",
@@ -20,7 +20,7 @@
     "common"
   ],
   "metadata": {},
-  "created_at": "2026-04-24T13:47:43.877808",
-  "updated_at": "2026-04-24T13:47:43.877809",
+  "created_at": "2026-05-08T15:47:32.445339",
+  "updated_at": "2026-05-08T15:47:32.445340",
   "target_class": "foaf:Person"
 }

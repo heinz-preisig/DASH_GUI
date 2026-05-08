@@ -1,92 +1,734 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brick App v2 - Web Interface</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Brick App v2</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; font-size: 14px; background: #f0f2f5; color: #222; height: 100vh; display: flex; flex-direction: column; }
+    header { background: #1a3a5c; color: #fff; padding: 10px 18px; display: flex; align-items: center; gap: 12px; }
+    header h1 { font-size: 17px; font-weight: 600; }
+    .status-bar { background: #e8edf2; border-top: 1px solid #cdd5de; padding: 4px 14px; font-size: 12px; color: #555; }
+    .layout { display: flex; flex: 1; overflow: hidden; }
+
+    /* Sidebar */
+    .sidebar { width: 240px; min-width: 180px; background: #fff; border-right: 1px solid #dde3ea; display: flex; flex-direction: column; overflow: hidden; }
+    .sidebar-section { padding: 10px 12px; border-bottom: 1px solid #eef0f3; }
+    .sidebar-section h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: #7a8899; margin-bottom: 6px; }
+    .brick-list { flex: 1; overflow-y: auto; padding: 4px 0; }
+    .brick-item { padding: 7px 14px; cursor: pointer; border-left: 3px solid transparent; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .brick-item:hover { background: #f0f5fb; }
+    .brick-item.selected { background: #e4edf8; border-left-color: #2a6db5; font-weight: 600; }
+    .brick-type-badge { font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-left: 5px; }
+    .badge-node { background: #d4edda; color: #155724; }
+    .badge-prop { background: #fff3cd; color: #856404; }
+
+    /* Main area */
+    .main { flex: 1; display: flex; overflow: hidden; }
+    .editor-pane { flex: 1; padding: 14px; overflow-y: auto; }
+    .prop-pane { width: 300px; min-width: 240px; border-left: 1px solid #dde3ea; background: #fff; display: flex; flex-direction: column; overflow: hidden; }
+    .prop-pane-header { padding: 10px 12px; border-bottom: 1px solid #eef0f3; display: flex; align-items: center; justify-content: space-between; }
+    .prop-pane-header h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: #7a8899; }
+    .prop-list { flex: 1; overflow-y: auto; }
+    .prop-item { padding: 7px 12px; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
+    .prop-item:hover { background: #f7f9fc; }
+    .prop-item.selected { background: #e4edf8; }
+    .prop-name { font-weight: 600; font-size: 13px; }
+    .prop-meta { font-size: 11px; color: #7a8899; margin-top: 2px; }
+    .constraint-chip { display: inline-block; background: #e9ecef; border-radius: 10px; font-size: 11px; padding: 1px 7px; margin: 2px 2px 0 0; }
+
+    /* Card */
+    .card { background: #fff; border: 1px solid #dde3ea; border-radius: 6px; padding: 16px; margin-bottom: 14px; }
+    .card h2 { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: #1a3a5c; border-bottom: 1px solid #eef0f3; padding-bottom: 7px; }
+
+    /* Forms */
+    .form-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+    .form-row label { width: 130px; min-width: 130px; font-size: 12px; color: #555; padding-top: 7px; }
+    .form-row .field { flex: 1; }
+    input[type=text], select, textarea { width: 100%; padding: 6px 9px; border: 1px solid #cdd5de; border-radius: 4px; font-size: 13px; font-family: inherit; background: #fff; }
+    input[type=text]:focus, select:focus, textarea:focus { outline: none; border-color: #2a6db5; box-shadow: 0 0 0 2px rgba(42,109,181,.15); }
+    textarea { resize: vertical; min-height: 56px; }
+    .input-with-btn { display: flex; gap: 6px; }
+    .input-with-btn input { flex: 1; }
+
+    /* Buttons */
+    .btn { padding: 6px 13px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-family: inherit; font-weight: 500; transition: background .15s; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary { background: #2a6db5; color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #1e5491; }
+    .btn-secondary { background: #e2e8f0; color: #333; }
+    .btn-secondary:hover:not(:disabled) { background: #d0d9e6; }
+    .btn-danger { background: #dc3545; color: #fff; }
+    .btn-danger:hover:not(:disabled) { background: #b02a37; }
+    .btn-sm { padding: 3px 9px; font-size: 12px; }
+    .btn-toolbar { display: flex; gap: 7px; margin-bottom: 10px; flex-wrap: wrap; }
+
+    /* Toolbar */
+    .toolbar { background: #fff; border-bottom: 1px solid #dde3ea; padding: 8px 14px; display: flex; align-items: center; gap: 8px; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal { background: #fff; border-radius: 8px; padding: 22px 24px; min-width: 420px; max-width: 640px; max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,.22); }
+    .modal h2 { font-size: 15px; margin-bottom: 16px; color: #1a3a5c; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid #eef0f3; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 32px; right: 24px; background: #1a3a5c; color: #fff; padding: 10px 18px; border-radius: 6px; font-size: 13px; z-index: 2000; box-shadow: 0 4px 16px rgba(0,0,0,.2); }
+    .toast.error { background: #dc3545; }
+    .toast.success { background: #198754; }
+
+    /* Ontology search */
+    .ont-results { max-height: 260px; overflow-y: auto; border: 1px solid #dde3ea; border-radius: 4px; margin-top: 8px; }
+    .ont-result-item { padding: 7px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
+    .ont-result-item:hover { background: #f0f5fb; }
+    .ont-result-item.selected { background: #e4edf8; }
+    .ont-uri { font-size: 11px; color: #7a8899; }
+
+    select { appearance: auto; }
+    .empty-hint { color: #aaa; font-size: 13px; padding: 20px; text-align: center; }
+  </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Brick App v2 - Web Interface</h1>
-    </div>
-    
-    <div class="container">
-        <div class="sidebar">
-            <div class="section">
-                <h2>Libraries</h2>
-                <div class="form-group">
-                    <select id="librarySelect">
-                        <option value="">All Libraries</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="section">
-                <h2>Brick Type</h2>
-                <div class="form-group">
-                    <select id="brickTypeSelect">
-                        <option value="">All Types</option>
-                        <option value="NodeShape">NodeShape</option>
-                        <option value="PropertyShape">PropertyShape</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="section">
-                <h2>Bricks</h2>
-                <ul id="brickList" class="brick-list">
-                    <li class="loading">Loading bricks...</li>
-                </ul>
-            </div>
+<div id="root"></div>
+
+<script type="text/babel">
+{% raw %}
+const { useState, useEffect, useCallback, useRef } = React;
+
+const DEFAULT_NAMESPACE = "http://example.org/shapes#";
+
+const DATATYPES = [
+  "xsd:string","xsd:integer","xsd:decimal","xsd:boolean",
+  "xsd:date","xsd:dateTime","xsd:anyURI","rdf:HTML","rdf:langString"
+];
+
+const CONSTRAINT_TYPES = [
+  "sh:minCount","sh:maxCount","sh:minLength","sh:maxLength",
+  "sh:minInclusive","sh:maxInclusive","sh:minExclusive","sh:maxExclusive",
+  "sh:pattern","sh:in","sh:hasValue","sh:languageIn","sh:uniqueLang",
+  "sh:equals","sh:disjoint","sh:lessThan","sh:lessThanOrEquals"
+];
+
+/* ── API helpers ─────────────────────────────────────── */
+async function api(method, path, body) {
+  const opts = { method, headers: { "Content-Type": "application/json" } };
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  const r = await fetch(path, opts);
+  const ct = r.headers.get("content-type") || "";
+  if (ct.includes("application/json")) return r.json();
+  return r.text();
+}
+
+/* ── Toast ───────────────────────────────────────────── */
+function Toast({ msg, type, onDone }) {
+  useEffect(() => { const t = setTimeout(onDone, 3000); return () => clearTimeout(t); }, []);
+  return <div className={`toast ${type}`}>{msg}</div>;
+}
+
+/* ── OntologyBrowserModal ────────────────────────────── */
+function OntologyBrowserModal({ mode, sessionId, onSelect, onClose }) {
+  const [ontologies, setOntologies] = useState([]);
+  const [selectedOnt, setSelectedOnt] = useState("");
+  const [items, setItems] = useState([]);
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState(null);
+
+  useEffect(() => {
+    api("GET", "/api/ontologies").then(r => {
+      if (r.status === "success") {
+        setOntologies(Object.keys(r.data || {}));
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!selectedOnt) return;
+    const endpoint = mode === "classes"
+      ? `/api/ontologies/${encodeURIComponent(selectedOnt)}/classes`
+      : `/api/ontologies/${encodeURIComponent(selectedOnt)}/properties`;
+    api("GET", endpoint).then(r => {
+      if (r.status === "success") setItems(r.data || []);
+    });
+  }, [selectedOnt]);
+
+  const filtered = items.filter(it => {
+    const s = query.toLowerCase();
+    return !s || (it.label||"").toLowerCase().includes(s) || (it.uri||"").toLowerCase().includes(s);
+  });
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <h2>Ontology Browser — {mode === "classes" ? "Classes" : "Properties"}</h2>
+        <div className="form-row">
+          <label>Ontology</label>
+          <div className="field">
+            <select value={selectedOnt} onChange={e => setSelectedOnt(e.target.value)}>
+              <option value="">Select ontology…</option>
+              {ontologies.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
         </div>
-        
-        <div class="main-content">
-            <div class="toolbar">
-                <button class="btn btn-primary" onclick="createNewBrick()">New Brick</button>
-                <button class="btn btn-secondary" onclick="saveCurrentBrick()">Save</button>
-                <button class="btn btn-secondary" onclick="deleteCurrentBrick()">Delete</button>
-            </div>
-            
-            <div class="content-area">
-                <div id="messages"></div>
-                
-                <div class="section">
-                    <h2>Brick Details</h2>
-                    <div id="brickDetails">
-                        <p>Select a brick from the list to view details.</p>
-                    </div>
-                </div>
-                
-                <div class="section">
-                    <h2>Properties</h2>
-                    <div id="propertiesSection">
-                        <p>No brick selected.</p>
-                    </div>
-                    <div style="margin-top: 1rem;">
-                        <button class="btn btn-primary" onclick="addProperty()">Add Property</button>
-                        <button class="btn btn-secondary" onclick="showPropertyBrowser()">Browse Properties</button>
-                    </div>
-                </div>
-                
-                <div class="section">
-                    <h2>Constraints</h2>
-                    <div id="constraintsSection">
-                        <p>No brick selected.</p>
-                    </div>
-                    <div style="margin-top: 1rem;">
-                        <button class="btn btn-primary" onclick="addConstraint()">Add Constraint</button>
-                        <button class="btn btn-secondary" onclick="showConstraintBrowser()">Browse Constraints</button>
-                    </div>
-                </div>
-            </div>
+        <div className="form-row">
+          <label>Search</label>
+          <div className="field">
+            <input type="text" placeholder="Filter by label or URI…" value={query} onChange={e => setQuery(e.target.value)}/>
+          </div>
         </div>
+        <div className="ont-results">
+          {filtered.length === 0
+            ? <div className="empty-hint">{selectedOnt ? "No results" : "Select an ontology above"}</div>
+            : filtered.map((it, i) => (
+              <div key={i} className={`ont-result-item ${selected === it ? "selected" : ""}`}
+                   onClick={() => setSelected(it)}>
+                <div>{it.label || it.uri}</div>
+                <div className="ont-uri">{it.uri}</div>
+              </div>
+            ))
+          }
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" disabled={!selected} onClick={() => onSelect(selected)}>Select</button>
+        </div>
+      </div>
     </div>
-    
-    <div class="status-bar">
-        <span id="statusText">Ready</span>
+  );
+}
+
+/* ── PropertyEditorModal ─────────────────────────────── */
+function PropertyEditorModal({ sessionId, onSave, onClose }) {
+  const [form, setForm] = useState({ name: "", property_path: "", datatype: "xsd:string", description: "", min_count: "", max_count: "" });
+  const [showOntBrowser, setShowOntBrowser] = useState(false);
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const generateIri = () => {
+    if (!form.name) return;
+    const cleaned = form.name.replace(/[^\w\s-]/g, "");
+    const words = cleaned.split(/\s+/).filter(Boolean);
+    if (!words.length) return;
+    const frag = words[0].toLowerCase() + words.slice(1).map(w => w[0].toUpperCase() + w.slice(1)).join("");
+    set("property_path", DEFAULT_NAMESPACE + frag);
+  };
+
+  const handleOntSelect = item => {
+    set("property_path", item.uri);
+    if (!form.name || form.name.startsWith("New ")) {
+      const last = item.uri.includes("#") ? item.uri.split("#").pop() : item.uri.split("/").pop();
+      if (last) set("name", last);
+    }
+    setShowOntBrowser(false);
+  };
+
+  const save = () => {
+    if (!form.name || !form.property_path) return;
+    const data = { ...form };
+    if (form.min_count) data.min_count = parseInt(form.min_count);
+    if (form.max_count) data.max_count = parseInt(form.max_count);
+    onSave(data);
+  };
+
+  return (
+    <>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal" onClick={e => e.stopPropagation()}>
+          <h2>Add Property</h2>
+          <div className="form-row"><label>Name *</label><div className="field"><input type="text" value={form.name} onChange={e => set("name", e.target.value)}/></div></div>
+          <div className="form-row">
+            <label>Property Path *</label>
+            <div className="field">
+              <div className="input-with-btn">
+                <input type="text" value={form.property_path} onChange={e => set("property_path", e.target.value)}/>
+                <button className="btn btn-secondary btn-sm" onClick={generateIri} title="Generate IRI from name">Gen</button>
+                <button className="btn btn-secondary btn-sm" onClick={() => setShowOntBrowser(true)} title="Browse ontology">Browse</button>
+              </div>
+            </div>
+          </div>
+          <div className="form-row"><label>Datatype</label><div className="field"><select value={form.datatype} onChange={e => set("datatype", e.target.value)}>{DATATYPES.map(d => <option key={d} value={d}>{d}</option>)}</select></div></div>
+          <div className="form-row"><label>Min Count</label><div className="field"><input type="text" value={form.min_count} onChange={e => set("min_count", e.target.value)} placeholder="optional"/></div></div>
+          <div className="form-row"><label>Max Count</label><div className="field"><input type="text" value={form.max_count} onChange={e => set("max_count", e.target.value)} placeholder="optional"/></div></div>
+          <div className="form-row"><label>Description</label><div className="field"><textarea value={form.description} onChange={e => set("description", e.target.value)}/></div></div>
+          <div className="modal-footer">
+            <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+            <button className="btn btn-primary" disabled={!form.name || !form.property_path} onClick={save}>Add Property</button>
+          </div>
+        </div>
+      </div>
+      {showOntBrowser && <OntologyBrowserModal mode="properties" sessionId={sessionId} onSelect={handleOntSelect} onClose={() => setShowOntBrowser(false)}/>}
+    </>
+  );
+}
+
+/* ── ConstraintEditorModal ───────────────────────────── */
+function ConstraintEditorModal({ propData, existing, onSave, onClose }) {
+  const [ctype, setCtype] = useState(existing?.constraint_type || "sh:minCount");
+  const [value, setValue] = useState(existing?.value ?? "");
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <h2>{existing ? "Edit" : "Add"} Constraint — {propData.name}</h2>
+        <div className="form-row">
+          <label>Constraint Type</label>
+          <div className="field">
+            <select value={ctype} onChange={e => setCtype(e.target.value)}>
+              {CONSTRAINT_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="form-row">
+          <label>Value</label>
+          <div className="field"><input type="text" value={value} onChange={e => setValue(e.target.value)}/></div>
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" disabled={!value} onClick={() => onSave({ constraint_type: ctype, value })}>Save</button>
+        </div>
+      </div>
     </div>
-    
-    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  );
+}
+
+/* ── ConstraintManagerModal ──────────────────────────── */
+function ConstraintManagerModal({ sessionId, propData, onClose, onRefresh }) {
+  const [editing, setEditing] = useState(null);
+  const [adding, setAdding] = useState(false);
+  const constraints = propData.constraints || [];
+
+  const doAdd = async (data) => {
+    await api("POST", `/api/session/${sessionId}/brick/properties/${encodeURIComponent(propData.name)}/constraints`, data);
+    onRefresh(); setAdding(false);
+  };
+  const doUpdate = async (idx, data) => {
+    await api("PUT", `/api/session/${sessionId}/brick/properties/${encodeURIComponent(propData.name)}/constraints/${idx}`, data);
+    onRefresh(); setEditing(null);
+  };
+  const doDelete = async (idx) => {
+    await api("DELETE", `/api/session/${sessionId}/brick/properties/${encodeURIComponent(propData.name)}/constraints/${idx}`);
+    onRefresh();
+  };
+
+  return (
+    <>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal" onClick={e => e.stopPropagation()}>
+          <h2>Constraints — {propData.name}</h2>
+          {constraints.length === 0
+            ? <div className="empty-hint">No constraints yet</div>
+            : constraints.map((c, i) => (
+              <div key={i} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6, padding:"6px 10px", background:"#f7f9fc", borderRadius:4 }}>
+                <span style={{ flex:1 }}><b>{c.constraint_type || c.name}</b>: {c.value}</span>
+                <button className="btn btn-secondary btn-sm" onClick={() => setEditing({ idx: i, data: c })}>Edit</button>
+                <button className="btn btn-danger btn-sm" onClick={() => doDelete(i)}>✕</button>
+              </div>
+            ))
+          }
+          <div className="modal-footer">
+            <button className="btn btn-secondary" onClick={onClose}>Close</button>
+            <button className="btn btn-primary" onClick={() => setAdding(true)}>Add Constraint</button>
+          </div>
+        </div>
+      </div>
+      {adding && <ConstraintEditorModal propData={propData} onSave={doAdd} onClose={() => setAdding(false)}/>}
+      {editing && <ConstraintEditorModal propData={propData} existing={editing.data} onSave={d => doUpdate(editing.idx, d)} onClose={() => setEditing(null)}/>}
+    </>
+  );
+}
+
+/* ── LibraryManagerModal ─────────────────────────────── */
+function LibraryManagerModal({ libraries, onClose, onRefresh }) {
+  const [newName, setNewName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const createLib = async () => {
+    if (!newName.trim()) return;
+    setBusy(true);
+    try {
+      const r = await api("POST", "/api/libraries", { library_name: newName.trim() });
+      if (r.status === "success") { setToast({ msg: "Library created", type: "success" }); setNewName(""); onRefresh(); }
+      else setToast({ msg: r.message || "Failed", type: "error" });
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <h2>Manage Libraries</h2>
+        <div style={{ marginBottom: 12 }}>
+          {libraries.map(l => (
+            <div key={l} style={{ padding:"6px 10px", background:"#f7f9fc", borderRadius:4, marginBottom:4 }}>{l}</div>
+          ))}
+        </div>
+        <div style={{ display:"flex", gap:8 }}>
+          <input type="text" placeholder="New library name…" value={newName} onChange={e => setNewName(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && createLib()}/>
+          <button className="btn btn-primary" disabled={!newName.trim() || busy} onClick={createLib}>Create</button>
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-secondary" onClick={onClose}>Close</button>
+        </div>
+      </div>
+      {toast && <Toast msg={toast.msg} type={toast.type} onDone={() => setToast(null)}/>}
+    </div>
+  );
+}
+
+/* ── BrickEditor panel ───────────────────────────────── */
+function BrickEditor({ sessionId, brickData, onSaved, onToast }) {
+  const isNode = brickData?.object_type === "NodeShape";
+  const [form, setForm] = useState({ name:"", description:"", target_class:"", property_path:"", datatype:"xsd:string" });
+  const [dirty, setDirty] = useState(false);
+  const [showOntBrowser, setShowOntBrowser] = useState(false);
+  const [ontMode, setOntMode] = useState("classes");
+
+  useEffect(() => {
+    if (!brickData) return;
+    setForm({
+      name: brickData.name || "",
+      description: brickData.description || "",
+      target_class: brickData.target_class || "",
+      property_path: brickData.property_path || "",
+      datatype: brickData.properties?.datatype || "xsd:string",
+    });
+    setDirty(false);
+  }, [brickData]);
+
+  const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setDirty(true); };
+
+  const save = async () => {
+    const data = { name: form.name, description: form.description };
+    if (isNode) data.target_class = form.target_class;
+    else { data.property_path = form.property_path; data.object_type = "PropertyShape"; }
+    await api("PUT", `/api/session/${sessionId}/brick`, data);
+    const r = await api("POST", `/api/session/${sessionId}/brick/save`, {});
+    if (r.status === "success") { onToast("Brick saved", "success"); setDirty(false); onSaved(); }
+    else onToast(r.message || "Save failed", "error");
+  };
+
+  const generateIri = () => {
+    if (!form.name) return;
+    const words = form.name.replace(/[^\w\s-]/g,"").split(/\s+/).filter(Boolean);
+    if (!words.length) return;
+    const frag = words[0].toLowerCase() + words.slice(1).map(w=>w[0].toUpperCase()+w.slice(1)).join("");
+    set("property_path", DEFAULT_NAMESPACE + frag);
+  };
+
+  const handleOntSelect = item => {
+    const uri = item.uri;
+    if (ontMode === "classes") set("target_class", uri);
+    else set("property_path", uri);
+    if (!form.name || form.name.startsWith("New ")) {
+      const last = uri.includes("#") ? uri.split("#").pop() : uri.split("/").pop();
+      if (last) set("name", last);
+    }
+    setShowOntBrowser(false);
+  };
+
+  if (!brickData) return (
+    <div className="card"><div className="empty-hint">Select a brick from the list, or create a new one.</div></div>
+  );
+
+  return (
+    <>
+      <div className="card">
+        <h2>
+          Brick Details
+          <span className={`brick-type-badge ${isNode ? "badge-node" : "badge-prop"}`} style={{ marginLeft:8, fontWeight:400 }}>
+            {brickData.object_type}
+          </span>
+        </h2>
+        <div className="form-row">
+          <label>Name</label>
+          <div className="field"><input type="text" value={form.name} onChange={e => set("name", e.target.value)}/></div>
+        </div>
+        <div className="form-row">
+          <label>Description</label>
+          <div className="field"><textarea value={form.description} onChange={e => set("description", e.target.value)}/></div>
+        </div>
+        {isNode ? (
+          <div className="form-row">
+            <label>Target Class</label>
+            <div className="field">
+              <div className="input-with-btn">
+                <input type="text" value={form.target_class} onChange={e => set("target_class", e.target.value)}/>
+                <button className="btn btn-secondary btn-sm" onClick={() => { setOntMode("classes"); setShowOntBrowser(true); }}>Browse</button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="form-row">
+              <label>Property Path</label>
+              <div className="field">
+                <div className="input-with-btn">
+                  <input type="text" value={form.property_path} onChange={e => set("property_path", e.target.value)}/>
+                  <button className="btn btn-secondary btn-sm" onClick={generateIri} title="Generate IRI from name">Gen</button>
+                  <button className="btn btn-secondary btn-sm" onClick={() => { setOntMode("properties"); setShowOntBrowser(true); }}>Browse</button>
+                </div>
+              </div>
+            </div>
+            <div className="form-row">
+              <label>Datatype</label>
+              <div className="field">
+                <select value={form.datatype} onChange={e => set("datatype", e.target.value)}>
+                  {DATATYPES.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+            </div>
+          </>
+        )}
+        <div style={{ display:"flex", justifyContent:"flex-end", gap:8, marginTop:8 }}>
+          <button className="btn btn-primary" disabled={!dirty} onClick={save}>Save Brick</button>
+        </div>
+      </div>
+      {showOntBrowser && <OntologyBrowserModal mode={ontMode} sessionId={sessionId} onSelect={handleOntSelect} onClose={() => setShowOntBrowser(false)}/>}
+    </>
+  );
+}
+
+/* ── PropertyPane ────────────────────────────────────── */
+function PropertyPane({ sessionId, brickData, onRefresh, onToast }) {
+  const [selected, setSelected] = useState(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [showConstraintMgr, setShowConstraintMgr] = useState(false);
+
+  const properties = brickData?.properties
+    ? Object.entries(brickData.properties).filter(([k]) => k !== "datatype")
+    : [];
+
+  const selectedPropData = selected ? (brickData?.properties?.[selected] || {}) : null;
+  const fullPropData = selectedPropData ? { name: selected, ...selectedPropData } : null;
+
+  const addProperty = async (data) => {
+    const r = await api("POST", `/api/session/${sessionId}/brick/properties`, data);
+    if (r.status === "success") { onToast("Property added", "success"); onRefresh(); setShowAdd(false); }
+    else onToast(r.message || "Failed", "error");
+  };
+
+  const deleteProperty = async () => {
+    if (!selected) return;
+    const r = await api("DELETE", `/api/session/${sessionId}/brick/properties/${encodeURIComponent(selected)}`);
+    if (r.status === "success") { onToast("Property removed", "success"); setSelected(null); onRefresh(); }
+    else onToast(r.message || "Failed", "error");
+  };
+
+  return (
+    <>
+      <div className="prop-pane">
+        <div className="prop-pane-header">
+          <h3>Properties</h3>
+          <div style={{ display:"flex", gap:5 }}>
+            <button className="btn btn-primary btn-sm" disabled={!brickData} onClick={() => setShowAdd(true)}>+ Add</button>
+            <button className="btn btn-danger btn-sm" disabled={!selected} onClick={deleteProperty}>✕</button>
+          </div>
+        </div>
+        <div className="prop-list">
+          {!brickData
+            ? <div className="empty-hint">No brick selected</div>
+            : properties.length === 0
+              ? <div className="empty-hint">No properties</div>
+              : properties.map(([name, data]) => {
+                  const constraints = data.constraints || [];
+                  return (
+                    <div key={name} className={`prop-item ${selected === name ? "selected" : ""}`}
+                         onClick={() => setSelected(name)}
+                         onDoubleClick={() => { setSelected(name); setShowConstraintMgr(true); }}>
+                      <div className="prop-name">{name}</div>
+                      <div className="prop-meta">
+                        {data.property_path && <span>{data.property_path}</span>}
+                        {data.datatype && <span> · {data.datatype}</span>}
+                      </div>
+                      {constraints.length > 0 && (
+                        <div style={{ marginTop:3 }}>
+                          {constraints.map((c, i) => (
+                            <span key={i} className="constraint-chip">{c.constraint_type || c.name}: {c.value}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+          }
+        </div>
+        {selected && (
+          <div style={{ padding:"8px 12px", borderTop:"1px solid #eef0f3", fontSize:12, color:"#555" }}>
+            Double-click a property to manage constraints
+          </div>
+        )}
+      </div>
+
+      {showAdd && <PropertyEditorModal sessionId={sessionId} onSave={addProperty} onClose={() => setShowAdd(false)}/>}
+      {showConstraintMgr && fullPropData && (
+        <ConstraintManagerModal
+          sessionId={sessionId}
+          propData={fullPropData}
+          onClose={() => setShowConstraintMgr(false)}
+          onRefresh={onRefresh}
+        />
+      )}
+    </>
+  );
+}
+
+/* ── Main App ────────────────────────────────────────── */
+function App() {
+  const [sessionId, setSessionId] = useState(null);
+  const [libraries, setLibraries] = useState([]);
+  const [activeLib, setActiveLib] = useState("");
+  const [bricks, setBricks] = useState([]);
+  const [selectedBrickId, setSelectedBrickId] = useState(null);
+  const [brickData, setBrickData] = useState(null);
+  const [status, setStatus] = useState("Initialising…");
+  const [toast, setToast] = useState(null);
+  const [showLibMgr, setShowLibMgr] = useState(false);
+
+  const showToast = (msg, type = "success") => setToast({ msg, type });
+
+  /* ── Init session ── */
+  useEffect(() => {
+    api("POST", "/api/session", { client_type: "web" }).then(r => {
+      if (r.status === "success") {
+        setSessionId(r.data.session_id);
+        setStatus("Ready");
+      } else {
+        setStatus("Error creating session");
+      }
+    }).catch(() => setStatus("Cannot connect to server"));
+  }, []);
+
+  /* ── Load libraries ── */
+  const loadLibraries = useCallback(async () => {
+    const r = await api("GET", "/api/libraries");
+    if (r.status === "success") {
+      const libs = r.data || [];
+      setLibraries(libs);
+      if (!activeLib && libs.length) setActiveLib(libs[0]);
+    }
+  }, [activeLib]);
+
+  useEffect(() => { if (sessionId) loadLibraries(); }, [sessionId]);
+
+  /* ── Load bricks ── */
+  const loadBricks = useCallback(async () => {
+    if (!activeLib) return;
+    const r = await api("GET", `/api/libraries/${encodeURIComponent(activeLib)}/bricks`);
+    if (r.status === "success") setBricks(r.data || []);
+  }, [activeLib]);
+
+  useEffect(() => { loadBricks(); }, [loadBricks]);
+
+  /* ── Load brick into session ── */
+  const selectBrick = async (brickId) => {
+    if (!sessionId) return;
+    setSelectedBrickId(brickId);
+    const r = await api("POST", `/api/session/${sessionId}/brick/load/${encodeURIComponent(brickId)}`, {});
+    if (r.status === "success") {
+      setBrickData(r.data);
+      setStatus(`Loaded: ${r.data?.name || brickId}`);
+    } else {
+      showToast("Failed to load brick", "error");
+    }
+  };
+
+  /* ── Refresh current brick ── */
+  const refreshBrick = async () => {
+    if (!sessionId) return;
+    const r = await api("GET", `/api/session/${sessionId}/brick`);
+    if (r.status === "success") setBrickData(r.data);
+  };
+
+  /* ── New brick ── */
+  const newBrick = async () => {
+    if (!sessionId) return;
+    const r = await api("POST", `/api/session/${sessionId}/brick`, { brick_type: "NodeShape" });
+    if (r.status === "success") {
+      setBrickData(r.data);
+      setSelectedBrickId(null);
+      setStatus("New brick — fill in details and save");
+    }
+  };
+
+  /* ── Delete brick ── */
+  const deleteBrick = async () => {
+    if (!selectedBrickId || !sessionId) return;
+    const brick = bricks.find(b => b.brick_id === selectedBrickId);
+    if (!window.confirm(`Delete "${brick?.name || selectedBrickId}"?`)) return;
+    const r = await api("DELETE", `/api/session/${sessionId}/brick/${encodeURIComponent(selectedBrickId)}`);
+    if (r.status === "success") {
+      showToast("Brick deleted", "success");
+      setSelectedBrickId(null); setBrickData(null);
+      loadBricks();
+    } else {
+      showToast(r.message || "Delete failed", "error");
+    }
+  };
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", height:"100vh" }}>
+      <header>
+        <h1>🧱 Brick App v2 — SHACL Brick Editor</h1>
+      </header>
+
+      <div className="toolbar">
+        <select value={activeLib} onChange={e => setActiveLib(e.target.value)} style={{ width:180 }}>
+          {libraries.map(l => <option key={l} value={l}>{l}</option>)}
+        </select>
+        <button className="btn btn-secondary" onClick={() => setShowLibMgr(true)}>Manage Libraries</button>
+        <div style={{ flex:1 }}/>
+        <button className="btn btn-primary" disabled={!sessionId} onClick={newBrick}>+ New Brick</button>
+        <button className="btn btn-danger" disabled={!selectedBrickId} onClick={deleteBrick}>Delete</button>
+      </div>
+
+      <div className="layout">
+        {/* Brick list sidebar */}
+        <div className="sidebar">
+          <div className="sidebar-section">
+            <h3>Bricks ({bricks.length})</h3>
+          </div>
+          <div className="brick-list">
+            {bricks.length === 0
+              ? <div className="empty-hint">No bricks in library</div>
+              : bricks.map(b => (
+                <div key={b.brick_id}
+                     className={`brick-item ${selectedBrickId === b.brick_id ? "selected" : ""}`}
+                     title={b.brick_id}
+                     onDoubleClick={() => selectBrick(b.brick_id)}>
+                  {b.name || b.brick_id}
+                  <span className={`brick-type-badge ${b.object_type === "NodeShape" ? "badge-node" : "badge-prop"}`}>
+                    {b.object_type === "NodeShape" ? "N" : "P"}
+                  </span>
+                </div>
+              ))
+            }
+          </div>
+          <div style={{ padding:"8px 12px", fontSize:11, color:"#aaa", borderTop:"1px solid #eef0f3" }}>
+            Double-click to open
+          </div>
+        </div>
+
+        {/* Editor */}
+        <div className="main">
+          <div className="editor-pane">
+            <BrickEditor sessionId={sessionId} brickData={brickData} onSaved={loadBricks} onToast={showToast}/>
+          </div>
+          <PropertyPane sessionId={sessionId} brickData={brickData} onRefresh={refreshBrick} onToast={showToast}/>
+        </div>
+      </div>
+
+      <div className="status-bar">{status}</div>
+
+      {toast && <Toast msg={toast.msg} type={toast.type} onDone={() => setToast(null)}/>}
+      {showLibMgr && <LibraryManagerModal libraries={libraries} onClose={() => setShowLibMgr(false)} onRefresh={loadLibraries}/>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+{% endraw %}
+</script>
 </body>
 </html>
