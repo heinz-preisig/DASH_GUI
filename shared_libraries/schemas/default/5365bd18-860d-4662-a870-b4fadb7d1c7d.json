@@ -1,0 +1,57 @@
+{
+  "schema_id": "5365bd18-860d-4662-a870-b4fadb7d1c7d",
+  "name": "CompanySchema",
+  "description": "A company with address and products, each managed by a person",
+  "root_brick_id": "2680574d-7b7f-49d9-8475-18da71075052",
+  "component_brick_ids": [
+    "2680574d-7b7f-49d9-8475-18da71075052",
+    "3509c09e-1274-40a7-a96a-daf58a361d77",
+    "02a114b4-cb65-4372-a878-d74f896531d8",
+    "eb49bf40-422e-4c9e-9b28-0e2bc44f8eb4",
+    "fa7f7418-68e2-4548-bfc8-43498b897363"
+  ],
+  "flow_config": null,
+  "inheritance_chain": [],
+  "relationships": {},
+  "edges": [
+    {
+      "child_brick_id": "3509c09e-1274-40a7-a96a-daf58a361d77",
+      "path_iri": "org:hasAddress",
+      "label": "Address",
+      "parent_brick_id": "2680574d-7b7f-49d9-8475-18da71075052",
+      "min_count": 1,
+      "max_count": 1,
+      "collapsible": true,
+      "description": "",
+      "sequence": 0
+    },
+    {
+      "child_brick_id": "02a114b4-cb65-4372-a878-d74f896531d8",
+      "path_iri": "org:hasProduct",
+      "label": "Products",
+      "parent_brick_id": "2680574d-7b7f-49d9-8475-18da71075052",
+      "min_count": 0,
+      "max_count": null,
+      "collapsible": true,
+      "description": "",
+      "sequence": 1
+    },
+    {
+      "child_brick_id": "eb49bf40-422e-4c9e-9b28-0e2bc44f8eb4",
+      "path_iri": "org:managedBy",
+      "label": "Product Manager",
+      "parent_brick_id": "02a114b4-cb65-4372-a878-d74f896531d8",
+      "min_count": 1,
+      "max_count": 1,
+      "collapsible": true,
+      "description": "",
+      "sequence": 0
+    }
+  ],
+  "metadata": {},
+  "component_ui_metadata": {},
+  "groups": {},
+  "schema_refs": [],
+  "created_at": "2026-05-07T10:24:49.295157",
+  "updated_at": "2026-05-11T12:17:02.045621"
+}

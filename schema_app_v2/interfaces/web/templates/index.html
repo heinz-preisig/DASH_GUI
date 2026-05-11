@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Schema App v2</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; font-size: 14px; background: #f0f2f5; color: #222; height: 100vh; display: flex; flex-direction: column; }
+    header { background: #1a3a5c; color: #fff; padding: 10px 18px; display: flex; align-items: center; gap: 12px; }
+    header h1 { font-size: 17px; font-weight: 600; }
+    .status-bar { background: #e8edf2; border-top: 1px solid #cdd5de; padding: 4px 14px; font-size: 12px; color: #555; }
+    .layout { display: flex; flex: 1; overflow: hidden; }
+
+    /* Sidebar */
+    .sidebar { width: 260px; min-width: 200px; background: #fff; border-right: 1px solid #dde3ea; display: flex; flex-direction: column; overflow: hidden; }
+    .sidebar-section { padding: 10px 12px; border-bottom: 1px solid #eef0f3; }
+    .sidebar-section h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: #7a8899; margin-bottom: 6px; }
+    .schema-list { flex: 1; overflow-y: auto; padding: 4px 0; }
+    .schema-item { padding: 7px 14px; cursor: pointer; border-left: 3px solid transparent; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .schema-item:hover { background: #f0f5fb; }
+    .schema-item.selected { background: #e4edf8; border-left-color: #2a6db5; font-weight: 600; }
+    .schema-item-meta { font-size: 11px; color: #7a8899; margin-top: 2px; }
+
+    /* Main area */
+    .main { flex: 1; display: flex; overflow: hidden; }
+    .editor-pane { flex: 1; padding: 14px; overflow-y: auto; }
+    .comp-pane { width: 320px; min-width: 260px; border-left: 1px solid #dde3ea; background: #fff; display: flex; flex-direction: column; overflow: hidden; }
+    .comp-pane-header { padding: 10px 12px; border-bottom: 1px solid #eef0f3; display: flex; align-items: center; justify-content: space-between; }
+    .comp-pane-header h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: #7a8899; }
+    .comp-list { flex: 1; overflow-y: auto; }
+    .comp-item { padding: 7px 12px; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
+    .comp-item:hover { background: #f7f9fc; }
+    .comp-item.selected { background: #e4edf8; }
+    .comp-name { font-weight: 600; font-size: 13px; }
+    .comp-meta { font-size: 11px; color: #7a8899; margin-top: 2px; }
+    .ref-item { padding: 7px 12px; border-bottom: 1px solid #f0f0f0; }
+    .ref-name { font-style: italic; color: #5566aa; font-size: 13px; }
+    .ref-meta { font-size: 11px; color: #7a8899; }
+
+    /* Tree view */
+    .tree-node { padding: 4px 0 4px 16px; font-size: 13px; }
+    .tree-node-root { padding: 4px 0; font-weight: 700; font-size: 13px; color: #1a3a5c; }
+    .tree-node-children { border-left: 1px dashed #cdd5de; margin-left: 8px; }
+
+    /* Brick browser */
+    .brick-browser { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; border: 1px solid #dde3ea; border-radius: 4px; padding: 4px; }
+    .brick-pick { padding: 6px 10px; cursor: pointer; border-radius: 4px; }
+    .brick-pick:hover { background: #f0f5fb; }
+    .brick-pick.selected { background: #e4edf8; }
+    .brick-type-badge { font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-left: 5px; }
+    .badge-node { background: #d4edda; color: #155724; }
+    .badge-prop { background: #fff3cd; color: #856404; }
+
+    /* Card */
+    .card { background: #fff; border: 1px solid #dde3ea; border-radius: 6px; padding: 16px; margin-bottom: 14px; }
+    .card h2 { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: #1a3a5c; border-bottom: 1px solid #eef0f3; padding-bottom: 7px; }
+
+    /* Forms */
+    .form-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+    .form-row label { width: 130px; min-width: 130px; font-size: 12px; color: #555; padding-top: 7px; }
+    .form-row .field { flex: 1; }
+    input[type=text], select, textarea { width: 100%; padding: 6px 9px; border: 1px solid #cdd5de; border-radius: 4px; font-size: 13px; font-family: inherit; background: #fff; }
+    input[type=text]:focus, select:focus, textarea:focus { outline: none; border-color: #2a6db5; box-shadow: 0 0 0 2px rgba(42,109,181,.15); }
+    textarea { resize: vertical; min-height: 56px; }
+
+    /* Buttons */
+    .btn { padding: 6px 13px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-family: inherit; font-weight: 500; transition: background .15s; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary { background: #2a6db5; color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #1e5491; }
+    .btn-secondary { background: #e2e8f0; color: #333; }
+    .btn-secondary:hover:not(:disabled) { background: #d0d9e6; }
+    .btn-danger { background: #dc3545; color: #fff; }
+    .btn-danger:hover:not(:disabled) { background: #b02a37; }
+    .btn-success { background: #198754; color: #fff; }
+    .btn-success:hover:not(:disabled) { background: #146c43; }
+    .btn-sm { padding: 3px 9px; font-size: 12px; }
+    .btn-toolbar { display: flex; gap: 7px; margin-bottom: 10px; flex-wrap: wrap; }
+
+    /* Toolbar */
+    .toolbar { background: #fff; border-bottom: 1px solid #dde3ea; padding: 8px 14px; display: flex; align-items: center; gap: 8px; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal { background: #fff; border-radius: 8px; padding: 22px 24px; min-width: 440px; max-width: 660px; max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,.22); }
+    .modal h2 { font-size: 15px; margin-bottom: 16px; color: #1a3a5c; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid #eef0f3; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 32px; right: 24px; background: #1a3a5c; color: #fff; padding: 10px 18px; border-radius: 6px; font-size: 13px; z-index: 2000; box-shadow: 0 4px 16px rgba(0,0,0,.2); }
+    .toast.error { background: #dc3545; }
+    .toast.success { background: #198754; }
+
+    /* Tabs */
+    .tabs { display: flex; border-bottom: 2px solid #dde3ea; margin-bottom: 14px; }
+    .tab { padding: 7px 16px; cursor: pointer; font-size: 13px; color: #7a8899; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .tab:hover { color: #1a3a5c; }
+    .tab.active { color: #2a6db5; border-bottom-color: #2a6db5; font-weight: 600; }
+
+    /* Validation */
+    .issue-list { padding: 8px 12px; background: #fff8e1; border: 1px solid #ffe082; border-radius: 4px; margin-top: 8px; }
+    .issue-item { font-size: 12px; color: #7a5c00; padding: 2px 0; }
+    .valid-badge { color: #198754; font-weight: 600; }
+    .invalid-badge { color: #dc3545; font-weight: 600; }
+
+    select { appearance: auto; }
+    .empty-hint { color: #aaa; font-size: 13px; padding: 20px; text-align: center; }
+    .divider { border: none; border-top: 1px solid #eef0f3; margin: 12px 0; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+{% raw %}
+const { useState, useEffect, useCallback, useRef } = React;
+
+/* ── API helpers ─────────────────────────────────────── */
+async function api(method, path, body) {
+  const opts = { method, headers: { "Content-Type": "application/json" } };
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  const r = await fetch(path, opts);
+  const ct = r.headers.get("content-type") || "";
+  if (ct.includes("application/json")) return r.json();
+  return { status: "success", data: await r.text() };
+}
+
+/* ── Toast ───────────────────────────────────────────── */
+function Toast({ msg, type, onDone }) {
+  useEffect(() => { const t = setTimeout(onDone, 3200); return () => clearTimeout(t); }, []);
+  return <div className={`toast ${type}`}>{msg}</div>;
+}
+
+/* ── NewSchemaModal ──────────────────────────────────── */
+function NewSchemaModal({ sessionId, brickLib, onCreated, onClose }) {
+  const [name, setName] = useState("");
+  const [desc, setDesc] = useState("");
+  const [rootBrick, setRootBrick] = useState("");
+  const [nodeShapes, setNodeShapes] = useState([]);
+  const [lib, setLib] = useState(brickLib || "");
+
+  useEffect(() => {
+    if (!sessionId) return;
+    const q = lib ? `?library=${encodeURIComponent(lib)}` : "";
+    api("GET", `/api/session/${sessionId}/bricks/node-shapes${q}`).then(r => {
+      if (r.status === "success") setNodeShapes(r.data || []);
+    });
+  }, [sessionId, lib]);
+
+  const submit = async () => {
+    if (!name.trim() || !rootBrick) return;
+    const r = await api("POST", `/api/session/${sessionId}/schemas`, {
+      name: name.trim(), description: desc, root_brick_id: rootBrick
+    });
+    if (r.status === "success") onCreated(r.data);
+    else alert(r.message || "Failed to create schema");
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <h2>New Schema</h2>
+        <div className="form-row">
+          <label>Name *</label>
+          <div className="field"><input type="text" value={name} onChange={e => setName(e.target.value)} autoFocus/></div>
+        </div>
+        <div className="form-row">
+          <label>Description</label>
+          <div className="field"><textarea value={desc} onChange={e => setDesc(e.target.value)}/></div>
+        </div>
+        <div className="form-row">
+          <label>Root Brick *</label>
+          <div className="field">
+            <select value={rootBrick} onChange={e => setRootBrick(e.target.value)}>
+              <option value="">Select a NodeShape brick…</option>
+              {nodeShapes.map(b => <option key={b.brick_id} value={b.brick_id}>{b.name || b.brick_id}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" disabled={!name.trim() || !rootBrick} onClick={submit}>Create Schema</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── AddComponentModal ───────────────────────────────── */
+function AddComponentModal({ sessionId, schemaId, existingIds, brickLib, onAdded, onClose }) {
+  const [bricks, setBricks] = useState([]);
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState(null);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    const q = brickLib ? `?library=${encodeURIComponent(brickLib)}` : "";
+    api("GET", `/api/session/${sessionId}/bricks${q}`).then(r => {
+      if (r.status === "success") setBricks(r.data || []);
+    });
+  }, [sessionId, brickLib]);
+
+  const filtered = bricks.filter(b => {
+    const s = search.toLowerCase();
+    return !s || (b.name || "").toLowerCase().includes(s) || (b.brick_id || "").toLowerCase().includes(s);
+  }).filter(b => !existingIds.includes(b.brick_id));
+
+  const add = async () => {
+    if (!selected) return;
+    const r = await api("POST", `/api/session/${sessionId}/schemas/${schemaId}/components`, { brick_id: selected });
+    if (r.status === "success") onAdded(selected);
+    else alert(r.message || "Failed");
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <h2>Add Component Brick</h2>
+        <div className="form-row">
+          <label>Search</label>
+          <div className="field"><input type="text" placeholder="Filter bricks…" value={search} onChange={e => setSearch(e.target.value)} autoFocus/></div>
+        </div>
+        <div className="brick-browser">
+          {filtered.length === 0
+            ? <div className="empty-hint">No bricks available</div>
+            : filtered.map(b => (
+              <div key={b.brick_id} className={`brick-pick ${selected === b.brick_id ? "selected" : ""}`}
+                   onClick={() => setSelected(b.brick_id)}>
+                {b.name || b.brick_id}
+                <span className={`brick-type-badge ${b.object_type === "NodeShape" ? "badge-node" : "badge-prop"}`}>
+                  {b.object_type === "NodeShape" ? "N" : "P"}
+                </span>
+                {b.description && <div style={{ fontSize:11, color:"#7a8899" }}>{b.description}</div>}
+              </div>
+            ))
+          }
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" disabled={!selected} onClick={add}>Add</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── AddRefModal ─────────────────────────────────────── */
+function AddRefModal({ sessionId, schemaId, components, allSchemas, onAdded, onClose }) {
+  const [refSchemaId, setRefSchemaId] = useState("");
+  const [attachTo, setAttachTo] = useState("");
+  const [propPath, setPropPath] = useState("");
+  const [label, setLabel] = useState("");
+
+  const submit = async () => {
+    if (!refSchemaId || !attachTo || !propPath) return;
+    const r = await api("POST", `/api/session/${sessionId}/schemas/${schemaId}/refs`, {
+      schema_id: refSchemaId, attach_to_brick_id: attachTo, property_path: propPath, label
+    });
+    if (r.status === "success") onAdded(r.data);
+    else alert(r.message || "Failed");
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <h2>Add Schema Reference (sh:node)</h2>
+        <div className="form-row">
+          <label>Referenced Schema *</label>
+          <div className="field">
+            <select value={refSchemaId} onChange={e => setRefSchemaId(e.target.value)}>
+              <option value="">Select schema…</option>
+              {allSchemas.filter(s => s.schema_id !== schemaId).map(s => (
+                <option key={s.schema_id} value={s.schema_id}>{s.name || s.schema_id}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="form-row">
+          <label>Attach to Brick *</label>
+          <div className="field">
+            <select value={attachTo} onChange={e => setAttachTo(e.target.value)}>
+              <option value="">Select component brick…</option>
+              {components.map(c => (
+                <option key={c.brick_id} value={c.brick_id}>{c.name || c.brick_id}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="form-row">
+          <label>Property Path *</label>
+          <div className="field"><input type="text" placeholder="e.g. ex:hasAddress" value={propPath} onChange={e => setPropPath(e.target.value)}/></div>
+        </div>
+        <div className="form-row">
+          <label>Label</label>
+          <div className="field"><input type="text" placeholder="optional display label" value={label} onChange={e => setLabel(e.target.value)}/></div>
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" disabled={!refSchemaId || !attachTo || !propPath} onClick={submit}>Add Reference</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── SchemaEditor ────────────────────────────────────── */
+function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, onSaved, onToast, onDeleted }) {
+  const [form, setForm] = useState({ name: "", description: "" });
+  const [dirty, setDirty] = useState(false);
+  const [components, setComponents] = useState([]);
+  const [refs, setRefs] = useState([]);
+  const [tree, setTree] = useState({ tree: {}, roots: [] });
+  const [validation, setValidation] = useState(null);
+  const [tab, setTab] = useState("details");
+  const [showAddComp, setShowAddComp] = useState(false);
+  const [showAddRef, setShowAddRef] = useState(false);
+
+  useEffect(() => {
+    if (!schemaData) return;
+    setForm({ name: schemaData.name || "", description: schemaData.description || "" });
+    setDirty(false);
+    setValidation(null);
+    loadComponents();
+    loadRefs();
+    loadTree();
+  }, [schemaData?.schema_id]);
+
+  const loadComponents = async () => {
+    if (!schemaData) return;
+    const compIds = schemaData.component_brick_ids || [];
+    const details = await Promise.all(
+      compIds.map(id =>
+        api("GET", `/api/session/${sessionId}/bricks/${encodeURIComponent(id)}`)
+          .then(r => r.status === "success" ? r.data : { brick_id: id, name: id })
+      )
+    );
+    setComponents(details);
+  };
+
+  const loadRefs = async () => {
+    if (!schemaData) return;
+    const r = await api("GET", `/api/session/${sessionId}/schemas/${schemaData.schema_id}/refs`);
+    if (r.status === "success") setRefs(r.data || []);
+  };
+
+  const loadTree = async () => {
+    if (!schemaData) return;
+    const r = await api("GET", `/api/session/${sessionId}/schemas/${schemaData.schema_id}/tree`);
+    if (r.status === "success") setTree(r.data || { tree: {}, roots: [] });
+  };
+
+  const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setDirty(true); };
+
+  const save = async () => {
+    const r = await api("PUT", `/api/session/${sessionId}/schemas/${schemaData.schema_id}`,
+      { name: form.name, description: form.description });
+    if (r.status === "success") {
+      onToast("Schema saved", "success");
+      setDirty(false);
+      onSaved(r.data);
+    } else onToast(r.message || "Save failed", "error");
+  };
+
+  const validate = async () => {
+    const r = await api("POST", `/api/session/${sessionId}/schemas/${schemaData.schema_id}/validate`);
+    if (r.status === "success") setValidation(r.data);
+  };
+
+  const removeComp = async (brickId) => {
+    const r = await api("DELETE", `/api/session/${sessionId}/schemas/${schemaData.schema_id}/components/${encodeURIComponent(brickId)}`);
+    if (r.status === "success") {
+      onToast("Component removed", "success");
+      loadComponents();
+      loadTree();
+      onSaved({ ...schemaData, component_brick_ids: (schemaData.component_brick_ids || []).filter(id => id !== brickId) });
+    } else onToast(r.message || "Failed", "error");
+  };
+
+  const removeRef = async (ref) => {
+    const q = ref.attach_to_brick_id ? `?attach_to_brick_id=${encodeURIComponent(ref.attach_to_brick_id)}` : "";
+    const r = await api("DELETE", `/api/session/${sessionId}/schemas/${schemaData.schema_id}/refs/${encodeURIComponent(ref.schema_id)}${q}`);
+    if (r.status === "success") { onToast("Reference removed", "success"); loadRefs(); loadTree(); }
+    else onToast(r.message || "Failed", "error");
+  };
+
+  const exportShacl = () => {
+    window.open(`/api/session/${sessionId}/schemas/${schemaData.schema_id}/export/shacl`, '_blank');
+  };
+
+  const doDelete = async () => {
+    if (!window.confirm(`Delete schema "${schemaData.name}"?`)) return;
+    const r = await api("DELETE", `/api/session/${sessionId}/schemas/${schemaData.schema_id}`);
+    if (r.status === "success") { onToast("Schema deleted", "success"); onDeleted(schemaData.schema_id); }
+    else onToast(r.message || "Failed", "error");
+  };
+
+  if (!schemaData) return (
+    <div className="card"><div className="empty-hint">Select a schema from the list, or create a new one.</div></div>
+  );
+
+  return (
+    <>
+      <div className="card">
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+          <h2 style={{ margin:0, borderBottom:"none", paddingBottom:0 }}>Schema Details</h2>
+          <div style={{ display:"flex", gap:6 }}>
+            <button className="btn btn-success btn-sm" onClick={exportShacl} title="Download SHACL Turtle">Export SHACL</button>
+            <button className="btn btn-secondary btn-sm" onClick={validate}>Validate</button>
+            <button className="btn btn-danger btn-sm" onClick={doDelete}>Delete</button>
+          </div>
+        </div>
+        <hr className="divider"/>
+        <div className="form-row">
+          <label>Name</label>
+          <div className="field"><input type="text" value={form.name} onChange={e => set("name", e.target.value)}/></div>
+        </div>
+        <div className="form-row">
+          <label>Description</label>
+          <div className="field"><textarea value={form.description} onChange={e => set("description", e.target.value)}/></div>
+        </div>
+        <div className="form-row">
+          <label>Root Brick</label>
+          <div className="field" style={{ paddingTop:7, fontSize:13, color:"#555" }}>
+            {schemaData.root_brick_id || <span style={{ color:"#aaa" }}>— not set —</span>}
+          </div>
+        </div>
+        <div style={{ display:"flex", justifyContent:"flex-end", gap:8, marginTop:8 }}>
+          <button className="btn btn-primary" disabled={!dirty} onClick={save}>Save</button>
+        </div>
+        {validation && (
+          <div style={{ marginTop:10 }}>
+            {validation.valid
+              ? <div className="valid-badge">✓ Schema is valid</div>
+              : <>
+                  <div className="invalid-badge">✗ Validation issues:</div>
+                  <div className="issue-list">
+                    {validation.issues.map((iss, i) => <div key={i} className="issue-item">• {iss}</div>)}
+                  </div>
+                </>
+            }
+          </div>
+        )}
+      </div>
+
+      <div className="tabs">
+        <div className={`tab ${tab === "components" ? "active" : ""}`} onClick={() => setTab("components")}>
+          Components ({components.length})
+        </div>
+        <div className={`tab ${tab === "refs" ? "active" : ""}`} onClick={() => setTab("refs")}>
+          Schema Refs ({refs.length})
+        </div>
+        <div className={`tab ${tab === "tree" ? "active" : ""}`} onClick={() => setTab("tree")}>
+          Tree View
+        </div>
+      </div>
+
+      {tab === "components" && (
+        <div className="card">
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+            <h2 style={{ margin:0, borderBottom:"none", paddingBottom:0 }}>Components</h2>
+            <button className="btn btn-primary btn-sm" onClick={() => setShowAddComp(true)}>+ Add Brick</button>
+          </div>
+          {components.length === 0
+            ? <div className="empty-hint">No components — add bricks above</div>
+            : components.map(c => (
+              <div key={c.brick_id} style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 0", borderBottom:"1px solid #f0f0f0" }}>
+                <div style={{ flex:1 }}>
+                  <div className="comp-name">{c.name || c.brick_id}</div>
+                  <div className="comp-meta">
+                    <span className={`brick-type-badge ${c.object_type === "NodeShape" ? "badge-node" : "badge-prop"}`}>{c.object_type || "?"}</span>
+                    {c.target_class && <span style={{ marginLeft:6 }}>{c.target_class}</span>}
+                    {c.property_path && <span style={{ marginLeft:6 }}>{c.property_path}</span>}
+                  </div>
+                </div>
+                <button className="btn btn-danger btn-sm" onClick={() => removeComp(c.brick_id)}>✕</button>
+              </div>
+            ))
+          }
+        </div>
+      )}
+
+      {tab === "refs" && (
+        <div className="card">
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+            <h2 style={{ margin:0, borderBottom:"none", paddingBottom:0 }}>Schema References</h2>
+            <button className="btn btn-primary btn-sm" disabled={components.length === 0} onClick={() => setShowAddRef(true)}>+ Add Ref</button>
+          </div>
+          {refs.length === 0
+            ? <div className="empty-hint">No schema references — embed another schema via sh:node</div>
+            : refs.map((ref, i) => (
+              <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:8, padding:"8px 0", borderBottom:"1px solid #f0f0f0" }}>
+                <div style={{ flex:1 }}>
+                  <div className="ref-name">⬡ {ref.label || ref.schema_id}</div>
+                  <div className="ref-meta">
+                    <span>schema: {ref.schema_id}</span>
+                    {ref.attach_to_brick_id && <span> · attach: {ref.attach_to_brick_id}</span>}
+                    {ref.property_path && <span> · path: {ref.property_path}</span>}
+                  </div>
+                </div>
+                <button className="btn btn-danger btn-sm" onClick={() => removeRef(ref)}>✕</button>
+              </div>
+            ))
+          }
+        </div>
+      )}
+
+      {tab === "tree" && (
+        <div className="card">
+          <h2>UI Tree Structure</h2>
+          <TreeView tree={tree} rootBrickId={schemaData.root_brick_id} components={components} refs={refs}/>
+        </div>
+      )}
+
+      {showAddComp && (
+        <AddComponentModal
+          sessionId={sessionId}
+          schemaId={schemaData.schema_id}
+          existingIds={schemaData.component_brick_ids || []}
+          brickLib={brickLib}
+          onAdded={id => {
+            setShowAddComp(false);
+            onToast("Component added", "success");
+            const updated = { ...schemaData, component_brick_ids: [...(schemaData.component_brick_ids || []), id] };
+            onSaved(updated);
+            loadComponents();
+            loadTree();
+          }}
+          onClose={() => setShowAddComp(false)}
+        />
+      )}
+
+      {showAddRef && (
+        <AddRefModal
+          sessionId={sessionId}
+          schemaId={schemaData.schema_id}
+          components={components}
+          allSchemas={allSchemas}
+          onAdded={ref => {
+            setShowAddRef(false);
+            onToast("Schema reference added", "success");
+            loadRefs();
+            loadTree();
+          }}
+          onClose={() => setShowAddRef(false)}
+        />
+      )}
+    </>
+  );
+}
+
+/* ── TreeView ────────────────────────────────────────── */
+function TreeView({ tree, rootBrickId, components, refs }) {
+  const compMap = Object.fromEntries(components.map(c => [c.brick_id, c]));
+
+  const renderNode = (brickId, depth = 0) => {
+    const brick = compMap[brickId];
+    const children = tree.tree?.[brickId] || [];
+    const brickRefs = refs.filter(r => r.attach_to_brick_id === brickId);
+    return (
+      <div key={brickId} style={{ paddingLeft: depth * 16 }}>
+        <div style={{ padding:"3px 0", fontSize:13, fontWeight: depth === 0 ? 600 : 400 }}>
+          {depth === 0 ? "◆ " : "├ "}{brick?.name || brickId}
+          {brick?.object_type && (
+            <span className={`brick-type-badge ${brick.object_type === "NodeShape" ? "badge-node" : "badge-prop"}`} style={{ marginLeft:5 }}>
+              {brick.object_type === "NodeShape" ? "N" : "P"}
+            </span>
+          )}
+        </div>
+        {brickRefs.map((ref, i) => (
+          <div key={i} style={{ paddingLeft:16, fontSize:12, color:"#8888cc", fontStyle:"italic" }}>
+            └ ⬡ {ref.label || ref.schema_id} ({ref.property_path})
+          </div>
+        ))}
+        {children.map(childId => renderNode(childId, depth + 1))}
+      </div>
+    );
+  };
+
+  if (!rootBrickId && components.length === 0) {
+    return <div className="empty-hint">No components yet</div>;
+  }
+
+  const roots = tree.roots?.length ? tree.roots : (rootBrickId ? [rootBrickId] : []);
+  const standalone = components.filter(c => !roots.includes(c.brick_id) && !Object.values(tree.tree || {}).flat().includes(c.brick_id));
+
+  return (
+    <div style={{ fontFamily:"monospace" }}>
+      {roots.map(id => renderNode(id, 0))}
+      {standalone.length > 0 && (
+        <>
+          <div style={{ fontSize:11, color:"#aaa", marginTop:10, marginBottom:4 }}>Ungrouped</div>
+          {standalone.map(c => renderNode(c.brick_id, 0))}
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ── Main App ────────────────────────────────────────── */
+function App() {
+  const [sessionId, setSessionId] = useState(null);
+  const [schemaLibraries, setSchemaLibraries] = useState([]);
+  const [brickLibraries, setBrickLibraries] = useState([]);
+  const [activeSchemaLib, setActiveSchemaLib] = useState("");
+  const [activeBrickLib, setActiveBrickLib] = useState("");
+  const [schemas, setSchemas] = useState([]);
+  const [selectedSchemaId, setSelectedSchemaId] = useState(null);
+  const [schemaData, setSchemaData] = useState(null);
+  const [status, setStatus] = useState("Initialising…");
+  const [toast, setToast] = useState(null);
+  const [showNewSchema, setShowNewSchema] = useState(false);
+
+  const showToast = (msg, type = "success") => setToast({ msg, type });
+
+  /* ── Init session ── */
+  useEffect(() => {
+    api("POST", "/api/session", { client_type: "web" }).then(r => {
+      if (r.status === "success") {
+        setSessionId(r.data.session_id);
+        setStatus("Ready");
+      } else {
+        setStatus("Error creating session");
+      }
+    }).catch(() => setStatus("Cannot connect to server"));
+  }, []);
+
+  /* ── Push libraries to session, then reload schema list ── */
+  const pushLibrariesAndReload = useCallback(async (sid, sLib, bLib) => {
+    if (!sid) return;
+    await api("PUT", `/api/session/${sid}/libraries`, {
+      schema_library: sLib || null,
+      brick_library: bLib || null,
+    });
+    const r = await api("GET", `/api/session/${sid}/schemas`);
+    if (r.status === "success") setSchemas(r.data || []);
+  }, []);
+
+  /* ── Load libraries on session ready, then push & load schemas ── */
+  useEffect(() => {
+    if (!sessionId) return;
+    (async () => {
+      const r = await api("GET", `/api/libraries?session_id=${sessionId}`);
+      if (r.status === "success") {
+        const schemaLibs = r.data.schema_libraries || [];
+        const brickLibs  = r.data.brick_libraries  || [];
+        setSchemaLibraries(schemaLibs);
+        setBrickLibraries(brickLibs);
+        const sLib = schemaLibs[0] || null;
+        const bLib = brickLibs[0]  || null;
+        if (sLib) setActiveSchemaLib(sLib);
+        if (bLib) setActiveBrickLib(bLib);
+        await pushLibrariesAndReload(sessionId, sLib, bLib);
+      }
+    })();
+  }, [sessionId]);
+
+  /* ── Reload schemas when user changes library dropdowns ── */
+  const loadSchemas = useCallback(async () => {
+    if (!sessionId || (!activeSchemaLib && !activeBrickLib)) return;
+    await pushLibrariesAndReload(sessionId, activeSchemaLib, activeBrickLib);
+    setSchemaData(null);
+    setSelectedSchemaId(null);
+  }, [sessionId, activeSchemaLib, activeBrickLib, pushLibrariesAndReload]);
+
+  const prevLibRef = React.useRef(null);
+  useEffect(() => {
+    const key = `${activeSchemaLib}|${activeBrickLib}`;
+    if (prevLibRef.current === null) { prevLibRef.current = key; return; }
+    if (prevLibRef.current !== key) { prevLibRef.current = key; loadSchemas(); }
+  }, [activeSchemaLib, activeBrickLib]);
+
+  /* ── Select schema ── */
+  const selectSchema = async (id) => {
+    setSelectedSchemaId(id);
+    const r = await api("GET", `/api/session/${sessionId}/schemas/${encodeURIComponent(id)}`);
+    if (r.status === "success") {
+      setSchemaData(r.data);
+      setStatus(`Loaded: ${r.data?.name || id}`);
+    } else showToast("Failed to load schema", "error");
+  };
+
+  const handleSaved = (updated) => {
+    setSchemaData(updated);
+    setSchemas(prev => prev.map(s => s.schema_id === updated.schema_id ? { ...s, ...updated } : s));
+  };
+
+  const handleDeleted = (id) => {
+    setSchemas(prev => prev.filter(s => s.schema_id !== id));
+    setSelectedSchemaId(null);
+    setSchemaData(null);
+    setStatus("Schema deleted");
+  };
+
+  const handleCreated = async (schema) => {
+    setShowNewSchema(false);
+    await loadSchemas();
+    selectSchema(schema.schema_id);
+    showToast("Schema created", "success");
+  };
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", height:"100vh" }}>
+      <header>
+        <h1>📋 Schema App v2 — SHACL Schema Editor</h1>
+      </header>
+
+      <div className="toolbar">
+        <span style={{ fontSize:12, color:"#555" }}>Schema lib:</span>
+        <select value={activeSchemaLib} onChange={e => setActiveSchemaLib(e.target.value)} style={{ width:160 }}>
+          {schemaLibraries.map(l => <option key={l} value={l}>{l}</option>)}
+        </select>
+        <span style={{ fontSize:12, color:"#555", marginLeft:8 }}>Brick lib:</span>
+        <select value={activeBrickLib} onChange={e => setActiveBrickLib(e.target.value)} style={{ width:160 }}>
+          {brickLibraries.map(l => <option key={l} value={l}>{l}</option>)}
+        </select>
+        <div style={{ flex:1 }}/>
+        <button className="btn btn-primary" disabled={!sessionId} onClick={() => setShowNewSchema(true)}>+ New Schema</button>
+      </div>
+
+      <div className="layout">
+        {/* Schema list sidebar */}
+        <div className="sidebar">
+          <div className="sidebar-section">
+            <h3>Schemas ({schemas.length})</h3>
+          </div>
+          <div className="schema-list">
+            {schemas.length === 0
+              ? <div className="empty-hint">No schemas</div>
+              : schemas.map(s => (
+                <div key={s.schema_id}
+                     className={`schema-item ${selectedSchemaId === s.schema_id ? "selected" : ""}`}
+                     title={s.schema_id}
+                     onClick={() => selectSchema(s.schema_id)}>
+                  {s.name || s.schema_id}
+                  {s.description && <div className="schema-item-meta">{s.description}</div>}
+                </div>
+              ))
+            }
+          </div>
+        </div>
+
+        {/* Editor */}
+        <div className="main">
+          <div className="editor-pane">
+            <SchemaEditor
+              sessionId={sessionId}
+              schemaData={schemaData}
+              allSchemas={schemas}
+              brickLib={activeBrickLib}
+              onSaved={handleSaved}
+              onToast={showToast}
+              onDeleted={handleDeleted}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="status-bar">{status}</div>
+
+      {toast && <Toast msg={toast.msg} type={toast.type} onDone={() => setToast(null)}/>}
+
+      {showNewSchema && (
+        <NewSchemaModal
+          sessionId={sessionId}
+          brickLib={activeBrickLib}
+          onCreated={handleCreated}
+          onClose={() => setShowNewSchema(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+{% endraw %}
+</script>
+</body>
+</html>
