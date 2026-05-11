@@ -66,8 +66,9 @@ class BrickIntegration:
         return None
     
     def get_brick_libraries(self) -> List[str]:
-        """Get all available brick libraries"""
-        return self.brick_core.get_libraries()
+        """Get all available brick libraries (excludes internal dirs like archive/templates)"""
+        _exclude = {'archive', 'templates'}
+        return [lib for lib in self.brick_core.get_libraries() if lib not in _exclude]
     
     def validate_brick_ids(self, brick_ids: List[str], library_name: Optional[str] = None) -> Dict[str, bool]:
         """Validate that all brick IDs exist"""

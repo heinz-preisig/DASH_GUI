@@ -43,6 +43,8 @@ class SchemaBackendSession:
         # Session-specific state
         self.current_schema = None
         self.session_data = {}
+        self.active_schema_library = None
+        self.active_brick_library = None
         
         # Event handlers for this session
         self.event_handlers = {
@@ -81,6 +83,8 @@ class SchemaBackendSession:
             "client_type": self.client_type,
             "created_at": self.created_at.isoformat(),
             "current_schema_id": self.current_schema.schema_id if self.current_schema else None,
+            "active_schema_library": self.active_schema_library,
+            "active_brick_library": self.active_brick_library,
             "is_active": True
         }
     

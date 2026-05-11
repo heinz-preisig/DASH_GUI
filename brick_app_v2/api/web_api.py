@@ -505,6 +505,53 @@ class BrickWebAPI:
                 "timestamp": datetime.now().isoformat(),
                 "version": "1.0.0"
             })
+
+        # SHACL import
+        @self.app.route('/api/import/shacl', methods=['POST'])
+        def import_shacl():
+            """
+            Import SHACL NodeShapes from an uploaded .ttl file.
+
+            Multipart form fields:
+              file     – the .ttl file (required)
+              library  – target library name (optional; defaults to filename stem)
+              prefix   – prepended to library name when no library given (optional)
+            """
+            from brick_app_v2.core.shacl_importer import SHACLImporter
+            from flask import request as _req
+
+            if 'file' not in _req.files:
+                return jsonify({"status": "error", "message": "No file uploaded"}), 400
+
+            uploaded = _req.files['file']
+            if not uploaded.filename:
+                return jsonify({"status": "error", "message": "Empty filename"}), 400
+
+            prefix  = _req.form.get('prefix', 'imported')
+            stem    = uploaded.filename.rsplit('.', 1)[0]
+            library = _req.form.get('library') or f"{prefix}_{stem}"
+
+            turtle_text = uploaded.read().decode('utf-8', errors='replace')
+
+            try:
+                importer = SHACLImporter(self.backend.brick_core.repository_path)
+                result   = importer.import_turtle_string(
+                    turtle_text, library, source_name=uploaded.filename
+                )
+            except ImportError as e:
+                return jsonify({"status": "error", "message": str(e)}), 500
+
+            if result.errors:
+                return jsonify({
+                    "status": "error",
+                    "message": result.errors[0],
+                    "data": result.to_dict(),
+                }), 422
+
+            return jsonify({
+                "status": "success",
+                "data": {**result.to_dict(), "library": library},
+            })
     
     def _setup_error_handlers(self):
         """Setup error handlers"""
