@@ -7,6 +7,7 @@
 ### Core Documentation
 - **README_V2_STATUS.md** - Complete v2 system status and architecture
 - **TASK_MANAGER.md** - Task management and operations guide
+- **ARCHIVE.md** - Archived/outdated documentation
 - **API_REFERENCE.md** - API documentation (future)
 
 ### User Guides
@@ -15,8 +16,9 @@
 - **TROUBLESHOOTING.md** - Common issues and solutions
 
 ### Development Documentation
-- **DEVELOPER_GUIDE.md** - Development setup and contribution guide
+- **DEVELOPMENT.md** - Development environment setup (IDE, Docker, local)
 - **ARCHITECTURE.md** - System architecture documentation
+- **ROADMAP.md** - Future features and planned enhancements
 - **CHANGELOG.md** - Version history and changes
 
 ## 🚀 Quick Access
@@ -38,8 +40,11 @@ cat docs/TROUBLESHOOTING.md
 # Architecture
 cat docs/ARCHITECTURE.md
 
-# Development guide
-cat docs/DEVELOPER_GUIDE.md
+# Development setup
+cat docs/DEVELOPMENT.md
+
+# Roadmap & future features
+cat docs/ROADMAP.md
 
 # API reference
 cat docs/API_REFERENCE.md
@@ -63,9 +68,10 @@ cat docs/TASK_MANAGER.md
 | QUICK_START.md | Quick start guide | New Users |
 | USER_GUIDE.md | Complete user manual | All Users |
 | TROUBLESHOOTING.md | Common issues & solutions | Users |
-| DEVELOPER_GUIDE.md | Development setup | Developers |
+| DEVELOPMENT.md | Development environment setup | Developers |
 | ARCHITECTURE.md | System architecture | Developers |
-| API_REFERENCE.md | API documentation | Developers |
+| ROADMAP.md | Future features & enhancements | All |
+| ARCHIVE.md | Archived/outdated docs | Developers |
 | CHANGELOG.md | Version history | All |
 
 ## 🔧 Documentation Maintenance

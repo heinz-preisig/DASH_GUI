@@ -161,6 +161,16 @@ QT INTERFACE (Alphabetical Sorting):
 DOCUMENTATION:
   README.md                                   Added Docker deployment section
   docs/QUICK_START.md                         Added Docker quick start option
+  docs/README.md                              Updated with new consolidated files
+
+CONSOLIDATION (moved to docs/):
+  PYCHARM_SETUP.md → docs/DEVELOPMENT.md       IDE, Docker, local dev setup
+  Journal.md → docs/ROADMAP.md                Future tree structure feature
+  README_ARCHIVE.md → docs/ARCHIVE.md         Archive explanation
+
+CLEANUP:
+  BRICK_APP_STATUS.md                         Moved to archive/ (outdated)
+  BRICK_BUILDING_GUIDE.md                     Deleted (duplicate of docs/)
 
 CORE:
   schema_app_v2/core/session_manager.py         active library attrs + get_session_info

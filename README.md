@@ -43,8 +43,9 @@ python3 run_tasks.py dash       # Web
 - **🚀 Task Management**: `docs/TASK_MANAGER.md` - Centralized operations guide
 
 ### Developer Documentation
-- **🧱 Brick Building**: `BRICK_BUILDING_GUIDE.md` - Brick creation guide
-- **⚙️ Development Setup**: `PYCHARM_SETUP.md` - IDE configuration
+- **🧱 Brick Building**: `docs/BRICK_BUILDING_GUIDE.md` - Brick creation guide
+- **⚙️ Development Setup**: `docs/DEVELOPMENT.md` - IDE, Docker, local setup
+- **🗺️ Roadmap**: `docs/ROADMAP.md` - Future features and enhancements
 
 ## 🎯 Task Management
 
@@ -182,6 +183,12 @@ cat docs/USER_GUIDE.md
 
 # Troubleshooting
 cat docs/TROUBLESHOOTING.md
+
+# Development setup
+cat docs/DEVELOPMENT.md
+
+# Future features
+cat docs/ROADMAP.md
 ```
 
 ### System Commands
