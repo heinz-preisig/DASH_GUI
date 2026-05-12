@@ -84,7 +84,8 @@ docker run -p 5000:5000 \
 ### Image Tags
 
 The workflow automatically creates multiple tags:
-- `latest` - Always points to the most recent build
+- `latest` - Always points to the most recent build on the default branch (main/master)
+- `master` or `main` - Branch name tag for the latest commit on that branch
 - `v1.0.0` - Specific version from Git tag
 - `v1.0` - Minor version
 - `v1` - Major version
