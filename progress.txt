@@ -93,16 +93,45 @@ KNOWN STATE / THINGS TO VERIFY NEXT SESSION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 HOW TO RESTART
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DOCKER DEPLOYMENT (Web Interface)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Schema app:
+Quick start with bash scripts:
+    ./start-schema-app.sh          # Schema app on http://localhost:5000
+    ./start-brick-app.sh           # Brick app on http://localhost:5001
+
+Or run both:
+    ./start-schema-app.sh &
+    ./start-brick-app.sh &
+
+Manual Docker:
+    docker build -t dash-gui .
+    docker run -p 5000:5000 -e APP=schema dash-gui
+    docker run -p 5001:5001 -e APP=brick -e PORT=5001 dash-gui
+
+Files added:
+    Dockerfile              - Multi-stage build with entrypoint script
+    docker-compose.yml      - Schema + optional Brick app services
+    docker-entrypoint.sh    - Chooses app via APP env var
+    .dockerignore           - Excludes for smaller image
+    start-schema-app.sh     - Quick start script for Schema App
+    start-brick-app.sh      - Quick start script for Brick App
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Schema app (local development):
     cd /home/heinz/1_Gits/DASH_GUI
     .venv/bin/python run_schema_app_web.py
+    → http://localhost:5000
+
+Schema app (Docker):
+    docker-compose up -d
     → http://localhost:5000
 
 Brick app:
     cd /home/heinz/1_Gits/DASH_GUI
     .venv/bin/python run_brick_app_web.py
-    → http://localhost:5001  (check run_brick_app_web.py for actual port)
+    → http://localhost:5001
 
 DigiPass libraries are now bundled in the repo (shared_libraries/bricks/digipass_*).
 
@@ -115,10 +144,29 @@ To re-import from source SHACL (if source files change):
 KEY FILES CHANGED THIS SESSION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-schema_app_v2/core/session_manager.py         active library attrs + get_session_info
-schema_app_v2/core/brick_integration.py       get_brick_libraries excludes archive/templates
-schema_app_v2/interfaces/web/flask_app.py     _slib/_blib helpers, PUT /libraries endpoint
-schema_app_v2/interfaces/web/templates/index.html  sequential library push + schema load
-brick_app_v2/core/shacl_importer.py           NEW — SHACL import engine
-brick_app_v2/api/web_api.py                   NEW endpoint POST /api/import/shacl
-parse_shacl_to_bricks.py                      refactored to thin CLI wrapper
+DOCKER / DEPLOYMENT:
+  Dockerfile                                  NEW — Multi-stage web-only container
+  docker-compose.yml                          NEW — Docker Compose with both app services
+  docker-entrypoint.sh                        NEW — Entrypoint script for APP selection
+  .dockerignore                               NEW — Excludes for smaller image
+  run_schema_app_web.py                       Added --host parameter for Docker
+  run_brick_app_web.py                        Added --host parameter for Docker
+  schema_app_v2/__init__.py                   Made Qt import optional (for web-only)
+
+QT INTERFACE (Alphabetical Sorting):
+  brick_panel.py                              Brick list + libraries sorted
+  add_component_dialog.py                     Brick list sorted
+  schema_management.py                        Schemas, libraries, root bricks sorted
+
+DOCUMENTATION:
+  README.md                                   Added Docker deployment section
+  docs/QUICK_START.md                         Added Docker quick start option
+
+CORE:
+  schema_app_v2/core/session_manager.py         active library attrs + get_session_info
+  schema_app_v2/core/brick_integration.py       get_brick_libraries excludes archive/templates
+  schema_app_v2/interfaces/web/flask_app.py     _slib/_blib helpers, PUT /libraries endpoint
+  schema_app_v2/interfaces/web/templates/index.html  sequential library push + schema load
+  brick_app_v2/core/shacl_importer.py           NEW — SHACL import engine
+  brick_app_v2/api/web_api.py                   NEW endpoint POST /api/import/shacl
+  parse_shacl_to_bricks.py                      refactored to thin CLI wrapper

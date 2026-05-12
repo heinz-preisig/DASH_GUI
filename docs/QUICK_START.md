@@ -2,20 +2,33 @@
 
 **Purpose**: Get started with DASH GUI v2 in 5 minutes
 
-## 🚀 Prerequisites
+## 🚀 Quick Start Options
 
-### System Requirements
+### Option A: Docker (No Python Setup Required)
+```bash
+# Start Schema App
+./start-schema-app.sh
+# → Open http://localhost:5000
+
+# Start Brick App (in another terminal)
+./start-brick-app.sh
+# → Open http://localhost:5001
+```
+
+### Option B: Local Development
+
+#### Prerequisites
 - Python 3.13+
 - Virtual environment (`.venv/`)
 - Dependencies installed (see `pyproject.toml`)
 
-### Quick Setup Check
+#### Quick Setup Check
 ```bash
 # Verify everything is ready
 python3 run_tasks.py setup
 ```
 
-## 🎯 5-Minute Quick Start
+## 🎯 5-Minute Quick Start (Local)
 
 ### Step 1: Launch Interface (30 seconds)
 ```bash
@@ -24,6 +37,9 @@ python3 run_tasks.py qt
 
 # OR DASH Web Interface
 python3 run_tasks.py dash
+
+# OR Flask Web Interface
+.venv/bin/python run_schema_app_web.py
 ```
 
 ### Step 2: Create First Schema (2 minutes)
@@ -70,10 +86,15 @@ A: In `schema_repositories/default/schemas/`
 A: Place JSON brick files in `brick_repositories/default/bricks/`
 
 **Q: Can I use the web interface?**
-A: Yes! Run `python3 run_tasks.py dash` and open http://localhost:8050
+A: Yes! Multiple options:
+- Docker: `./start-schema-app.sh` → http://localhost:5000
+- Flask: `.venv/bin/python run_schema_app_web.py` → http://localhost:5000
+- DASH: `python3 run_tasks.py dash` → http://localhost:8050
 
 **Q: How do I stop the application?**
-A: Run `python3 run_tasks.py stop` or close the window
+A: 
+- Docker: Press Ctrl+C or run `docker stop <container>`
+- Local: Run `python3 run_tasks.py stop` or close the window
 
 ## 📚 Further Reading
 

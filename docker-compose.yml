@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  # Schema App (default) - http://localhost:5000
+  schema-app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - APP=schema          # or APP=brick for brick app
+      - PORT=5000
+    volumes:
+      # Persist user data (schemas, bricks they create)
+      - ./shared_libraries:/app/shared_libraries
+    restart: unless-stopped
+
+  # Brick App - http://localhost:5001
+  # Uncomment to run both apps simultaneously
+  # brick-app:
+  #   build: .
+  #   ports:
+  #     - "5001:5001"
+  #   environment:
+  #     - FLASK_ENV=production
+  #     - APP=brick
+  #     - PORT=5001
+  #   volumes:
+  #     - ./shared_libraries:/app/shared_libraries
+  #   restart: unless-stopped
