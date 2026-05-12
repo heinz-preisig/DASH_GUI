@@ -1,0 +1,37 @@
+{
+  "brick_id": "product2-shape",
+  "name": "Product2Shape",
+  "description": "Second product line",
+  "template_type": "free_text",
+  "object_type": "NodeShape",
+  "namespace": "org",
+  "target_class": "org:Product",
+  "leaf_properties": [
+    {
+      "path": "org:productName",
+      "label": "Product 2 Name",
+      "datatype": "xsd:string",
+      "min_count": 1,
+      "max_count": 1
+    },
+    {
+      "path": "org:description",
+      "label": "Description",
+      "datatype": "xsd:string",
+      "min_count": 0,
+      "max_count": null
+    },
+    {
+      "path": "org:productCode",
+      "label": "SKU Code",
+      "datatype": "xsd:string",
+      "min_count": 1,
+      "max_count": 1
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [],
+  "created_at": "2026-05-12T12:30:00.000000",
+  "updated_at": "2026-05-12T12:30:00.000000",
+  "metadata": {}
+}

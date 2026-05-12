@@ -263,3 +263,6 @@ htmlcov/
 !.gitignore
 !shared_libraries/config.json
 !shared_libraries/library_manager.py
+
+# Node.js dependencies
+node_modules/

@@ -1,0 +1,92 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix org: <http://example.org/org/#> .
+
+# Root Brick
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix org: <http://example.org/org/#> .
+
+CompanyShape a sh:NodeShape ;
+    sh:targetClass org:Organization .
+
+# Component: 2680574d-7b7f-49d9-8475-18da71075052 (depth 0)
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix org: <http://example.org/org/#> .
+
+CompanyShape a sh:NodeShape ;
+    sh:targetClass org:Organization ;
+    sh:property [
+        sh:path hasAddressshape ;
+        sh:node AddressShape ;
+    ] ;
+    sh:property [
+        sh:path hasPersonshape ;
+        sh:node PersonShape ;
+    ] ;
+    sh:property [
+        sh:path hasProduct1shape ;
+        sh:node Product1Shape ;
+        sh:order 1 ;
+        sh:name "Product 1"@en ;
+    ] ;
+    sh:property [
+        sh:path hasProduct2shape ;
+        sh:node Product2Shape ;
+        sh:order 2 ;
+        sh:name "Product 2"@en ;
+    ] ;
+    sh:property [
+        sh:path hasProduct3shape ;
+        sh:node Product3Shape ;
+        sh:order 3 ;
+        sh:name "Product 3"@en ;
+    ] .
+
+# Component: 3509c09e-1274-40a7-a96a-daf58a361d77 (depth 1)
+AddressShape a sh:NodeShape ;
+    sh:targetClass org:Address .
+
+# Component: eb49bf40-422e-4c9e-9b28-0e2bc44f8eb4 (depth 1)
+PersonShape a sh:NodeShape ;
+    sh:targetClass foaf:Person .
+
+# Component: product1-shape (depth 1)
+Product1Shape a sh:NodeShape ;
+    sh:targetClass org:Product ;
+    sh:property [
+        sh:path hasPersonshape ;
+        sh:node PersonShape ;
+    ] ;
+    sh:order 1 .
+
+# Component: product2-shape (depth 1)
+Product2Shape a sh:NodeShape ;
+    sh:targetClass org:Product ;
+    sh:property [
+        sh:path hasPersonshape ;
+        sh:node PersonShape ;
+    ] ;
+    sh:order 2 .
+
+# Component: product3-shape (depth 1)
+Product3Shape a sh:NodeShape ;
+    sh:targetClass org:Product ;
+    sh:property [
+        sh:path hasPersonshape ;
+        sh:node PersonShape ;
+    ] ;
+    sh:order 3 .
+
+# Schema Metadata
+# Schema ID: company-three-products
+# Schema Name: CompanyWithThreeProducts
+# Description: A company with address and exactly three products, each with a manager
+# Created: 2026-05-12T12:30:00.000000
+# Updated: 2026-05-12T13:26:05.991536
+# Root Brick: 2680574d-7b7f-49d9-8475-18da71075052
+# Component Bricks: 6
+# Components: 2680574d-7b7f-49d9-8475-18da71075052, 3509c09e-1274-40a7-a96a-daf58a361d77, product1-shape, product2-shape, product3-shape, eb49bf40-422e-4c9e-9b28-0e2bc44f8eb4
