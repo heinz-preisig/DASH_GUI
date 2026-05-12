@@ -125,6 +125,16 @@ python3 run_tasks.py stop      # Stop all processes
 ### Prerequisites
 - Docker installed on your system
 
+### Quick Start (Docker Hub - No Build Required)
+If you have a Docker Hub account or use a published image:
+```bash
+# Pull and run published image (replace with your Docker Hub username)
+./start-schema-app.sh 5000 hapdocker/dash-gui:latest
+
+# Or directly with docker
+docker run -p 5000:5000 -v "$(pwd)/shared_libraries:/app/shared_libraries" hapdocker/dash-gui:latest
+```
+
 ### Quick Start
 ```bash
 # Build and start Schema App
