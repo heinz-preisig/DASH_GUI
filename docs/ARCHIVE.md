@@ -30,6 +30,7 @@ This directory contains legacy and experimental components that are not part of 
 Note: All repositories remaining in the root directory (`brick_repositories/`, `schema_repositories/`, `ontologies/`) are actively used by the v2 applications and are not archived.
 
 ### Documentation
+- `BRICK_APP_STATUS.md` - Legacy brick app status (May 2026, pre-Docker)
 - `GUI_LAUNCH_GUIDE.md` - Legacy GUI launch guide
 - `IMPLEMENTATION_STATUS.md` - Previous implementation status
 - `LIBRARY_MANAGEMENT.md` - Library management documentation
