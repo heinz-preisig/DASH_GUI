@@ -62,14 +62,10 @@ COMPLETED THIS SESSION
      digipass_all                  1074 bricks  (deduplicated union)
      digipass_common                217 bricks  (shapes in ≥2 files)
 
-   Storage: JSON files live in Dropbox:
-     ~/Dropbox/checked_out/Research.Papers_and_Reports.2025.002__DigiPass_SHACL/brick_libraries/
-   Symlinks in shared_libraries/bricks/ point there (symlinks are in git).
-   On a new machine: ensure Dropbox is synced, then recreate symlinks:
-     DROPBOX_TARGET="~/Dropbox/checked_out/Research.Papers_and_Reports.2025.002__DigiPass_SHACL/brick_libraries"
-     for d in "$DROPBOX_TARGET"/digipass_*/; do
-       ln -s "$d" "shared_libraries/bricks/$(basename $d)"
-     done
+   Storage: DigiPass libraries now live directly in the repo:
+     shared_libraries/bricks/digipass_*
+   
+   Previously stored in Dropbox with symlinks, now bundled for web deployment.
 
    Each brick has:
      - metadata.source_iri     original shape IRI
@@ -108,9 +104,11 @@ Brick app:
     .venv/bin/python run_brick_app_web.py
     → http://localhost:5001  (check run_brick_app_web.py for actual port)
 
-Re-import DigiPass SHACL (idempotent, safe to re-run):
+DigiPass libraries are now bundled in the repo (shared_libraries/bricks/digipass_*).
+
+To re-import from source SHACL (if source files change):
     .venv/bin/python parse_shacl_to_bricks.py \
-        "/home/heinz/Dropbox/checked_out/Research.Papers_and_Reports.2025.002__DigiPass_SHACL/application_schacl_forms" \
+        "/path/to/application_schacl_forms" \
         --prefix digipass --combined digipass_all --common digipass_common
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
