@@ -15,3 +15,4 @@ core/editor_backend.py
 core/multi_tenant_backend.py
 core/ontology_manager.py
 core/session_manager.py
+core/shacl_importer.py
