@@ -21,12 +21,29 @@
 python3 run_tasks.py setup
 
 # 2. Launch interface
-python3 run_tasks.py qt        # Desktop
+python3 run_tasks.py qt        # Desktop (PyQt6)
 # OR
-python3 run_tasks.py dash       # Web
+python3 run_tasks.py dash       # Web (DASH)
+# OR
+uv run python run_schema_app_web.py --port 5003  # Web (Flask + React)
 
 # 3. Create first schema
 # Follow interface instructions or see: docs/QUICK_START.md
+```
+
+### Option 3: Web Frontend (Vite + React)
+```bash
+# Build the web frontend (one-time setup)
+./build-web-frontend.sh
+
+# Or manually:
+cd schema_app_v2/interfaces/web
+npm install
+npm run build
+
+# Run Flask backend
+uv run python run_schema_app_web.py --port 5003
+# Access: http://localhost:5003
 ```
 
 ## 📚 Complete Documentation
@@ -82,18 +99,26 @@ python3 run_tasks.py stop      # Stop all processes
 ✅ **Ready for Testing**:
 - Docker deployment (web-only, no Qt dependencies)
 - PyQt6 interface working
+- **Flask/React web interface working** (May 2026)
 - DASH web interface available
 - 7 bricks loading successfully
 - Task management centralized
 - Complete documentation suite
 
 ✅ **Features Available**:
-- Schema creation and editing
-- Brick integration and management
-- SHACL export functionality
+- Schema creation and editing (Qt + Web)
+- Brick integration and management (Qt + Web)
+- SHACL export functionality (Qt + Web)
 - Flow configuration
 - Library management
-- Multi-interface support
+- Multi-interface support (Qt, Flask/React, DASH, Docker)
+
+### 🆕 Web Frontend Updates (May 2026)
+- **Modular React architecture** with Vite build system
+- **Component names display correctly** (fetched from API)
+- **Tree view** with hierarchical structure
+- **Groups and schema refs** support
+- **Build script**: `./build-web-frontend.sh`
 
 ## 🐳 Docker Deployment
 

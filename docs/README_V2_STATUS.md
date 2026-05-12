@@ -26,11 +26,19 @@
   - Flow management
   - Library management
 
-#### 🔄 Flask Web Interface (Future)
+#### ✅ Flask Web Interface (Working)
 - **Location**: `schema_app_v2/interfaces/web/`
 - **Main File**: `flask_app.py`
-- **Status**: Code available, requires Flask dependency
-- **Ready for**: Future web development
+- **Frontend**: React + Vite modular architecture
+- **Build Script**: `build-web-frontend.sh`
+- **Status**: Fully functional, ready for testing
+- **Features**:
+  - Schema creation, editing, saving
+  - Component management with proper name display
+  - Tree view with hierarchical structure
+  - Groups and schema references
+  - SHACL export
+- **Launch**: `uv run python run_schema_app_web.py --port 5003`
 
 #### 📊 DASH Web Interface (Interactive)
 - **Location**: `schema_app_v2/interfaces/web/dash_app.py`

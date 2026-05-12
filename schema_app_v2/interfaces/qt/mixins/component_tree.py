@@ -21,6 +21,10 @@ class ComponentTreeMixin:
         if not self.current_schema:
             return
 
+        # Track (parent_id, brick_id) pairs to prevent duplicates at same tree position
+        # but allow same brick under different parents (e.g., PersonShape under each Product)
+        self._added_pairs = set()
+
         # Root NodeShape header
         if self.current_schema.root_brick_id:
             root_brick = self.brick_integration.get_brick_by_id(self.current_schema.root_brick_id)
@@ -36,15 +40,26 @@ class ComponentTreeMixin:
                 for ref in self.current_schema.get_schema_refs_for_brick(self.current_schema.root_brick_id):
                     self._add_schema_ref_item(root_item, ref, self.current_schema.root_brick_id)
 
+                # Add root's children recursively (includes ungrouped children like AddressShape)
+                for child_id in self.current_schema.get_ui_children(self.current_schema.root_brick_id):
+                    child_meta = self.current_schema.get_component_ui_metadata(child_id)
+                    if child_meta and child_meta.group_id:
+                        continue  # Skip - shown in group instead
+                    self._add_brick_tree_item(root_item, child_id)
+
+                self._added_pairs.add((None, self.current_schema.root_brick_id))
+
         # Groups as top-level branches
         for group in self.current_schema.get_groups_by_sequence():
             self._add_group_to_tree(None, group)
 
-        # Ungrouped top-level components
+        # Ungrouped top-level components (not in any group)
         for brick_id in self.current_schema.get_ui_root_components():
+            if (None, brick_id) in self._added_pairs:
+                continue  # Skip - already added as root
             ui_meta = self.current_schema.get_component_ui_metadata(brick_id)
             if ui_meta and ui_meta.group_id:
-                continue
+                continue  # Skip - already shown in group
             self._add_brick_tree_item(None, brick_id)
 
     def _add_group_to_tree(self, parent_item, group: dict):
@@ -61,16 +76,34 @@ class ComponentTreeMixin:
         group_item.setFont(0, font)
         group_item.setExpanded(True)
 
-        for brick_id in self.current_schema.get_ui_root_components():
+        # Add all components that belong to this group (not just root components)
+        for brick_id in self.current_schema.component_brick_ids:
             ui_meta = self.current_schema.get_component_ui_metadata(brick_id)
             if ui_meta and ui_meta.group_id == group['id']:
                 self._add_brick_tree_item(group_item, brick_id)
 
     def _add_brick_tree_item(self, parent_item, brick_id: str):
         """Recursively add a brick and its UI-metadata children to the tree"""
+        # Get parent brick_id from parent_item data if available
+        parent_brick_id = None
+        if parent_item:
+            data = parent_item.data(0, Qt.ItemDataRole.UserRole)
+            if data and len(data) >= 2:
+                item_type = data[0]
+                if item_type == 'brick':
+                    parent_brick_id = data[1]
+
+        # Skip if (parent, brick) pair already added (prevents duplicates at same position)
+        # but allow same brick under different parents (e.g., PersonShape under each Product)
+        pair = (parent_brick_id, brick_id)
+        if pair in self._added_pairs:
+            return
+
         brick = self.brick_integration.get_brick_by_id(brick_id)
         if not brick:
             return
+
+        self._added_pairs.add(pair)
 
         ui_meta = self.current_schema.get_component_ui_metadata(brick_id)
         label = (ui_meta.label if ui_meta and ui_meta.label else brick.name)
@@ -86,6 +119,10 @@ class ComponentTreeMixin:
         item.setExpanded(True)
 
         for child_id in self.current_schema.get_ui_children(brick_id):
+            # Skip children that are in groups - they'll be shown in their group
+            child_meta = self.current_schema.get_component_ui_metadata(child_id)
+            if child_meta and child_meta.group_id:
+                continue
             self._add_brick_tree_item(item, child_id)
 
         for ref in self.current_schema.get_schema_refs_for_brick(brick_id):
@@ -189,13 +226,16 @@ class ComponentTreeMixin:
                     menu.exec(self.ui.componentTreeWidget.viewport().mapToGlobal(pos))
                     return
 
-                if kind == 'brick':
+                if kind in ('brick', 'root'):
                     node_id = node_data[1]
                     menu.addSeparator()
-                    menu.addAction("Set Parent…").triggered.connect(
-                        lambda: self._tree_set_parent(node_id))
-                    menu.addAction("Move to Group…").triggered.connect(
-                        lambda: self._tree_move_to_group(node_id))
+                    menu.addAction("Add Child…").triggered.connect(
+                        lambda: self._tree_add_child(node_id))
+                    if kind == 'brick':
+                        menu.addAction("Set Parent…").triggered.connect(
+                            lambda: self._tree_set_parent(node_id))
+                        menu.addAction("Move to Group…").triggered.connect(
+                            lambda: self._tree_move_to_group(node_id))
 
                     ui_meta = self.current_schema.get_component_ui_metadata(node_id)
                     if ui_meta and (ui_meta.parent_id or ui_meta.group_id):
@@ -257,6 +297,44 @@ class ComponentTreeMixin:
         self.current_schema.delete_group(group_id)
         self.schema_core.save_schema(self.current_schema)
         self.refresh_component_tree()
+
+    def _tree_add_child(self, parent_brick_id: str):
+        """Add an existing component as a child of the selected component"""
+        # Get candidates that are not already children and not the parent itself
+        candidates = [b for b in self.current_schema.component_brick_ids
+                      if b != parent_brick_id and self.current_schema.get_ui_parent(b) != parent_brick_id]
+        if not candidates:
+            QMessageBox.information(self, "No candidates", "No available components to add as child.")
+            return
+
+        id_map = {}
+        names = []
+        for bid in candidates:
+            brick = self.brick_integration.get_brick_by_id(bid)
+            name = brick.name if brick else bid
+            names.append(name)
+            id_map[name] = bid
+
+        chosen, ok = QInputDialog.getItem(self, "Add Child", "Select component to add as child:", names, 0, False)
+        if not ok or not chosen:
+            return
+
+        child_id = id_map[chosen]
+
+        # Get edge details
+        path_iri, ok1 = QInputDialog.getText(self, "Property Path", "Enter property path IRI (optional):", text="org:has")
+        if not ok1:
+            return
+
+        label, ok2 = QInputDialog.getText(self, "Label", "Enter display label (optional):", text=chosen)
+        if not ok2:
+            return
+
+        # Set the parent relationship (creates edge)
+        self.current_schema.set_component_parent(child_id, parent_brick_id, path_iri or "", label or chosen)
+        self.schema_core.save_schema(self.current_schema)
+        self.refresh_component_tree()
+        self.ui.statusbar.showMessage(f"Added {chosen} as child of {parent_brick_id}")
 
     def _tree_set_parent(self, brick_id: str):
         candidates = [b for b in self.current_schema.component_brick_ids if b != brick_id]

@@ -137,7 +137,10 @@ class DASHFormGenerator:
             for child_id in children:
                 child_brick = self.brick_integration.get_brick_by_id(child_id, library_name)
                 child_ui_metadata = schema.get_component_ui_metadata(child_id)
-                
+
+                # Get edge to access cardinality (min_count/max_count)
+                edge = schema.get_edge_to(child_id) if hasattr(schema, 'get_edge_to') else None
+
                 if child_brick:
                     prop_statement = {
                         "path": child_brick.property_path or f"has{child_brick.name.capitalize()}",
@@ -146,18 +149,25 @@ class DASHFormGenerator:
                         "order": child_ui_metadata.sequence if child_ui_metadata else 0,
                         "group": child_ui_metadata.group_id if child_ui_metadata else None
                     }
-                    
+
+                    # Add cardinality from edge (multiplicity support)
+                    if edge:
+                        if edge.min_count is not None:
+                            prop_statement["minCount"] = edge.min_count
+                        if edge.max_count is not None:
+                            prop_statement["maxCount"] = edge.max_count
+
                     # Add node reference for nested structures
                     if child_brick.object_type == "NodeShape":
                         prop_statement["node"] = child_brick.name
                         prop_statement["viewer"] = "dash:DetailsViewer"
                         prop_statement["editor"] = "dash:DetailsEditor"
-                    
+
                     # Add datatype for PropertyShapes
                     if child_brick.object_type == "PropertyShape" and hasattr(child_brick, 'properties'):
                         if "datatype" in child_brick.properties:
                             prop_statement["datatype"] = child_brick.properties["datatype"]
-                    
+
                     properties.append(prop_statement)
             
             dash_props["properties"] = properties

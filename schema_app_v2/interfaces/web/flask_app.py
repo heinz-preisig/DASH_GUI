@@ -8,8 +8,10 @@ REST API matching the brick_app_v2 architecture:
 
 from datetime import datetime
 
+import os
+
 try:
-    from flask import Flask, request, jsonify, render_template
+    from flask import Flask, request, jsonify, render_template, send_from_directory
     from flask_cors import CORS
     from werkzeug.exceptions import HTTPException
 except ImportError:
@@ -74,7 +76,18 @@ class SchemaWebAPI:
 
         @self.app.route('/')
         def index():
+            # Serve built Vite app from static/dist
+            dist_dir = os.path.join(os.path.dirname(__file__), 'static', 'dist')
+            if os.path.exists(dist_dir):
+                return send_from_directory(dist_dir, 'index.html')
+            # Fallback to template for development
             return render_template('index.html')
+
+        @self.app.route('/assets/<path:filename>')
+        def serve_assets(filename):
+            """Serve Vite built assets"""
+            dist_dir = os.path.join(os.path.dirname(__file__), 'static', 'dist', 'assets')
+            return send_from_directory(dist_dir, filename)
 
         # ── Sessions ───────────────────────────────────────────────────────
 

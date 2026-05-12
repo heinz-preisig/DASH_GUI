@@ -171,8 +171,14 @@ schema_app_v2/
    - Support `sh:maxCount > 1` with JavaScript add/remove row
    - Handle nested schema ref sections as collapsible sub-forms
 
-4. **Web Interface Parity**
-   - `interfaces/web/` lags behind Qt interface; update Flask API to expose schema refs and tree structure
+### ✅ Completed (May 2026)
+
+4. **Web Interface Parity** ✅
+   - Refactored web frontend to modular React + Vite architecture
+   - Fixed API path duplication bug (`/api/api/` → `/api/`)
+   - Component names now display correctly (fetching from API instead of showing IDs)
+   - Tree view, groups, and schema refs working in web interface
+   - Build script `build-web-frontend.sh` automates npm install and build
 
 ### Medium Priority
 
