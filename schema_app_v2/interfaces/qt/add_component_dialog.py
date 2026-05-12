@@ -41,8 +41,8 @@ class AddComponentDialog(QDialog):
         """Load available bricks from controller"""
         self.brickList.clear()
         
-        # Get all bricks from controller
-        bricks = self.controller.get_available_bricks()
+        # Get all bricks from controller and sort alphabetically
+        bricks = sorted(self.controller.get_available_bricks(), key=lambda b: b.name.lower())
         for brick in bricks:
             display_text = f"{brick.name} ({brick.object_type})"
             if hasattr(brick, 'description') and brick.description:

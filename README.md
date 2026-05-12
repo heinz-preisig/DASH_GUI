@@ -4,7 +4,18 @@
 
 ## 🚀 Quick Start
 
-### 5-Minute Quick Start
+### Option 1: Docker Deployment (Recommended for Distribution)
+```bash
+# Quick start with Docker (no Python setup needed)
+./start-schema-app.sh          # Schema app on http://localhost:5000
+./start-brick-app.sh           # Brick app on http://localhost:5001
+
+# Or run both simultaneously
+./start-schema-app.sh &
+./start-brick-app.sh &
+```
+
+### Option 2: Local Development (5-Minute Quick Start)
 ```bash
 # 1. System check
 python3 run_tasks.py setup
@@ -55,9 +66,10 @@ python3 run_tasks.py stop      # Stop all processes
 - **run_tasks.py**: Centralized task runner
 
 ### Interface Options
+- **🐳 Docker Web**: Containerized deployment (no dependencies)
 - **🖥️ PyQt6 Desktop**: Native desktop application
-- **📊 DASH Web**: Interactive web interface
-- **🔄 Flask Web**: Basic web interface (future)
+- **📊 DASH Web**: Interactive web interface (local)
+- **🔄 Flask Web**: Flask-based web API
 
 ### Repositories
 - **brick_repositories/**: Active brick library (7 bricks available)
@@ -67,6 +79,7 @@ python3 run_tasks.py stop      # Stop all processes
 ## 📋 Current Status
 
 ✅ **Ready for Testing**:
+- Docker deployment (web-only, no Qt dependencies)
 - PyQt6 interface working
 - DASH web interface available
 - 7 bricks loading successfully
@@ -80,6 +93,32 @@ python3 run_tasks.py stop      # Stop all processes
 - Flow configuration
 - Library management
 - Multi-interface support
+
+## 🐳 Docker Deployment
+
+### Prerequisites
+- Docker installed on your system
+
+### Quick Start
+```bash
+# Build and start Schema App
+./start-schema-app.sh
+# → http://localhost:5000
+
+# Build and start Brick App
+./start-brick-app.sh  
+# → http://localhost:5001
+
+# Or use docker-compose for both
+docker-compose up -d
+```
+
+### Docker Files
+- `Dockerfile` - Multi-stage build (web-only, ~100MB)
+- `docker-compose.yml` - Both apps with volume persistence
+- `docker-entrypoint.sh` - App selection script
+- `start-schema-app.sh` - Quick start for Schema App
+- `start-brick-app.sh` - Quick start for Brick App
 
 ## 🔧 Development Setup
 
@@ -98,7 +137,10 @@ pip install -r pyproject.toml
 # Desktop interface
 python3 run_tasks.py qt
 
-# Web interface
+# Web interface (Flask)
+.venv/bin/python run_schema_app_web.py
+
+# Web interface (DASH)
 python3 run_tasks.py dash
 
 # System status
@@ -118,12 +160,14 @@ DASH_GUI/
 │   └── TASK_MANAGER.md       # Task management guide
 ├── brick_app_v2/              # Core brick management system
 ├── schema_app_v2/             # Schema construction system
-├── brick_repositories/          # Active brick library
-├── schema_repositories/        # Schema storage
-├── ontologies/               # Ontology cache
+├── shared_libraries/          # Brick & schema libraries (bundled DigiPass)
+├── Dockerfile                 # Docker build (web-only)
+├── docker-compose.yml         # Docker Compose config
+├── start-schema-app.sh       # Quick start: Schema App
+├── start-brick-app.sh        # Quick start: Brick App
 ├── run_tasks.py              # Centralized task runner
-├── run_schema_app_v2.py       # Main launcher
-└── archive/                  # Legacy components
+├── run_schema_app_web.py     # Web launcher (Flask)
+└── run_brick_app_web.py      # Web launcher (Flask)
 ```
 
 ## 🎯 Getting Help

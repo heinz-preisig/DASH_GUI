@@ -31,7 +31,7 @@ class SchemaManagementMixin:
 
     def open_schema(self):
         """Open an existing schema"""
-        schemas = self.schema_core.get_all_schemas()
+        schemas = sorted(self.schema_core.get_all_schemas(), key=lambda s: s.name.lower())
         if not schemas:
             QMessageBox.information(self, "No Schemas", "No schemas found in current library.")
             return
@@ -216,7 +216,7 @@ class SchemaManagementMixin:
             QMessageBox.warning(self, "No Schema", "Please create or select a schema to extend first.")
             return
 
-        all_schemas = self.schema_core.get_all_schemas()
+        all_schemas = sorted(self.schema_core.get_all_schemas(), key=lambda s: s.name.lower())
         parent_schemas = [s for s in all_schemas if s.schema_id != self.current_schema.schema_id]
         if not parent_schemas:
             QMessageBox.warning(self, "No Parent Schemas", "No other schemas available to extend from.")
@@ -384,7 +384,7 @@ class SchemaManagementMixin:
     def refresh_schema_libraries(self):
         """Refresh schema library combo"""
         try:
-            libraries = self.schema_core.get_libraries()
+            libraries = sorted(self.schema_core.get_libraries())
             self.ui.libraryComboBox.clear()
             self.ui.libraryComboBox.addItems(libraries)
             if libraries:
@@ -395,13 +395,15 @@ class SchemaManagementMixin:
     def refresh_schema_list(self):
         """Refresh schema list widget"""
         self.ui.schemaListWidget.clear()
-        for schema in self.schema_core.get_all_schemas():
+        schemas = sorted(self.schema_core.get_all_schemas(), key=lambda s: s.name.lower())
+        for schema in schemas:
             self.ui.schemaListWidget.addItem(schema.name)
 
     def refresh_root_bricks(self):
         """Refresh root brick combo"""
         self.ui.rootBrickComboBox.clear()
-        for brick in self.brick_integration.get_node_shape_bricks():
+        bricks = sorted(self.brick_integration.get_node_shape_bricks(), key=lambda b: b.name.lower())
+        for brick in bricks:
             self.ui.rootBrickComboBox.addItem(brick.name)
 
     def load_schema_into_ui(self, schema):

@@ -47,7 +47,7 @@ class BrickPanelMixin:
     def refresh_brick_libraries(self):
         """Refresh brick library combo"""
         try:
-            libraries = self.brick_integration.get_brick_libraries()
+            libraries = sorted(self.brick_integration.get_brick_libraries())
             self.ui.brickLibraryComboBox.clear()
             self.ui.brickLibraryComboBox.addItems(libraries)
             if libraries:
@@ -61,5 +61,6 @@ class BrickPanelMixin:
         all_bricks = self.brick_integration.get_available_bricks()
         if search_term:
             all_bricks = [b for b in all_bricks if search_term.lower() in b.name.lower()]
+        all_bricks = sorted(all_bricks, key=lambda b: b.name.lower())
         for brick in all_bricks:
             self.ui.brickListWidget.addItem(brick.name)
