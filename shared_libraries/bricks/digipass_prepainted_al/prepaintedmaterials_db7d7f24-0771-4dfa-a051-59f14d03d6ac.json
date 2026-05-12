@@ -1,0 +1,29 @@
+{
+  "brick_id": "db7d7f24-0771-4dfa-a051-59f14d03d6ac",
+  "name": "prepaintedMaterials",
+  "description": "",
+  "template_type": "custom",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/prepaintedMaterials",
+  "leaf_properties": [],
+  "xone_alternatives": [],
+  "tags": [
+    "source:prepainted_al.ttl",
+    "refs:durabilityOfTheCoatingSystemShape",
+    "refs:globalWarmingPotentialShape",
+    "refs:ozoneDepletionPotentialShape",
+    "refs:acidificationPotentialForSoilAndWaterShape",
+    "refs:eutrophicationPotentialShape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/prepaintedMaterials",
+    "source_file": "prepainted_al.ttl"
+  }
+}

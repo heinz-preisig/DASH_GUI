@@ -1,0 +1,55 @@
+{
+  "brick_id": "a6eae727-14a8-4259-a16b-caa2ddbf472f",
+  "name": "RefractiveIndexShape",
+  "description": "",
+  "template_type": "decimal_with_unit",
+  "namespace": "dpp",
+  "target_class": "http://qudt.org/vocab/quantitykind/RefractiveIndexShape",
+  "leaf_properties": [
+    {
+      "path": "http://qudt.org/vocab/quantitykind/RefractiveIndexMinValue",
+      "label": "min value",
+      "description": "description for min value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": 0.0,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "decimal_with_unit"
+    },
+    {
+      "path": "http://qudt.org/vocab/quantitykind/RefractiveIndexMaxValue",
+      "label": "max value",
+      "description": "description for max value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": 0.0,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "decimal_with_unit"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://qudt.org/vocab/quantitykind/RefractiveIndexShape",
+    "source_file": "grantami.ttl"
+  }
+}

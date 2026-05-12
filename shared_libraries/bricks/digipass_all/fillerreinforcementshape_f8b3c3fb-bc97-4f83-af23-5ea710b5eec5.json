@@ -1,0 +1,64 @@
+{
+  "brick_id": "f8b3c3fb-bc97-4f83-af23-5ea710b5eec5",
+  "name": "fillerReinforcementShape",
+  "description": "",
+  "template_type": "dropdown_iri",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/fillerReinforcementShape",
+  "leaf_properties": [
+    {
+      "path": "http://qudt.org/schema/qudt/Unit",
+      "label": "value",
+      "description": "description for value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/unfilled",
+        "http://digital-passport.io/concept/alumina",
+        "http://digital-passport.io/concept/unfilled",
+        "http://digital-passport.io/concept/aluminum",
+        "http://digital-passport.io/concept/aluminumNitride",
+        "http://digital-passport.io/concept/aramid",
+        "http://digital-passport.io/concept/beryllium",
+        "http://digital-passport.io/concept/boron",
+        "http://digital-passport.io/concept/boronCarbide",
+        "http://digital-passport.io/concept/carbon",
+        "http://digital-passport.io/concept/cellulose",
+        "http://digital-passport.io/concept/epoxyResin",
+        "http://digital-passport.io/concept/glass",
+        "http://digital-passport.io/concept/graphite",
+        "http://digital-passport.io/concept/mineral",
+        "http://digital-passport.io/concept/ragCotoonFabric",
+        "http://digital-passport.io/concept/siliconCarbide",
+        "http://digital-passport.io/concept/siliconNitride",
+        "http://digital-passport.io/concept/stainlessSteel",
+        "http://digital-passport.io/concept/titaniumBoride",
+        "http://digital-passport.io/concept/titaniumCarbide",
+        "http://digital-passport.io/concept/titaniumOxide",
+        "http://digital-passport.io/concept/wood"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/fillerReinforcementShape",
+    "source_file": "grantami.ttl"
+  }
+}

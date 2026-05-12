@@ -1,0 +1,29 @@
+{
+  "brick_id": "0d8520fa-006c-420e-be50-b83c38c20c4c",
+  "name": "impactCategoriesShape",
+  "description": "",
+  "template_type": "custom",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/lcia/impactCategoriesShape",
+  "leaf_properties": [],
+  "xone_alternatives": [],
+  "tags": [
+    "source:lcia.ttl",
+    "refs:climateChangeCategoryShape",
+    "refs:ozoneDepletionGroupShape",
+    "refs:resporatoryOrganicsShape",
+    "refs:photochemicalOzoneFormationGroupShape",
+    "refs:ionizingRadiationGroupShape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/lcia/impactCategoriesShape",
+    "source_file": "lcia.ttl"
+  }
+}

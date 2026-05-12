@@ -1,0 +1,87 @@
+{
+  "brick_id": "d64c8d02-4620-4004-98ec-d85c94b34413",
+  "name": "impactStrengthNotched30CShape",
+  "description": "",
+  "template_type": "decimal_with_unit",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/impactStrengthNotched30CShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/impactStrengthNotched30CMinValue",
+      "label": "min value",
+      "description": "description for min value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": 0.0,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "decimal_with_unit"
+    },
+    {
+      "path": "http://digital-passport.io/concept/impactStrengthNotched30CMaxValue",
+      "label": "max value",
+      "description": "description for max value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": 0.0,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "decimal_with_unit"
+    },
+    {
+      "path": "http://qudt.org/schema/qudt/Unit",
+      "label": "unit",
+      "description": "description for unit",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://qudt.org/vocab/unit/J-PER-M2",
+        "http://qudt.org/vocab/unit/MJ-PER-M2",
+        "http://qudt.org/vocab/unit/N-PER-M",
+        "http://qudt.org/vocab/unit/KiloN-PER-M",
+        "http://qudt.org/vocab/unit/N-PER-MilliM",
+        "http://qudt.org/vocab/unit/ERG-PER-CentiM2",
+        "http://qudt.org/vocab/unit/DYN-PER-CentiM",
+        "http://qudt.org/vocab/unit/LB_F-PER-FT",
+        "http://qudt.org/vocab/unit/LB_F-PER-IN",
+        "http://qudt.org/vocab/unit/FT-LB_F-PER-FT2",
+        "http://digital-passport.io/concept/MilliN-PER-M",
+        "http://digital-passport.io/concept/KiloJ-PER-M2",
+        "http://digital-passport.io/concept/N-MilliM-PER-MilliM2",
+        "http://digital-passport.io/concept/LB_F-FT-PER-IN2",
+        "http://digital-passport.io/concept/BTU-PER-IN2",
+        "http://digital-passport.io/concept/LB_F-IN-PER-IN"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/impactStrengthNotched30CShape",
+    "source_file": "grantami.ttl"
+  }
+}

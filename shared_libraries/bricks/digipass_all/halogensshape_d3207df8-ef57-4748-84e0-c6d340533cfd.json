@@ -1,0 +1,45 @@
+{
+  "brick_id": "d3207df8-ef57-4748-84e0-c6d340533cfd",
+  "name": "halogensShape",
+  "description": "",
+  "template_type": "dropdown_iri",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/halogensShape",
+  "leaf_properties": [
+    {
+      "path": "http://qudt.org/schema/qudt/Unit",
+      "label": "value",
+      "description": "description for value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/unacceptable",
+        "http://digital-passport.io/concept/limitedUse",
+        "http://digital-passport.io/concept/acceptable",
+        "http://digital-passport.io/concept/excellent"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/halogensShape",
+    "source_file": "grantami.ttl"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "brick_id": "81319a5d-c933-452e-a31c-13895e072648",
+  "name": "durabilityOfTheCoatingSystemShape",
+  "description": "",
+  "template_type": "static_label",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/prepainted-metals/durabilityOfTheCoatingSystemShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/prepainted-metals/category",
+      "label": "category",
+      "description": "",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": null,
+      "in_values": [],
+      "has_value": "Declaration of Performance and Conformity",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "static_label"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "common:2_files",
+    "source:prepainted_steel.ttl",
+    "refs:corrosionResistanceOrPrepaintedSteelShape",
+    "refs:UVResistanceOfPrepaintedMetalShape",
+    "refs:corrosionResistanceCategoryShape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/prepainted-metals/durabilityOfTheCoatingSystemShape",
+    "source_file": "prepainted_steel.ttl",
+    "found_in": [
+      "prepainted_al.ttl",
+      "prepainted_steel.ttl"
+    ],
+    "file_count": 2
+  }
+}

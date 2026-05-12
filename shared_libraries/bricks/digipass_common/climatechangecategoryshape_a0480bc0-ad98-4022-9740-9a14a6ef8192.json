@@ -1,0 +1,81 @@
+{
+  "brick_id": "a0480bc0-ad98-4022-9740-9a14a6ef8192",
+  "name": "climateChangeCategoryShape",
+  "description": "",
+  "template_type": "dropdown_iri",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/lcia/climateChangeCategoryShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/lcia/midpointIndicator",
+      "label": "Midpoint indicator",
+      "description": "Midpoint indicators used in this LCIA study",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/lcia/climateChange"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    },
+    {
+      "path": "http://digital-passport.io/concept/lcia/value",
+      "label": "Value",
+      "description": "This input identifies the value associated with a data structure. The value may be a scalar or a Additional indicator to another object. The disjoint sub-properties of this data:value distinguish between scalar values and object references.",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": 0.0,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "decimal_with_unit"
+    },
+    {
+      "path": "http://digital-passport.io/concept/lcia/units",
+      "label": "Units",
+      "description": "Units",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/lcia/kgCO2eq"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "common:3_files",
+    "source:lcia_pef.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/lcia/climateChangeCategoryShape",
+    "source_file": "lcia_pef.ttl",
+    "found_in": [
+      "lcia.ttl",
+      "lcia_en.ttl",
+      "lcia_pef.ttl"
+    ],
+    "file_count": 3
+  }
+}

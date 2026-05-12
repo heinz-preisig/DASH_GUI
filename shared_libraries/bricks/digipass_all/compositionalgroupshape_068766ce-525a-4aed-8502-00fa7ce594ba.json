@@ -1,0 +1,608 @@
+{
+  "brick_id": "068766ce-525a-4aed-8502-00fa7ce594ba",
+  "name": "compositionAlGroupShape",
+  "description": "",
+  "template_type": "xone_choice",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/prepainted-metals/compositionAlGroupShape",
+  "leaf_properties": [],
+  "xone_alternatives": [
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-1050A [Al 99,5]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-1050A [Al 99,5]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-1200 [Al 99,0]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-1200 [Al 99,0]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-3003 [Al Mn1Cu]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-3003 [Al Mn1Cu]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-3103 [Al Mn1]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-3103 [Al Mn1]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-3004 [Al Mn1Mg1]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-3004 [Al Mn1Mg1]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-3005 [Al Mn1Mg0,5]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-3005 [Al Mn1Mg0,5]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-3104 [Al Mn1Mg1Cu]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-3104 [Al Mn1Mg1Cu]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-3105 [Al Mn0,5Mg0,5]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-3105 [Al Mn0,5Mg0,5]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-4017 [Al SiMnMgCu]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-4017 [Al SiMnMgCu]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-5005 [Al Mg1(B)]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-5005 [Al Mg1(B)]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-5006 [Al Mg1Mn0,5]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-5006 [Al Mg1Mn0,5]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-5010 [Al Mg0,5Mn]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-5010 [Al Mg0,5Mn]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-5050 [Al Mg1,5(C)]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-5050 [Al Mg1,5(C)]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-5251 [Al Mg2]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-5251 [Al Mg2]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-5052 [Al Mg2,5]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-5052 [Al Mg2,5]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-5754 [Al Mg3]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-5754 [Al Mg3]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-5182 [Al Mg4,5Mn0,4]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-5182 [Al Mg4,5Mn0,4]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-6011 [Al Mg0,9Si0,9Cu]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-6011 [Al Mg0,9Si0,9Cu]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-6025 [Al Mg2,5SiMnCu]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-6025 [Al Mg2,5SiMnCu]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-8006 [Al Fe1,5Mn]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-8006 [Al Fe1,5Mn]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-8011A [Al FeSi(A)]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-8011A [Al FeSi(A)]",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/selection",
+        "label": "alloy name",
+        "description": "EN AW-5010 [Al Mg0,5Mn]",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "EN AW-8111",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/prepainted-metals/choiceComposition",
+        "label": "Selection",
+        "description": "Provide alloy composition",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "Provide alloy composition",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      },
+      {
+        "path": "http://qudt.org/schema/datatype/value",
+        "label": "Al",
+        "description": "This input identifies the value associated with a data structure. The value may be a scalar or a reference to another object. The disjoint sub-properties of this data:value distinguish between scalar values and object references.",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+        "node_kind": null,
+        "in_values": [],
+        "has_value": null,
+        "min_inclusive": 0.0,
+        "max_inclusive": 100.0,
+        "single_line": null,
+        "template_type": "decimal_with_unit"
+      },
+      {
+        "path": "http://qudt.org/schema/qudt/Unit",
+        "label": "Select a unit",
+        "description": "A unit of measure, or unit, is a particular quantity value that has been chosen as a scale for measuring other quantities the same kind (more generally of equivalent dimension).For example, the meter is a quantity of length that has been rigorously defined and standardized by the BIPM (International Board of Weights and Measures).Any measurement of the length can be expressed as a number multiplied by the unit meter.More formally, the value of a physical quantity Q with respect to a unit (U) is expressed as the scalar multiple of a real number (n) and U, as  $Q = nU$.",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": "http://www.w3.org/ns/shacl#IRI",
+        "in_values": [
+          "http://qudt.org/vocab/unit/PERCENT"
+        ],
+        "has_value": null,
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "dropdown_iri"
+      },
+      {
+        "path": "http://qudt.org/schema/datatype/value",
+        "label": "Mg",
+        "description": "This input identifies the value associated with a data structure. The value may be a scalar or a reference to another object. The disjoint sub-properties of this data:value distinguish between scalar values and object references.",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+        "node_kind": null,
+        "in_values": [],
+        "has_value": null,
+        "min_inclusive": 0.0,
+        "max_inclusive": 100.0,
+        "single_line": null,
+        "template_type": "decimal_with_unit"
+      },
+      {
+        "path": "http://qudt.org/schema/qudt/Unit",
+        "label": "Select a unit",
+        "description": "A unit of measure, or unit, is a particular quantity value that has been chosen as a scale for measuring other quantities the same kind (more generally of equivalent dimension).For example, the meter is a quantity of length that has been rigorously defined and standardized by the BIPM (International Board of Weights and Measures).Any measurement of the length can be expressed as a number multiplied by the unit meter.More formally, the value of a physical quantity Q with respect to a unit (U) is expressed as the scalar multiple of a real number (n) and U, as  $Q = nU$.",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": "http://www.w3.org/ns/shacl#IRI",
+        "in_values": [
+          "http://qudt.org/vocab/unit/PERCENT"
+        ],
+        "has_value": null,
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "dropdown_iri"
+      },
+      {
+        "path": "http://qudt.org/schema/datatype/value",
+        "label": "Mn",
+        "description": "This input identifies the value associated with a data structure. The value may be a scalar or a reference to another object. The disjoint sub-properties of this data:value distinguish between scalar values and object references.",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+        "node_kind": null,
+        "in_values": [],
+        "has_value": null,
+        "min_inclusive": 0.0,
+        "max_inclusive": 100.0,
+        "single_line": null,
+        "template_type": "decimal_with_unit"
+      },
+      {
+        "path": "http://qudt.org/schema/qudt/Unit",
+        "label": "Select a unit",
+        "description": "A unit of measure, or unit, is a particular quantity value that has been chosen as a scale for measuring other quantities the same kind (more generally of equivalent dimension).For example, the meter is a quantity of length that has been rigorously defined and standardized by the BIPM (International Board of Weights and Measures).Any measurement of the length can be expressed as a number multiplied by the unit meter.More formally, the value of a physical quantity Q with respect to a unit (U) is expressed as the scalar multiple of a real number (n) and U, as  $Q = nU$.",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": "http://www.w3.org/ns/shacl#IRI",
+        "in_values": [
+          "http://qudt.org/vocab/unit/PERCENT"
+        ],
+        "has_value": null,
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "dropdown_iri"
+      },
+      {
+        "path": "http://qudt.org/schema/datatype/value",
+        "label": "Ti",
+        "description": "This input identifies the value associated with a data structure. The value may be a scalar or a reference to another object. The disjoint sub-properties of this data:value distinguish between scalar values and object references.",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+        "node_kind": null,
+        "in_values": [],
+        "has_value": null,
+        "min_inclusive": 0.0,
+        "max_inclusive": 100.0,
+        "single_line": null,
+        "template_type": "decimal_with_unit"
+      },
+      {
+        "path": "http://qudt.org/schema/qudt/Unit",
+        "label": "Select a unit",
+        "description": "A unit of measure, or unit, is a particular quantity value that has been chosen as a scale for measuring other quantities the same kind (more generally of equivalent dimension).For example, the meter is a quantity of length that has been rigorously defined and standardized by the BIPM (International Board of Weights and Measures).Any measurement of the length can be expressed as a number multiplied by the unit meter.More formally, the value of a physical quantity Q with respect to a unit (U) is expressed as the scalar multiple of a real number (n) and U, as  $Q = nU$.",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": "http://www.w3.org/ns/shacl#IRI",
+        "in_values": [
+          "http://qudt.org/vocab/unit/PERCENT"
+        ],
+        "has_value": null,
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "dropdown_iri"
+      },
+      {
+        "path": "http://qudt.org/schema/datatype/value",
+        "label": "Cu",
+        "description": "This input identifies the value associated with a data structure. The value may be a scalar or a reference to another object. The disjoint sub-properties of this data:value distinguish between scalar values and object references.",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+        "node_kind": null,
+        "in_values": [],
+        "has_value": null,
+        "min_inclusive": 0.0,
+        "max_inclusive": 100.0,
+        "single_line": null,
+        "template_type": "decimal_with_unit"
+      },
+      {
+        "path": "http://qudt.org/schema/qudt/Unit",
+        "label": "Select a unit",
+        "description": "A unit of measure, or unit, is a particular quantity value that has been chosen as a scale for measuring other quantities the same kind (more generally of equivalent dimension).For example, the meter is a quantity of length that has been rigorously defined and standardized by the BIPM (International Board of Weights and Measures).Any measurement of the length can be expressed as a number multiplied by the unit meter.More formally, the value of a physical quantity Q with respect to a unit (U) is expressed as the scalar multiple of a real number (n) and U, as  $Q = nU$.",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": "http://www.w3.org/ns/shacl#IRI",
+        "in_values": [
+          "http://qudt.org/vocab/unit/PERCENT"
+        ],
+        "has_value": null,
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "dropdown_iri"
+      },
+      {
+        "path": "http://qudt.org/schema/datatype/value",
+        "label": "Other",
+        "description": "This input identifies the value associated with a data structure. The value may be a scalar or a reference to another object. The disjoint sub-properties of this data:value distinguish between scalar values and object references.",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+        "node_kind": null,
+        "in_values": [],
+        "has_value": null,
+        "min_inclusive": 0.0,
+        "max_inclusive": 100.0,
+        "single_line": null,
+        "template_type": "decimal_with_unit"
+      },
+      {
+        "path": "http://qudt.org/schema/qudt/Unit",
+        "label": "Select a unit",
+        "description": "A unit of measure, or unit, is a particular quantity value that has been chosen as a scale for measuring other quantities the same kind (more generally of equivalent dimension).For example, the meter is a quantity of length that has been rigorously defined and standardized by the BIPM (International Board of Weights and Measures).Any measurement of the length can be expressed as a number multiplied by the unit meter.More formally, the value of a physical quantity Q with respect to a unit (U) is expressed as the scalar multiple of a real number (n) and U, as  $Q = nU$.",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": "http://www.w3.org/ns/shacl#IRI",
+        "in_values": [
+          "http://qudt.org/vocab/unit/PERCENT"
+        ],
+        "has_value": null,
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "dropdown_iri"
+      }
+    ]
+  ],
+  "tags": [
+    "source:prepainted_al.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/prepainted-metals/compositionAlGroupShape",
+    "source_file": "prepainted_al.ttl"
+  }
+}

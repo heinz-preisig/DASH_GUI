@@ -1,0 +1,48 @@
+{
+  "brick_id": "50d2162f-0d9f-4753-8843-ccdc4f7fccc3",
+  "name": "recyclingMethodShape",
+  "description": "",
+  "template_type": "dropdown_iri",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/photovoltaics/recyclingMethodShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/photovoltaics/recyclingMethodChoice",
+      "label": "Please choose",
+      "description": "An individual option or selection available to a user within a predefined set. It is presented as a dropdown menu, from which only one item may be selected.",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/photovoltaics/degradationDuringProcessing",
+        "http://digital-passport.io/concept/photovoltaics/mechanicalAndChemicalRecycling",
+        "http://digital-passport.io/concept/photovoltaics/pyrolysis",
+        "http://digital-passport.io/concept/photovoltaics/acidEtching",
+        "http://digital-passport.io/concept/photovoltaics/electrochemicalRecovery",
+        "http://digital-passport.io/concept/photovoltaics/chemicalDissolution",
+        "http://digital-passport.io/concept/photovoltaics/degradationDuringProcessing"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:photovoltaics.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/photovoltaics/recyclingMethodShape",
+    "source_file": "photovoltaics.ttl"
+  }
+}

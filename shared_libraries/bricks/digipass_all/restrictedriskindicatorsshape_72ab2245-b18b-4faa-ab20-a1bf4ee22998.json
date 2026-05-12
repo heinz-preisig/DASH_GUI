@@ -1,0 +1,27 @@
+{
+  "brick_id": "72ab2245-b18b-4faa-ab20-a1bf4ee22998",
+  "name": "restrictedRiskIndicatorsShape",
+  "description": "",
+  "template_type": "custom",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/restrictedRiskIndicatorsShape",
+  "leaf_properties": [],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl",
+    "refs:roHS2EUcompliantgradesShape",
+    "refs:REACHcandidateListIndicatorShape",
+    "refs:SINlistIndicatorShape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/restrictedRiskIndicatorsShape",
+    "source_file": "grantami.ttl"
+  }
+}

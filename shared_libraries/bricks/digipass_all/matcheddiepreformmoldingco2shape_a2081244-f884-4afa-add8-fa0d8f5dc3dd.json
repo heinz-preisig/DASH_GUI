@@ -1,0 +1,78 @@
+{
+  "brick_id": "a2081244-f884-4afa-add8-fa0d8f5dc3dd",
+  "name": "matchedDiePreformMoldingCO2Shape",
+  "description": "",
+  "template_type": "decimal_with_unit",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/matchedDiePreformMoldingCO2Shape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/matchedDiePreformMoldingCO2MinValue",
+      "label": "min value",
+      "description": "description for min value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": 0.0,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "decimal_with_unit"
+    },
+    {
+      "path": "http://digital-passport.io/concept/matchedDiePreformMoldingCO2MaxValue",
+      "label": "max value",
+      "description": "description for max value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": 0.0,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "decimal_with_unit"
+    },
+    {
+      "path": "http://qudt.org/schema/qudt/Unit",
+      "label": "unit",
+      "description": "description for unit",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://qudt.org/vocab/unit/KiloGM-PER-KiloGM",
+        "http://qudt.org/vocab/unit/GM-PER-KiloGM",
+        "http://qudt.org/vocab/unit/GM-PER-GM",
+        "http://qudt.org/vocab/unit/LB-PER-LB",
+        "http://digital-passport.io/concept/TONNE-PER-TONNE",
+        "http://digital-passport.io/concept/SLUG-PER-SLUG",
+        "http://digital-passport.io/concept/LB_F-SEC2-IN-PER-LB_F-SEC2-IN"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/matchedDiePreformMoldingCO2Shape",
+    "source_file": "grantami.ttl"
+  }
+}

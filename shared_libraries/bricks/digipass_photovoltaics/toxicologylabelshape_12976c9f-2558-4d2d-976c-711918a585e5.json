@@ -1,0 +1,57 @@
+{
+  "brick_id": "12976c9f-2558-4d2d-976c-711918a585e5",
+  "name": "toxicologyLabelShape",
+  "description": "",
+  "template_type": "dropdown_iri",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/toxicology/toxicologyLabelShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/toxicology/toxicologyLabelChoice",
+      "label": "Please choose",
+      "description": "An individual option or selection available to a user within a predefined set. It is presented as a dropdown menu, from which only one item may be selected.",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/toxicology/acuteOralToxicity",
+        "http://digital-passport.io/concept/toxicology/acuteDermalToxicity",
+        "http://digital-passport.io/concept/toxicology/acuteInhalationToxicity",
+        "http://digital-passport.io/concept/toxicology/primaryIrritationToSkin",
+        "http://digital-passport.io/concept/toxicology/irritationToEyes",
+        "http://digital-passport.io/concept/toxicology/toxicityToFish",
+        "http://digital-passport.io/concept/toxicology/toxicityToDaphnia",
+        "http://digital-passport.io/concept/toxicology/toxicityToAlgae",
+        "http://digital-passport.io/concept/toxicology/toxicityToBacteria",
+        "http://digital-passport.io/concept/toxicology/irritationAndCorrosion",
+        "http://digital-passport.io/concept/toxicology/skinAndRespiratorySensitisation",
+        "http://digital-passport.io/concept/toxicology/acuteToxic",
+        "http://digital-passport.io/concept/toxicology/repeatedDoseToxicity",
+        "http://digital-passport.io/concept/toxicology/reproductiveAndDevelopmentalToxicity",
+        "http://digital-passport.io/concept/toxicology/mutagenicity",
+        "http://digital-passport.io/concept/toxicology/carcinogenicity"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:photovoltaics.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/toxicology/toxicologyLabelShape",
+    "source_file": "photovoltaics.ttl"
+  }
+}

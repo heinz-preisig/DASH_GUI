@@ -1,0 +1,29 @@
+{
+  "brick_id": "c5d6ba69-0ba8-421c-9c8e-d92a2c9cfbb5",
+  "name": "chemicalResistanceOfPolymersShape",
+  "description": "",
+  "template_type": "custom",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/chemicalResistanceOfPolymersShape",
+  "leaf_properties": [],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl",
+    "refs:chemicalResistanceDataSourcesShape",
+    "refs:acetaldehydeShape",
+    "refs:aceticAcid10Shape",
+    "refs:aceticAcidGlacialShape",
+    "refs:aceticAnhydrideShape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/chemicalResistanceOfPolymersShape",
+    "source_file": "grantami.ttl"
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "brick_id": "570ab1e6-a548-4e77-8c8e-82f2f6fa1448",
+  "name": "expansionPerpendicularToOrientationShape",
+  "description": "",
+  "template_type": "decimal_with_unit",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/expansionPerpendicularToOrientationShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/expansionPerpendicularToOrientationMinValue",
+      "label": "min value",
+      "description": "description for min value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": 0.0,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "decimal_with_unit"
+    },
+    {
+      "path": "http://digital-passport.io/concept/expansionPerpendicularToOrientationMaxValue",
+      "label": "max value",
+      "description": "description for max value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": 0.0,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "decimal_with_unit"
+    },
+    {
+      "path": "http://qudt.org/schema/qudt/Unit",
+      "label": "unit",
+      "description": "description for unit",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/MicroSTRAIN-PER-DEG_F",
+        "http://digital-passport.io/concept/MicroSTRAIN-PER-DEG_C",
+        "http://digital-passport.io/concept/10minus4STRAIN-PER-DEG_C",
+        "http://digital-passport.io/concept/STRAIN-PER-DEG_F",
+        "http://digital-passport.io/concept/STRAIN-PER-DEG_C",
+        "http://digital-passport.io/concept/IN-PER-IN-DEG_F",
+        "http://digital-passport.io/concept/PercentSTRAIN-PER-DEG_C",
+        "http://digital-passport.io/concept/PercentSTRAIN-PER-DEG_F"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/expansionPerpendicularToOrientationShape",
+    "source_file": "grantami.ttl"
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "brick_id": "590cf291-7151-4d61-b0a1-e728e96ceb0f",
+  "name": "topcoatCoatingMaterialShape",
+  "description": "",
+  "template_type": "static_label",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/prepainted-metals/topcoatCoatingMaterialShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/prepainted-metals/standard",
+      "label": "standard",
+      "description": "",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": null,
+      "in_values": [],
+      "has_value": "Appendix B (EN 10169/EN 1396)",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "static_label"
+    },
+    {
+      "path": "http://digital-passport.io/concept/prepainted-metals/Choice",
+      "label": "Please choose",
+      "description": "An individual option or selection available to a user within a predefined set. It is presented as a dropdown menu, from which only one item may be selected.",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/prepainted-metals/acrylic",
+        "http://digital-passport.io/concept/prepainted-metals/epoxide",
+        "http://digital-passport.io/concept/prepainted-metals/polyester",
+        "http://digital-passport.io/concept/prepainted-metals/polyamide-modifiedPolyester",
+        "http://digital-passport.io/concept/prepainted-metals/highBuildPolyester",
+        "http://digital-passport.io/concept/prepainted-metals/highDurablePolyester",
+        "http://digital-passport.io/concept/prepainted-metals/polyamide-modifiedHighDurablePolyester",
+        "http://digital-passport.io/concept/prepainted-metals/silicon-modifiedPolyester",
+        "http://digital-passport.io/concept/prepainted-metals/polyurethane",
+        "http://digital-passport.io/concept/prepainted-metals/polyfluoro-ethylene-vinylEther",
+        "http://digital-passport.io/concept/prepainted-metals/polyamide-modifiedPolyurethane",
+        "http://digital-passport.io/concept/prepainted-metals/polyvinylideneFluoride",
+        "http://digital-passport.io/concept/prepainted-metals/polyvinylChloridePlastisol",
+        "http://digital-passport.io/concept/prepainted-metals/specialAdhesive",
+        "http://digital-passport.io/concept/prepainted-metals/heatResistantNon-stickSystem",
+        "http://digital-passport.io/concept/prepainted-metals/weldableZinc-richPrimer",
+        "http://digital-passport.io/concept/prepainted-metals/weldablePrimerWithConductivePigmentsOtherThanZinc"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "common:2_files",
+    "source:prepainted_steel.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/prepainted-metals/topcoatCoatingMaterialShape",
+    "source_file": "prepainted_steel.ttl",
+    "found_in": [
+      "prepainted_al.ttl",
+      "prepainted_steel.ttl"
+    ],
+    "file_count": 2
+  }
+}

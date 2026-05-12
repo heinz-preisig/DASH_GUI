@@ -1,0 +1,34 @@
+{
+  "brick_id": "53c20535-b763-4b27-868d-65a2588404ba",
+  "name": "lcia",
+  "description": "",
+  "template_type": "custom",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/lcia",
+  "leaf_properties": [],
+  "xone_alternatives": [],
+  "tags": [
+    "common:3_files",
+    "source:lcia_pef.ttl",
+    "refs:generalInformationShape",
+    "refs:impactCategoriesShape",
+    "refs:additionalIndicatorsShape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/lcia",
+    "source_file": "lcia_pef.ttl",
+    "found_in": [
+      "lcia.ttl",
+      "lcia_en.ttl",
+      "lcia_pef.ttl"
+    ],
+    "file_count": 3
+  }
+}

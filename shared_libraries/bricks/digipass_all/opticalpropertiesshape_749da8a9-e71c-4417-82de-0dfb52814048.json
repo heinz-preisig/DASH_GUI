@@ -1,0 +1,29 @@
+{
+  "brick_id": "749da8a9-e71c-4417-82de-0dfb52814048",
+  "name": "opticalPropertiesShape",
+  "description": "",
+  "template_type": "custom",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/opticalPropertiesShape",
+  "leaf_properties": [],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl",
+    "refs:RefractiveIndexShape",
+    "refs:Q487623Shape",
+    "refs:Q12894628Shape",
+    "refs:Q51921674Shape",
+    "refs:acousticVelocityShape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/opticalPropertiesShape",
+    "source_file": "grantami.ttl"
+  }
+}

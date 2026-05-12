@@ -1,0 +1,29 @@
+{
+  "brick_id": "571a15c7-620b-49ab-8a40-4030e507d0d6",
+  "name": "mechanicalPropertiesShape",
+  "description": "",
+  "template_type": "custom",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/mechanicalPropertiesShape",
+  "leaf_properties": [],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl",
+    "refs:youngsModulusShape",
+    "refs:specificStiffnessShape",
+    "refs:Q904497Shape",
+    "refs:Q76005Shape",
+    "refs:Q76005Shape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/mechanicalPropertiesShape",
+    "source_file": "grantami.ttl"
+  }
+}

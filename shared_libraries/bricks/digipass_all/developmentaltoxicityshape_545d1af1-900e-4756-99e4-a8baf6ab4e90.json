@@ -1,0 +1,159 @@
+{
+  "brick_id": "545d1af1-900e-4756-99e4-a8baf6ab4e90",
+  "name": "developmentalToxicityShape",
+  "description": "",
+  "template_type": "dropdown_iri",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/nanosafety/developmentalToxicityShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/nanosafety/developmentalToxicityRouteOfExposure",
+      "label": "Route of exposure",
+      "description": "Route of exposure type of the toxicology",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/nanosafety/oral",
+        "http://digital-passport.io/concept/nanosafety/dermal",
+        "http://digital-passport.io/concept/nanosafety/inhalation"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    },
+    {
+      "path": "http://digital-passport.io/concept/nanosafety/developmentalToxicityLocalOrSystemic",
+      "label": "Local/Systemic",
+      "description": "Is the effect local or systemic",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/nanosafety/local",
+        "http://digital-passport.io/concept/nanosafety/systemic"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    },
+    {
+      "path": "http://digital-passport.io/concept/nanosafety/developmentalToxicityModeOfAction",
+      "label": "Mode of action",
+      "description": "Mode of action",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/nanosafety/threshold",
+        "http://digital-passport.io/concept/nanosafety/non-threshold"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    },
+    {
+      "path": "http://digital-passport.io/concept/nanosafety/developmentalToxicityEffectLevelValue",
+      "label": "Effect level value",
+      "description": "This input identifies the value associated with a data structure. The value may be a scalar or a reference to another object. The disjoint sub-properties of this data:value distinguish between scalar values and object references.",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": 0.0,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "decimal_with_unit"
+    },
+    {
+      "path": "http://digital-passport.io/concept/nanosafety/developmentalToxicityEffectLevelUnit",
+      "label": "Effect level unit",
+      "description": "A unit of measure, or unit, is a particular quantity value that has been chosen as a scale for measuring other quantities the same kind (more generally of equivalent dimension).For example, the meter is a quantity of length that has been rigorously defined and standardized by the BIPM (International Board of Weights and Measures).Any measurement of the length can be expressed as a number multiplied by the unit meter.More formally, the value of a physical quantity Q with respect to a unit (U) is expressed as the scalar multiple of a real number (n) and U, as  $Q = nU$.",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://qudt.org/vocab/unit/MilliGM-PER-L"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    },
+    {
+      "path": "http://digital-passport.io/concept/nanosafety/developmentalToxicityEffectLevelType",
+      "label": "Effect level type",
+      "description": "Effect level type",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/toxicology/NOAEL",
+        "http://digital-passport.io/concept/toxicology/LOAEL",
+        "http://digital-passport.io/concept/toxicology/DNEL",
+        "http://digital-passport.io/concept/toxicology/DMEL",
+        "http://digital-passport.io/concept/toxicology/LC50",
+        "http://digital-passport.io/concept/toxicology/EC50",
+        "http://digital-passport.io/concept/toxicology/LD50",
+        "http://digital-passport.io/concept/toxicology/ED50"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    },
+    {
+      "path": "http://digital-passport.io/concept/nanosafety/developmentalToxicitySpecies",
+      "label": "Species",
+      "description": "Species the experiment was conducted on",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/notApplicable",
+        "http://digital-passport.io/concept/toxicology/rat",
+        "http://digital-passport.io/concept/toxicology/rabbit",
+        "http://digital-passport.io/concept/toxicology/pimpephalesPromelas",
+        "http://digital-passport.io/concept/toxicology/daphiaMagna",
+        "http://digital-passport.io/concept/toxicology/scenedesmusQuadricauda",
+        "http://digital-passport.io/concept/toxicology/pseudomonasPutida"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:nanosafety.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/nanosafety/developmentalToxicityShape",
+    "source_file": "nanosafety.ttl"
+  }
+}

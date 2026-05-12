@@ -1,0 +1,85 @@
+{
+  "brick_id": "4d9e719d-3d74-4175-803f-1a9ea0f3bc2a",
+  "name": "annualWorldProductionPrincipalComponentShape",
+  "description": "",
+  "template_type": "decimal_with_unit",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/annualWorldProductionPrincipalComponentShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/annualWorldProductionPrincipalComponentMinValue",
+      "label": "min value",
+      "description": "description for min value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": 0.0,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "decimal_with_unit"
+    },
+    {
+      "path": "http://digital-passport.io/concept/annualWorldProductionPrincipalComponentMaxValue",
+      "label": "max value",
+      "description": "description for max value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": 0.0,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "decimal_with_unit"
+    },
+    {
+      "path": "http://qudt.org/schema/qudt/Unit",
+      "label": "unit",
+      "description": "description for unit",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://qudt.org/vocab/unit/KiloGM-PER-SEC",
+        "http://qudt.org/vocab/unit/KiloGM-PER-HR",
+        "http://qudt.org/vocab/unit/KiloGM-PER-YR",
+        "http://qudt.org/vocab/unit/GM-PER-SEC",
+        "http://qudt.org/vocab/unit/TONNE-PER-YR",
+        "http://qudt.org/vocab/unit/TONNE-PER-SEC",
+        "http://qudt.org/vocab/unit/LB-PER-SEC",
+        "http://qudt.org/vocab/unit/LB-PER-HR",
+        "http://qudt.org/vocab/unit/SLUG-PER-SEC",
+        "http://digital-passport.io/concept/GM-PER-MilliSEC",
+        "http://digital-passport.io/concept/GM-PER-10MIN",
+        "http://digital-passport.io/concept/TON-PER-YR",
+        "http://digital-passport.io/concept/LB-PER-YR",
+        "http://digital-passport.io/concept/LB_F-SEC2-PER-IN-S"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/annualWorldProductionPrincipalComponentShape",
+    "source_file": "grantami.ttl"
+  }
+}

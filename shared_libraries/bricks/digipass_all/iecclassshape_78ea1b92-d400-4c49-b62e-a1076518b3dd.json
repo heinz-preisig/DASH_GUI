@@ -1,0 +1,48 @@
+{
+  "brick_id": "78ea1b92-d400-4c49-b62e-a1076518b3dd",
+  "name": "IECClassShape",
+  "description": "",
+  "template_type": "dropdown_iri",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/wind-turbine-blades/IECClassShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/wind-turbine-blades/IECClassChoice",
+      "label": "Please choose",
+      "description": "An individual option or selection available to a user within a predefined set. It is presented as a dropdown menu, from which only one item may be selected.",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/Ia",
+        "http://digital-passport.io/concept/Ib",
+        "http://digital-passport.io/concept/IIa",
+        "http://digital-passport.io/concept/IIb",
+        "http://digital-passport.io/concept/IIIa",
+        "http://digital-passport.io/concept/IIIb",
+        "http://digital-passport.io/concept/IV"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:turbine_blades.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/wind-turbine-blades/IECClassShape",
+    "source_file": "turbine_blades.ttl"
+  }
+}

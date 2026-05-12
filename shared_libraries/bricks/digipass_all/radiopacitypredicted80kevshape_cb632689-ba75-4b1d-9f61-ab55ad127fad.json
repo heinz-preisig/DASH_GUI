@@ -1,0 +1,40 @@
+{
+  "brick_id": "cb632689-ba75-4b1d-9f61-ab55ad127fad",
+  "name": "radiopacityPredicted80keVShape",
+  "description": "",
+  "template_type": "free_text",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/radiopacityPredicted80keVShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/Information",
+      "label": "information",
+      "description": "Description of the information",
+      "min_count": 1,
+      "max_count": null,
+      "datatype": "http://www.w3.org/2001/XMLSchema#string",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "free_text"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/radiopacityPredicted80keVShape",
+    "source_file": "grantami.ttl"
+  }
+}

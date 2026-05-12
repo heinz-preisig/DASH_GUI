@@ -1,0 +1,202 @@
+{
+  "brick_id": "90aac9f9-309c-42ab-bb6b-e7caf687bd21",
+  "name": "H360Shape",
+  "description": "",
+  "template_type": "static_label",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/ghs/H360Shape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/ghs/Pictogram",
+      "label": "Pictogram",
+      "description": "Pictogram of the GHS classification",
+      "min_count": 0,
+      "max_count": 1,
+      "datatype": "http://digipass.com#imageLink",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "free_text"
+    },
+    {
+      "path": "http://digital-passport.io/concept/ghs/HazardStatement",
+      "label": "Hazard Statement",
+      "description": "Hazard statement of the GHS classification",
+      "min_count": 0,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#string",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": "May damage fertility or the unborn child (state specific effect if known)(state route of exposure if it is conclusively proven that no other routes of exposure cause the hazard)",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "static_label"
+    },
+    {
+      "path": "http://digital-passport.io/concept/ghs/HazardCode",
+      "label": "Hazard Code",
+      "description": "Hazard code of the GHS classification",
+      "min_count": 0,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/ghs/H360"
+      ],
+      "has_value": "http://digital-passport.io/concept/ghs/H360",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "static_label"
+    },
+    {
+      "path": "http://digital-passport.io/concept/ghs/HazardClass",
+      "label": "Hazard Class",
+      "description": "Hazard class of the GHS classification",
+      "min_count": 0,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#string",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": "Reproductive toxicity (chapter 3.7)",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "static_label"
+    },
+    {
+      "path": "http://digital-passport.io/concept/ghs/HazardCategory",
+      "label": "Hazard Category",
+      "description": "Hazard category of the GHS classification",
+      "min_count": 0,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#string",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": "1, 1A, 1B",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "static_label"
+    },
+    {
+      "path": "http://digital-passport.io/concept/ghs/HazardSignal",
+      "label": "Signal Word",
+      "description": "Hazard statement of the GHS classification",
+      "min_count": 0,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#string",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": "Danger",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "static_label"
+    },
+    {
+      "path": "http://digital-passport.io/concept/ghs/PrecautionaryStatementPrevention",
+      "label": "Precautionary Statement (Prevention)",
+      "description": "Precautionary statement specifying how to prevent a hazard.",
+      "min_count": 0,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/ghs/P203"
+      ],
+      "has_value": "http://digital-passport.io/concept/ghs/P203",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "static_label"
+    },
+    {
+      "path": "http://digital-passport.io/concept/ghs/PrecautionaryPrevention1",
+      "label": " ",
+      "description": "",
+      "min_count": 0,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/ghs/P280"
+      ],
+      "has_value": "http://digital-passport.io/concept/ghs/P280",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "static_label"
+    },
+    {
+      "path": "http://digital-passport.io/concept/ghs/PrecautionaryStatementResponse",
+      "label": "Precautionary Statement (Response)",
+      "description": "Precautionary statement specifying how to act once a hazard occurs.",
+      "min_count": 0,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/ghs/P318"
+      ],
+      "has_value": "http://digital-passport.io/concept/ghs/P318",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "static_label"
+    },
+    {
+      "path": "http://digital-passport.io/concept/ghs/PrecautionaryStatementStorage",
+      "label": "Precautionary Statement (Storage)",
+      "description": "Precautionary statement specifying how to properly store a hazardous chemical.",
+      "min_count": 0,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/ghs/P405"
+      ],
+      "has_value": "http://digital-passport.io/concept/ghs/P405",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "static_label"
+    },
+    {
+      "path": "http://digital-passport.io/concept/ghs/PrecautionaryStatementDisposal",
+      "label": "Precautionary Statement (Disposal)",
+      "description": "Precautionary statement specifying how to properly dispose a hazardous chemical.",
+      "min_count": 0,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/ghs/P501"
+      ],
+      "has_value": "http://digital-passport.io/concept/ghs/P501",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "static_label"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:nanosafety.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/ghs/H360Shape",
+    "source_file": "nanosafety.ttl"
+  }
+}

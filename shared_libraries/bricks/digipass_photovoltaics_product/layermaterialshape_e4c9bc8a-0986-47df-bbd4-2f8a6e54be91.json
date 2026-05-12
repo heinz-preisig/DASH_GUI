@@ -1,0 +1,40 @@
+{
+  "brick_id": "e4c9bc8a-0986-47df-bbd4-2f8a6e54be91",
+  "name": "layerMaterialShape",
+  "description": "",
+  "template_type": "free_text",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/photovoltaics/layerMaterialShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/photovoltaics/layerMaterialInformation",
+      "label": "information",
+      "description": "A free-form information.",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#string",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "free_text"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:photovoltaics_product.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/photovoltaics/layerMaterialShape",
+    "source_file": "photovoltaics_product.ttl"
+  }
+}

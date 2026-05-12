@@ -1,0 +1,40 @@
+{
+  "brick_id": "5e25e8bc-eae8-4116-b5e2-3fb741d1f1c5",
+  "name": "surfaceCoatingMaterialShape",
+  "description": "",
+  "template_type": "free_text",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/wind-turbine-blades/surfaceCoatingMaterialShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/wind-turbine-blades/surfaceCoatingMaterialInformation",
+      "label": "information",
+      "description": "A free-form information.",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#string",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "free_text"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:turbine_blades.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/wind-turbine-blades/surfaceCoatingMaterialShape",
+    "source_file": "turbine_blades.ttl"
+  }
+}

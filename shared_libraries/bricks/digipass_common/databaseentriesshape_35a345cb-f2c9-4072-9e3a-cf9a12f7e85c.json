@@ -1,0 +1,73 @@
+{
+  "brick_id": "35a345cb-f2c9-4072-9e3a-cf9a12f7e85c",
+  "name": "databaseEntriesShape",
+  "description": "",
+  "template_type": "dropdown_iri",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/lcia/databaseEntriesShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/lcia/database",
+      "label": "Name",
+      "description": "Databases used in this LCIA study",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/lcia/ecoinventDatabase",
+        "http://digital-passport.io/concept/lcia/GaBiDatabase",
+        "http://digital-passport.io/concept/lcia/USLCIDatabase",
+        "http://digital-passport.io/concept/lcia/ELCDDatabase",
+        "http://digital-passport.io/concept/lcia/IDEADatabase",
+        "http://digital-passport.io/concept/lcia/Defra",
+        "http://digital-passport.io/concept/lcia/Nexus",
+        "http://digital-passport.io/concept/lcia/EAADatabase",
+        "http://digital-passport.io/concept/lcia/WorldSteel",
+        "http://digital-passport.io/concept/lcia/IPCCEmissionsDatabase"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    },
+    {
+      "path": "http://digital-passport.io/concept/lcia/databaseVersion",
+      "label": "Version",
+      "description": "The version of the database used",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": 0.0,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "decimal_with_unit"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "common:3_files",
+    "source:lcia_pef.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/lcia/databaseEntriesShape",
+    "source_file": "lcia_pef.ttl",
+    "found_in": [
+      "lcia.ttl",
+      "lcia_en.ttl",
+      "lcia_pef.ttl"
+    ],
+    "file_count": 3
+  }
+}

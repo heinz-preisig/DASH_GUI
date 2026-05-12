@@ -1,0 +1,43 @@
+{
+  "brick_id": "29e921b7-a805-44b5-aa9c-82b774a332bc",
+  "name": "availableExposureAssessmentsShape",
+  "description": "",
+  "template_type": "dropdown_iri",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/nanosafety/availableExposureAssessmentsShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/nanosafety/availableExposureAssessmentsChoice",
+      "label": "Please choose",
+      "description": "An individual option or selection available to a user within a predefined set. It is presented as a dropdown menu, from which only one item may be selected.",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/yes",
+        "http://digital-passport.io/concept/no"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:nanosafety.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/nanosafety/availableExposureAssessmentsShape",
+    "source_file": "nanosafety.ttl"
+  }
+}

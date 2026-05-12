@@ -1,0 +1,29 @@
+{
+  "brick_id": "ba691f29-b3f5-4ceb-903e-09f3994ee03c",
+  "name": "recyclingShape",
+  "description": "",
+  "template_type": "custom",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/recyclingShape",
+  "leaf_properties": [],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl",
+    "refs:recycleShape",
+    "refs:embodiedEnergyRecyclingShape",
+    "refs:CO2FootprintRecyclingShape",
+    "refs:recycleFractionInCurrentSupplyShape",
+    "refs:downcycleShape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/recyclingShape",
+    "source_file": "grantami.ttl"
+  }
+}

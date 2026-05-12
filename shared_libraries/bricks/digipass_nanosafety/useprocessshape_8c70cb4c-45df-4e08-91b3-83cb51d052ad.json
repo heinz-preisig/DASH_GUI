@@ -1,0 +1,217 @@
+{
+  "brick_id": "8c70cb4c-45df-4e08-91b3-83cb51d052ad",
+  "name": "useProcessShape",
+  "description": "",
+  "template_type": "xone_choice",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/nanosafety/useProcessShape",
+  "leaf_properties": [],
+  "xone_alternatives": [
+    [
+      {
+        "path": "http://digital-passport.io/concept/nanosafety/name",
+        "label": "Name",
+        "description": "Manufacture",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "Manufacture",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      },
+      {
+        "path": "http://digital-passport.io/concept/nanosafety/code",
+        "label": "Code",
+        "description": "",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "M",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/nanosafety/name",
+        "label": "Name",
+        "description": "Formulation or re-packaging",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "Formulation or re-packaging",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      },
+      {
+        "path": "http://digital-passport.io/concept/nanosafety/code",
+        "label": "Code",
+        "description": "",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "F",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/nanosafety/name",
+        "label": "Name",
+        "description": "Use at industrial sites",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "Use at industrial sites",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      },
+      {
+        "path": "http://digital-passport.io/concept/nanosafety/code",
+        "label": "Code",
+        "description": "",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "IS",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/nanosafety/name",
+        "label": "Name",
+        "description": "Widespread use by professional workers",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "Widespread use by professional workers",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      },
+      {
+        "path": "http://digital-passport.io/concept/nanosafety/code",
+        "label": "Code",
+        "description": "",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "PW",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/nanosafety/name",
+        "label": "Name",
+        "description": "Consumer use",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "Consumer use",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      },
+      {
+        "path": "http://digital-passport.io/concept/nanosafety/code",
+        "label": "Code",
+        "description": "",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "C",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ],
+    [
+      {
+        "path": "http://digital-passport.io/concept/nanosafety/name",
+        "label": "Name",
+        "description": "Service life",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "Service life",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      },
+      {
+        "path": "http://digital-passport.io/concept/nanosafety/code",
+        "label": "Code",
+        "description": "",
+        "min_count": 1,
+        "max_count": 1,
+        "datatype": null,
+        "node_kind": null,
+        "in_values": [],
+        "has_value": "SL",
+        "min_inclusive": null,
+        "max_inclusive": null,
+        "single_line": null,
+        "template_type": "static_label"
+      }
+    ]
+  ],
+  "tags": [
+    "source:nanosafety.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/nanosafety/useProcessShape",
+    "source_file": "nanosafety.ttl"
+  }
+}

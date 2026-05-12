@@ -1,0 +1,28 @@
+{
+  "brick_id": "70757d88-32cb-41dd-8231-09e5695eb9ea",
+  "name": "otherInformationShape",
+  "description": "",
+  "template_type": "custom",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/photovoltaics/otherInformationShape",
+  "leaf_properties": [],
+  "xone_alternatives": [],
+  "tags": [
+    "source:photovoltaics.ttl",
+    "refs:pHShape",
+    "refs:primaryParticleSizeShape",
+    "refs:particalSizeInDispersionShape",
+    "refs:nanoparticlesSolubilityShape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/photovoltaics/otherInformationShape",
+    "source_file": "photovoltaics.ttl"
+  }
+}

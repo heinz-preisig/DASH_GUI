@@ -1,0 +1,45 @@
+{
+  "brick_id": "40b6afbf-4b82-4e77-92d6-6c40c2679646",
+  "name": "healthAndSafetyShape",
+  "description": "",
+  "template_type": "static_label",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/prepainted-metals/healthAndSafetyShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/prepainted-metals/category",
+      "label": "category",
+      "description": "",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": null,
+      "in_values": [],
+      "has_value": "Information required under other European Law",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "static_label"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:prepainted_al.ttl",
+    "refs:restrictedChemicalsShape",
+    "refs:substancesOfVeryHighConcernShape",
+    "refs:complianceWithAnnexXIVShape",
+    "refs:registrationOfUpwindSubstancesShape",
+    "refs:CLPRegulationShape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/prepainted-metals/healthAndSafetyShape",
+    "source_file": "prepainted_al.ttl"
+  }
+}

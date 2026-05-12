@@ -1,0 +1,45 @@
+{
+  "brick_id": "31e2fb12-bdfc-4082-8e82-bebcfa29e242",
+  "name": "sterilizabilitySteamAutoclaveShape",
+  "description": "",
+  "template_type": "dropdown_iri",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/sterilizabilitySteamAutoclaveShape",
+  "leaf_properties": [
+    {
+      "path": "http://qudt.org/schema/qudt/Unit",
+      "label": "value",
+      "description": "description for value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/poor",
+        "http://digital-passport.io/concept/marginal",
+        "http://digital-passport.io/concept/good",
+        "http://digital-passport.io/concept/excellent"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/sterilizabilitySteamAutoclaveShape",
+    "source_file": "grantami.ttl"
+  }
+}

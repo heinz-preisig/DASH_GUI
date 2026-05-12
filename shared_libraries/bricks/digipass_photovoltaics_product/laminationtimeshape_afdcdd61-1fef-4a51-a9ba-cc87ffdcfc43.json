@@ -1,0 +1,48 @@
+{
+  "brick_id": "afdcdd61-1fef-4a51-a9ba-cc87ffdcfc43",
+  "name": "laminationTimeShape",
+  "description": "",
+  "template_type": "dropdown_iri",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/photovoltaics/laminationTimeShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/photovoltaics/laminationTimeChoice",
+      "label": "Please choose",
+      "description": "An individual option or selection available to a user within a predefined set. It is presented as a dropdown menu, from which only one item may be selected.",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://qudt.org/vocab/unit/YR",
+        "http://qudt.org/vocab/unit/DAY",
+        "http://qudt.org/vocab/unit/HR",
+        "http://qudt.org/vocab/unit/MIN",
+        "http://qudt.org/vocab/unit/SEC",
+        "http://qudt.org/vocab/unit/MilliSEC",
+        "http://qudt.org/vocab/unit/MicroSEC"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:photovoltaics_product.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/photovoltaics/laminationTimeShape",
+    "source_file": "photovoltaics_product.ttl"
+  }
+}

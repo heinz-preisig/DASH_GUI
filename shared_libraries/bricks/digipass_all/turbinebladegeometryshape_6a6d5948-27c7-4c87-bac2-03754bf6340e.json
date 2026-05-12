@@ -1,0 +1,70 @@
+{
+  "brick_id": "6a6d5948-27c7-4c87-bac2-03754bf6340e",
+  "name": "turbineBladeGeometryShape",
+  "description": "",
+  "template_type": "free_text",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/wind-turbine-blades/turbineBladeGeometryShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/STL",
+      "label": "CAD geometry of the blade",
+      "description": "CAD geometry of the blade",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://digipass.com#stl",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "free_text"
+    },
+    {
+      "path": "http://digital-passport.io/concept/Image",
+      "label": "Drawing of the blade",
+      "description": "describe my picture",
+      "min_count": 1,
+      "max_count": null,
+      "datatype": "http://digipass.com#image",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "free_text"
+    },
+    {
+      "path": "http://digital-passport.io/concept/wind-turbine-blades/allocatedMaterialsvalue",
+      "label": "Allocated materials",
+      "description": "This input identifies the value associated with a data structure. The value may be a scalar or a reference to another object. The disjoint sub-properties of this data:value distinguish between scalar values and object references.",
+      "min_count": 1,
+      "max_count": null,
+      "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": 0.0,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "decimal_with_unit"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:turbine_blades.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/wind-turbine-blades/turbineBladeGeometryShape",
+    "source_file": "turbine_blades.ttl"
+  }
+}

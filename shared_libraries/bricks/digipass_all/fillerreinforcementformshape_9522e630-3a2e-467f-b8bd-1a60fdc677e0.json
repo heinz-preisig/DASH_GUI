@@ -1,0 +1,53 @@
+{
+  "brick_id": "9522e630-3a2e-467f-b8bd-1a60fdc677e0",
+  "name": "fillerReinforcementFormShape",
+  "description": "",
+  "template_type": "dropdown_iri",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/fillerReinforcementFormShape",
+  "leaf_properties": [
+    {
+      "path": "http://qudt.org/schema/qudt/Unit",
+      "label": "value",
+      "description": "description for value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/shortFiber",
+        "http://digital-passport.io/concept/longFiber",
+        "http://digital-passport.io/concept/wovenFabric",
+        "http://digital-passport.io/concept/nonCrimpFabric",
+        "http://digital-passport.io/concept/undirectionalLayup",
+        "http://digital-passport.io/concept/biaxialLayup",
+        "http://digital-passport.io/concept/quasiIsotropicLayup",
+        "http://digital-passport.io/concept/randomMat",
+        "http://digital-passport.io/concept/directionalMap",
+        "http://digital-passport.io/concept/whisker",
+        "http://digital-passport.io/concept/particulate",
+        "http://digital-passport.io/concept/bead"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/fillerReinforcementFormShape",
+    "source_file": "grantami.ttl"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "brick_id": "13963e70-fb0e-47fe-9f83-1d90e591ab8e",
+  "name": "indoorDurabilityOfTheCoatingSystemShape",
+  "description": "",
+  "template_type": "static_label",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/prepainted-metals/indoorDurabilityOfTheCoatingSystemShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/prepainted-metals/category",
+      "label": "category",
+      "description": "",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": null,
+      "in_values": [],
+      "has_value": "Declaration of Performance and Conformity",
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "static_label"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:prepainted_steel.ttl",
+    "refs:indoorCorrosionClassificationShape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/prepainted-metals/indoorDurabilityOfTheCoatingSystemShape",
+    "source_file": "prepainted_steel.ttl"
+  }
+}

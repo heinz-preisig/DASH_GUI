@@ -1,0 +1,29 @@
+{
+  "brick_id": "8ccc9c17-d11c-403d-b1a5-0d54ef130768",
+  "name": "geoeconomicDataShape",
+  "description": "",
+  "template_type": "custom",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/geoeconomicDataShape",
+  "leaf_properties": [],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl",
+    "refs:principalComponentShape",
+    "refs:typicalExploitedOreGradeShape",
+    "refs:minimumEconomicOreGradeShape",
+    "refs:abundanceInEarthsCrustShape",
+    "refs:abundanceInSeawaterShape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/geoeconomicDataShape",
+    "source_file": "grantami.ttl"
+  }
+}

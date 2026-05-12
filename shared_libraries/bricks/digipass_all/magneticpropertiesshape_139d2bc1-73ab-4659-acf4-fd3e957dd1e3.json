@@ -1,0 +1,29 @@
+{
+  "brick_id": "139d2bc1-73ab-4659-acf4-fd3e957dd1e3",
+  "name": "magneticPropertiesShape",
+  "description": "",
+  "template_type": "custom",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/magneticPropertiesShape",
+  "leaf_properties": [],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl",
+    "refs:magneticTypeShape",
+    "refs:Q105560621Shape",
+    "refs:Q4150950Shape",
+    "refs:saturationInductionBsShape",
+    "refs:coerciveForceHcShape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/magneticPropertiesShape",
+    "source_file": "grantami.ttl"
+  }
+}

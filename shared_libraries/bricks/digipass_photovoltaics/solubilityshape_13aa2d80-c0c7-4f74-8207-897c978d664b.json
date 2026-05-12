@@ -1,0 +1,45 @@
+{
+  "brick_id": "13aa2d80-c0c7-4f74-8207-897c978d664b",
+  "name": "solubilityShape",
+  "description": "",
+  "template_type": "dropdown_iri",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/photovoltaics/solubilityShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/photovoltaics/solubilityChoice",
+      "label": "Please choose",
+      "description": "An individual option or selection available to a user within a predefined set. It is presented as a dropdown menu, from which only one item may be selected.",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/photovoltaics/miscibleWithWater",
+        "http://digital-passport.io/concept/photovoltaics/immiscibleWithWater",
+        "http://digital-passport.io/concept/photovoltaics/soluble",
+        "http://digital-passport.io/concept/photovoltaics/insoluble"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:photovoltaics.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/photovoltaics/solubilityShape",
+    "source_file": "photovoltaics.ttl"
+  }
+}

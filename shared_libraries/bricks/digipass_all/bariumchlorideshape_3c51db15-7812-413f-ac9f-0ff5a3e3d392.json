@@ -1,0 +1,46 @@
+{
+  "brick_id": "3c51db15-7812-413f-ac9f-0ff5a3e3d392",
+  "name": "bariumChlorideShape",
+  "description": "",
+  "template_type": "dropdown_iri",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/bariumChlorideShape",
+  "leaf_properties": [
+    {
+      "path": "http://qudt.org/schema/qudt/Unit",
+      "label": "value",
+      "description": "description for value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/unsatisfactory",
+        "http://digital-passport.io/concept/doubtful",
+        "http://digital-passport.io/concept/limited",
+        "http://digital-passport.io/concept/probablySatisfactory",
+        "http://digital-passport.io/concept/satisfactory"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/bariumChlorideShape",
+    "source_file": "grantami.ttl"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "brick_id": "5f13156b-ba54-458b-9a28-ef8b3bc0aef7",
+  "name": "thermalPropertiesShape",
+  "description": "",
+  "template_type": "custom",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/thermalPropertiesShape",
+  "leaf_properties": [],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl",
+    "refs:MeltingPointShape",
+    "refs:P5670Shape",
+    "refs:Q477481Shape",
+    "refs:heatDeflection1dot8MPaShape",
+    "refs:Q647502Shape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/thermalPropertiesShape",
+    "source_file": "grantami.ttl"
+  }
+}

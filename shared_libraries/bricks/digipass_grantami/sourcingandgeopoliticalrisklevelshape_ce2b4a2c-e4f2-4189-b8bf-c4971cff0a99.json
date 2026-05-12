@@ -1,0 +1,46 @@
+{
+  "brick_id": "ce2b4a2c-e4f2-4189-b8bf-c4971cff0a99",
+  "name": "sourcingAndGeopoliticalRiskLevelShape",
+  "description": "",
+  "template_type": "dropdown_iri",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/sourcingAndGeopoliticalRiskLevelShape",
+  "leaf_properties": [
+    {
+      "path": "http://qudt.org/schema/qudt/Unit",
+      "label": "value",
+      "description": "description for value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/veryLow",
+        "http://digital-passport.io/concept/low",
+        "http://digital-passport.io/concept/medium",
+        "http://digital-passport.io/concept/high",
+        "http://digital-passport.io/concept/veryHigh"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/sourcingAndGeopoliticalRiskLevelShape",
+    "source_file": "grantami.ttl"
+  }
+}

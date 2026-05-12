@@ -1,0 +1,29 @@
+{
+  "brick_id": "aacd812b-7a1e-42fd-8961-1c22da0daf63",
+  "name": "healthAndSafetyInformationShape",
+  "description": "",
+  "template_type": "custom",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/photovoltaics/healthAndSafetyInformationShape",
+  "leaf_properties": [],
+  "xone_alternatives": [],
+  "tags": [
+    "source:photovoltaics.ttl",
+    "refs:pHShape",
+    "refs:meltingPointShape",
+    "refs:boilingPointShape",
+    "refs:flashPointShape",
+    "refs:ignitionTemperatureShape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/photovoltaics/healthAndSafetyInformationShape",
+    "source_file": "photovoltaics.ttl"
+  }
+}

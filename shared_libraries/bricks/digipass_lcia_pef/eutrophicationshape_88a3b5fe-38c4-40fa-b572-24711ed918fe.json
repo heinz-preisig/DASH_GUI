@@ -1,0 +1,78 @@
+{
+  "brick_id": "88a3b5fe-38c4-40fa-b572-24711ed918fe",
+  "name": "eutrophicationShape",
+  "description": "",
+  "template_type": "dropdown_iri",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/lcia/eutrophicationShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/lcia/midpointIndicator",
+      "label": "Midpoint indicator",
+      "description": "Midpoint indicators used in this LCIA study",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/lcia/terrestrialEutrophication",
+        "http://digital-passport.io/concept/lcia/freshwaterEutrophication",
+        "http://digital-passport.io/concept/lcia/marineEcotoxicity"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    },
+    {
+      "path": "http://digital-passport.io/concept/lcia/value",
+      "label": "Value",
+      "description": "This input identifies the value associated with a data structure. The value may be a scalar or a Additional indicator to another object. The disjoint sub-properties of this data:value distinguish between scalar values and object references.",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": 0.0,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "decimal_with_unit"
+    },
+    {
+      "path": "http://digital-passport.io/concept/lcia/units",
+      "label": "Units",
+      "description": "Units",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/lcia/molNeq",
+        "http://digital-passport.io/concept/lcia/kgPeq",
+        "http://digital-passport.io/concept/lcia/kgNeq"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:lcia_pef.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/lcia/eutrophicationShape",
+    "source_file": "lcia_pef.ttl"
+  }
+}

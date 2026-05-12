@@ -1,0 +1,81 @@
+{
+  "brick_id": "272e1a08-02d9-4c30-9ab2-01936a371380",
+  "name": "Q343241Shape",
+  "description": "",
+  "template_type": "decimal_with_unit",
+  "namespace": "dpp",
+  "target_class": "http://wikidata.org/wiki/Q343241Shape",
+  "leaf_properties": [
+    {
+      "path": "http://wikidata.org/wiki/Q343241MinValue",
+      "label": "min value",
+      "description": "description for min value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": 0.0,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "decimal_with_unit"
+    },
+    {
+      "path": "http://wikidata.org/wiki/Q343241MaxValue",
+      "label": "max value",
+      "description": "description for max value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": 0.0,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "decimal_with_unit"
+    },
+    {
+      "path": "http://qudt.org/schema/qudt/Unit",
+      "label": "unit",
+      "description": "description for unit",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://qudt.org/vocab/unit/V-PER-M",
+        "http://qudt.org/vocab/unit/V-PER-CentiM",
+        "http://qudt.org/vocab/unit/V-PER-MilliM",
+        "http://qudt.org/vocab/unit/MV-PER-M",
+        "http://qudt.org/vocab/unit/V-PER-IN",
+        "http://digital-passport.io/concept/10to4V-PER-CentiM",
+        "http://digital-passport.io/concept/V-PER-MI_US",
+        "http://digital-passport.io/concept/KiloV-PER-IN",
+        "http://digital-passport.io/concept/V-PER-FT",
+        "http://digital-passport.io/concept/KiloV-PER-MilliM"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://wikidata.org/wiki/Q343241Shape",
+    "source_file": "grantami.ttl"
+  }
+}

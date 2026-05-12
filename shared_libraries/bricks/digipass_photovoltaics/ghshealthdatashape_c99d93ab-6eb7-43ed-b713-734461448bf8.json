@@ -1,0 +1,29 @@
+{
+  "brick_id": "c99d93ab-6eb7-43ed-b713-734461448bf8",
+  "name": "ghsHealthDataShape",
+  "description": "",
+  "template_type": "custom",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/ghs/ghsHealthDataShape",
+  "leaf_properties": [],
+  "xone_alternatives": [],
+  "tags": [
+    "source:photovoltaics.ttl",
+    "refs:H300Shape",
+    "refs:H300-H310Shape",
+    "refs:H300-H310-H330Shape",
+    "refs:H300-H330Shape",
+    "refs:H301Shape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/ghs/ghsHealthDataShape",
+    "source_file": "photovoltaics.ttl"
+  }
+}

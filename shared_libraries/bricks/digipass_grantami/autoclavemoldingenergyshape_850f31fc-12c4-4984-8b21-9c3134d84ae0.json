@@ -1,0 +1,89 @@
+{
+  "brick_id": "850f31fc-12c4-4984-8b21-9c3134d84ae0",
+  "name": "autoclaveMoldingEnergyShape",
+  "description": "",
+  "template_type": "decimal_with_unit",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/autoclaveMoldingEnergyShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/autoclaveMoldingEnergyMinValue",
+      "label": "min value",
+      "description": "description for min value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": 0.0,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "decimal_with_unit"
+    },
+    {
+      "path": "http://digital-passport.io/concept/autoclaveMoldingEnergyMaxValue",
+      "label": "max value",
+      "description": "description for max value",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+      "node_kind": null,
+      "in_values": [],
+      "has_value": null,
+      "min_inclusive": 0.0,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "decimal_with_unit"
+    },
+    {
+      "path": "http://qudt.org/schema/qudt/Unit",
+      "label": "unit",
+      "description": "description for unit",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://qudt.org/vocab/unit/KiloCAL-PER-GM",
+        "http://qudt.org/vocab/unit/KiloJ-PER-KiloGM",
+        "http://qudt.org/vocab/unit/J-PER-KiloGM",
+        "http://qudt.org/vocab/unit/MegaJ-PER-KiloGM",
+        "http://qudt.org/vocab/unit/BTU_IT-PER-LB",
+        "http://qudt.org/vocab/unit/ERG-PER-GM",
+        "http://qudt.org/vocab/unit/N-M-PER-KiloGM",
+        "http://digital-passport.io/concept/CAL-PER-GM",
+        "http://digital-passport.io/concept/KiloCAL-PER-LB",
+        "http://digital-passport.io/concept/LB_F-IN-PER-LB",
+        "http://digital-passport.io/concept/LB_F-FT-PER-IN",
+        "http://digital-passport.io/concept/LB_F-IN-IN-PER-LB_F-SEC2",
+        "http://digital-passport.io/concept/LB_F-FT-PER-SLUG",
+        "http://digital-passport.io/concept/N-MilliM-PER-TONNE",
+        "http://digital-passport.io/concept/KiloN-M-PER-KiloGM",
+        "http://digital-passport.io/concept/N-MilliM-PER-GM",
+        "http://digital-passport.io/concept/MegaN-M-PER-KiloGM",
+        "http://digital-passport.io/concept/DYN-CentiM-PER-GM"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/autoclaveMoldingEnergyShape",
+    "source_file": "grantami.ttl"
+  }
+}

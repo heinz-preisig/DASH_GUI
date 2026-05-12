@@ -1,0 +1,29 @@
+{
+  "brick_id": "e4a0aca2-4d05-44fd-a0d5-e87e52c1ef2b",
+  "name": "toxicokineticsShape",
+  "description": "",
+  "template_type": "custom",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/toxicology/toxicokineticsShape",
+  "leaf_properties": [],
+  "xone_alternatives": [],
+  "tags": [
+    "source:nanosafety.ttl",
+    "refs:molecularWeightShape",
+    "refs:ionizableGroupsShape",
+    "refs:vapourPressureShape",
+    "refs:dermalAbsorptionPhysicalStateShape",
+    "refs:metalIonsShape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/toxicology/toxicokineticsShape",
+    "source_file": "nanosafety.ttl"
+  }
+}

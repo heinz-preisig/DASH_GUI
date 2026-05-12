@@ -1,0 +1,43 @@
+{
+  "brick_id": "6ef6d9d5-355a-473d-b1ee-8bbc14184f0d",
+  "name": "odorShape",
+  "description": "",
+  "template_type": "dropdown_iri",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/photovoltaics/odorShape",
+  "leaf_properties": [
+    {
+      "path": "http://digital-passport.io/concept/photovoltaics/odorChoice",
+      "label": "Please choose",
+      "description": "An individual option or selection available to a user within a predefined set. It is presented as a dropdown menu, from which only one item may be selected.",
+      "min_count": 1,
+      "max_count": 1,
+      "datatype": null,
+      "node_kind": "http://www.w3.org/ns/shacl#IRI",
+      "in_values": [
+        "http://digital-passport.io/concept/photovoltaics/notApplicable",
+        "http://digital-passport.io/concept/photovoltaics/alcoholicOdor"
+      ],
+      "has_value": null,
+      "min_inclusive": null,
+      "max_inclusive": null,
+      "single_line": null,
+      "template_type": "dropdown_iri"
+    }
+  ],
+  "xone_alternatives": [],
+  "tags": [
+    "source:photovoltaics.ttl"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/photovoltaics/odorShape",
+    "source_file": "photovoltaics.ttl"
+  }
+}

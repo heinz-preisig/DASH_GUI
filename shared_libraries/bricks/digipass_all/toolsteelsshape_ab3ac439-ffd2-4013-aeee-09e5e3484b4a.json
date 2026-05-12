@@ -1,0 +1,29 @@
+{
+  "brick_id": "ab3ac439-ffd2-4013-aeee-09e5e3484b4a",
+  "name": "toolSteelsShape",
+  "description": "",
+  "template_type": "custom",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/toolSteelsShape",
+  "leaf_properties": [],
+  "xone_alternatives": [],
+  "tags": [
+    "source:grantami.ttl",
+    "refs:decarburizationResistanceRatingShape",
+    "refs:distortionResistanceRatingShape",
+    "refs:crackingResistanceRatingShape",
+    "refs:hotHardnessRatingShape",
+    "refs:machinabilityRatingShape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/toolSteelsShape",
+    "source_file": "grantami.ttl"
+  }
+}

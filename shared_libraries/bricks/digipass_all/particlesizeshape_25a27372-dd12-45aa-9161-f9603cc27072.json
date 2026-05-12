@@ -1,0 +1,25 @@
+{
+  "brick_id": "25a27372-dd12-45aa-9161-f9603cc27072",
+  "name": "particleSizeShape",
+  "description": "",
+  "template_type": "custom",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/toxicology/particleSizeShape",
+  "leaf_properties": [],
+  "xone_alternatives": [],
+  "tags": [
+    "source:nanosafety.ttl",
+    "refs:particleSizeSelectionShape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/toxicology/particleSizeShape",
+    "source_file": "nanosafety.ttl"
+  }
+}

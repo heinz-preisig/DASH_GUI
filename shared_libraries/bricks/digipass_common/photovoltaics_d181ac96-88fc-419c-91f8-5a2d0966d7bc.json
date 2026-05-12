@@ -1,0 +1,34 @@
+{
+  "brick_id": "d181ac96-88fc-419c-91f8-5a2d0966d7bc",
+  "name": "photovoltaics",
+  "description": "",
+  "template_type": "custom",
+  "namespace": "dpp",
+  "target_class": "http://digital-passport.io/concept/photovoltaics",
+  "leaf_properties": [],
+  "xone_alternatives": [],
+  "tags": [
+    "common:2_files",
+    "source:photovoltaics_product.ttl",
+    "refs:generalProductShape",
+    "refs:productLayerShape",
+    "refs:encapsulationShape",
+    "refs:qualityControlShape"
+  ],
+  "object_type": "NodeShape",
+  "properties": {},
+  "constraints": [],
+  "targets": [],
+  "property_path": "",
+  "created_at": "",
+  "updated_at": "",
+  "metadata": {
+    "source_iri": "http://digital-passport.io/concept/photovoltaics",
+    "source_file": "photovoltaics_product.ttl",
+    "found_in": [
+      "photovoltaics.ttl",
+      "photovoltaics_product.ttl"
+    ],
+    "file_count": 2
+  }
+}
