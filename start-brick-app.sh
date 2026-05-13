@@ -20,7 +20,7 @@ fi
 docker run -it \
     --rm \
     -p "$PORT:$PORT" \
-    -v "$(pwd)/shared_libraries:/app/shared_libraries" \
+    -v "$(pwd)/shared_libraries:/app/data" \
     -e APP=brick \
     -e PORT="$PORT" \
     "$IMAGE"

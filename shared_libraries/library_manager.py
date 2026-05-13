@@ -15,8 +15,8 @@ class SharedLibraryManager:
     """Manages shared libraries for both brick and schema applications"""
 
     def __init__(self):
-        # Check for Docker environment override
-        docker_data_path = os.environ.get('SHARED_LIBRARIES_ROOT', '/app/shared_libraries')
+        # Check for Docker environment override (data mounted at /app/data)
+        docker_data_path = os.environ.get('SHARED_LIBRARIES_ROOT', '/app/data')
         if os.path.exists(docker_data_path):
             # Docker mode: data is mounted at /app/shared_libraries
             self.base_path = Path(docker_data_path).resolve()
