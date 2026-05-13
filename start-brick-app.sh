@@ -16,11 +16,12 @@ if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
     docker build -t "$IMAGE" .
 fi
 
-# Run container
+# Run container as current user to prevent permission issues
 docker run -it \
     --rm \
     -p "$PORT:$PORT" \
     -v "$(pwd)/shared_libraries:/app/data" \
+    --user "$(id -u):$(id -g)" \
     -e APP=brick \
     -e PORT="$PORT" \
     "$IMAGE"

@@ -33,12 +33,13 @@ if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
     fi
 fi
 
-# Run container
+# Run container as current user to prevent permission issues
 echo "Starting container..."
 docker run -it \
     --rm \
     -p "$PORT:$PORT" \
     -v "$(pwd)/shared_libraries:/app/data" \
+    --user "$(id -u):$(id -g)" \
     -e APP=schema \
     -e PORT="$PORT" \
     "$IMAGE"
