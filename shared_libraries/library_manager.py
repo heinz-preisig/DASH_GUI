@@ -126,9 +126,15 @@ class SharedLibraryManager:
                      if lib["name"] == lib_dir.name), None
                 )
 
+                # Compute relative path if project_root is available (local dev), else use absolute
+                try:
+                    rel_path = str(lib_dir.relative_to(self.project_root)) if hasattr(self, 'project_root') else str(lib_dir)
+                except ValueError:
+                    rel_path = str(lib_dir)
+
                 brick_libs.append({
                     "name": lib_dir.name,
-                    "path": str(lib_dir.relative_to(self.project_root)),
+                    "path": rel_path,
                     "description": config_lib.get("description", f"Brick library '{lib_dir.name}'") if config_lib else f"Brick library '{lib_dir.name}'",
                     "type": "bricks",
                     "brick_count": brick_count,
@@ -153,9 +159,15 @@ class SharedLibraryManager:
                      if lib["name"] == lib_dir.name), None
                 )
 
+                # Compute relative path if project_root is available (local dev), else use absolute
+                try:
+                    rel_path = str(lib_dir.relative_to(self.project_root)) if hasattr(self, 'project_root') else str(lib_dir)
+                except ValueError:
+                    rel_path = str(lib_dir)
+
                 schema_libs.append({
                     "name": lib_dir.name,
-                    "path": str(lib_dir.relative_to(self.project_root)),
+                    "path": rel_path,
                     "description": config_lib.get("description", f"Schema library '{lib_dir.name}'") if config_lib else f"Schema library '{lib_dir.name}'",
                     "type": "schemas",
                     "absolute_path": str(lib_dir.absolute())
