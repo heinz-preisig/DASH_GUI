@@ -4,8 +4,6 @@ Multi-Tenant Backend Architecture
 Provides isolated backend instances for multiple clients (Qt, Web, API)
 """
 
-import sys
-from pathlib import Path
 from typing import Dict, Any, Optional, List
 
 from .session_manager import SessionManager, BackendSession
@@ -16,9 +14,7 @@ from .abstract_events import (
     create_error_event, create_status_event
 )
 
-# Add parent directory to path for shared_libraries import
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from shared_libraries.library_manager import SharedLibraryManager
+from shared_libraries import SharedLibraryManager
 
 
 class MultiTenantBackend:
