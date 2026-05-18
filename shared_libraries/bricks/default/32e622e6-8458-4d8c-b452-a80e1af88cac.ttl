@@ -1,0 +1,6 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+<http://example.org/32e622e6-8458-4d8c-b452-a80e1af88cac> a sh:PropertyShape ;
+    rdfs:label "familyName" .
+

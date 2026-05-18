@@ -11,12 +11,13 @@ from schema_app_v2.core.schema_core import Schema, UIMetadata
 
 class UIMetadataPanelDialog(QDialog):
     """Dialog for editing UI metadata of schema components"""
-    
-    def __init__(self, schema: Schema, brick_id: str, parent=None):
+
+    def __init__(self, schema: Schema, brick_id: str, brick_integration=None, parent=None):
         super().__init__(parent)
-        
+
         self.schema = schema
         self.brick_id = brick_id
+        self.brick_integration = brick_integration
         self.brick_name = self._get_brick_name(brick_id)
         
         # Load UI file
@@ -56,8 +57,10 @@ class UIMetadataPanelDialog(QDialog):
     
     def _get_brick_name(self, brick_id: str) -> str:
         """Get brick name from ID"""
-        # Try to get from brick integration if available
-        # For now, just return the ID
+        if self.brick_integration:
+            brick = self.brick_integration.get_brick_by_id(brick_id)
+            if brick:
+                return brick.name
         return brick_id
     
     def _load_current_data(self):
@@ -78,7 +81,10 @@ class UIMetadataPanelDialog(QDialog):
             
             # Nesting tab
             if ui_metadata.parent_id:
-                self.parentComboBox.setCurrentText(ui_metadata.parent_id)
+                # Find index by user data (ID), not by display text
+                index = self.parentComboBox.findData(ui_metadata.parent_id)
+                if index >= 0:
+                    self.parentComboBox.setCurrentIndex(index)
             
             # Display tab
             self.displayLabelLineEdit.setText(ui_metadata.label)
@@ -104,10 +110,11 @@ class UIMetadataPanelDialog(QDialog):
         """Populate parent dropdown with available components"""
         self.parentComboBox.clear()
         self.parentComboBox.addItem("")  # Empty for no parent
-        
+
         for brick_id in self.schema.component_brick_ids:
             if brick_id != self.brick_id:  # Can't be parent of itself
-                self.parentComboBox.addItem(brick_id)
+                name = self._get_brick_name(brick_id)
+                self.parentComboBox.addItem(name, brick_id)  # Display name, store ID as data
     
     def _load_group_details(self, group_id: str):
         """Load group details into the group details section"""
@@ -178,14 +185,15 @@ class UIMetadataPanelDialog(QDialog):
     def _update_tree_preview(self):
         """Update tree preview widget"""
         self.treePreviewWidget.clear()
-        
+
         # Build tree
         root_items = {}
-        
+
         # Create items for all components
         for brick_id in self.schema.component_brick_ids:
             item = QTreeWidgetItem(self.treePreviewWidget)
-            item.setText(0, brick_id)
+            name = self._get_brick_name(brick_id)
+            item.setText(0, name)
             root_items[brick_id] = item
         
         # Set up parent-child relationships
@@ -209,7 +217,7 @@ class UIMetadataPanelDialog(QDialog):
         return UIMetadata(
             sequence=self.sequenceSpinBox.value(),
             group_id=self.groupComboBox.currentText() or None,
-            parent_id=self.parentComboBox.currentText() or None,
+            parent_id=self.parentComboBox.currentData() or None,
             label=self.displayLabelLineEdit.text(),
             help_text=self.helpTextEdit.toPlainText(),
             is_collapsible=self.collapsibleCheckBox.isChecked(),

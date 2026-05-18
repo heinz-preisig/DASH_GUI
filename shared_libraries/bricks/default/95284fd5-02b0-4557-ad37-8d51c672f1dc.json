@@ -1,0 +1,26 @@
+{
+  "brick_id": "95284fd5-02b0-4557-ad37-8d51c672f1dc",
+  "name": "Organisation",
+  "description": "",
+  "object_type": "NodeShape",
+  "target_class": "https://ref.gs1.org/voc/Organization",
+  "property_path": "",
+  "properties": {
+    "OrganisationName": {
+      "name": "OrganisationName",
+      "property_brick_id": "2b07fad1-957a-42cd-acfe-f1e11ac73bb3",
+      "property_brick_name": "OrganisationName",
+      "property_path": "https://ref.gs1.org/voc/organizationLegalName",
+      "datatype": "xsd:string",
+      "constraints": [],
+      "is_property_brick": true,
+      "description": ""
+    }
+  },
+  "constraints": [],
+  "tags": [],
+  "created_at": "2026-05-05T14:54:58.659902",
+  "updated_at": "2026-05-05T15:20:05.992646",
+  "targets": [],
+  "metadata": {}
+}

@@ -417,6 +417,7 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, onSaved, on
   const [tree, setTree] = useState({ tree: {}, roots: [] });
   const [groups, setGroups] = useState([]);
   const [validation, setValidation] = useState(null);
+  const [rootBrickName, setRootBrickName] = useState("");
   const [tab, setTab] = useState("details");
   const [showAddComp, setShowAddComp] = useState(false);
   const [showAddRef, setShowAddRef] = useState(false);
@@ -430,6 +431,7 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, onSaved, on
     loadRefs();
     loadTree();
     loadGroups();
+    loadRootBrickName();
   }, [schemaData?.schema_id]);
 
   const loadComponents = async () => {
@@ -460,6 +462,19 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, onSaved, on
     if (!schemaData) return;
     const r = await api("GET", `/api/session/${sessionId}/schemas/${schemaData.schema_id}/groups`);
     if (r.status === "success") setGroups(r.data || []);
+  };
+
+  const loadRootBrickName = async () => {
+    if (!schemaData || !schemaData.root_brick_id) {
+      setRootBrickName("");
+      return;
+    }
+    const r = await api("GET", `/api/session/${sessionId}/bricks/${encodeURIComponent(schemaData.root_brick_id)}`);
+    if (r.status === "success" && r.data) {
+      setRootBrickName(r.data.name || schemaData.root_brick_id);
+    } else {
+      setRootBrickName(schemaData.root_brick_id);
+    }
   };
 
   const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setDirty(true); };
@@ -573,7 +588,11 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, onSaved, on
         <div className="form-row">
           <label>Root Brick</label>
           <div className="field" style={{ paddingTop:7, fontSize:13, color:"#555" }}>
-            {schemaData.root_brick_id || <span style={{ color:"#aaa" }}>— not set —</span>}
+            {rootBrickName ? (
+              <span>{rootBrickName} <span style={{ color:"#888", fontSize:11 }}>({schemaData.root_brick_id})</span></span>
+            ) : (
+              <span style={{ color:"#aaa" }}>— not set —</span>
+            )}
           </div>
         </div>
         <div style={{ display:"flex", justifyContent:"flex-end", gap:8, marginTop:8 }}>

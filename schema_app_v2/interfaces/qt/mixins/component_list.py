@@ -268,7 +268,7 @@ class ComponentListMixin:
                 f"Component '{brick_id}' not found in schema")
             return
         from schema_app_v2.interfaces.qt.ui_metadata_panel_dialog import UIMetadataPanelDialog
-        dialog = UIMetadataPanelDialog(self.current_schema, brick_id, self)
+        dialog = UIMetadataPanelDialog(self.current_schema, brick_id, self.brick_integration, self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self.schema_core.save_schema(self.current_schema)
             self.qt_session._emit_event('schema_updated', self.current_schema.to_dict())

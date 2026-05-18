@@ -1,0 +1,8 @@
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+<http://example.org/13c4eb91-f21e-4297-b842-f3fb6c411cb0> a sh:NodeShape ;
+    rdfs:label "myFirstTest" ;
+    sh:targetClass foaf:Person .
+
