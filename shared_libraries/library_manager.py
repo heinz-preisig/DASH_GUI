@@ -20,15 +20,14 @@ class SharedLibraryManager:
         if os.path.exists(docker_data_path):
             # Docker mode: data is mounted at /app/shared_libraries
             self.base_path = Path(docker_data_path).resolve()
-            self.config_file = self.base_path / "config.json"
+            self.config_file = self.base_path / "library_registry.json"
             self.config = self._load_config()
         else:
-            # Local dev mode: look for shared_libraries in project root
-            self.project_root = Path(__file__).resolve().parent.parent
-            self.config = self._load_config_local()
-            root_rel = self.config.get("shared_library_root", "shared_libraries")
-            self.base_path = (self.project_root / root_rel).resolve()
-            self.config_file = self.base_path / "config.json"
+            # Local dev mode: external shared_libraries at sibling of DASH_GUI project
+            project_root = Path(__file__).resolve().parent.parent
+            self.base_path = (project_root.parent / "shared_libraries").resolve()
+            self.config_file = self.base_path / "library_registry.json"
+            self.config = self._load_config()
 
         # Ensure all registered library directories exist
         self._ensure_directories()
@@ -36,7 +35,7 @@ class SharedLibraryManager:
     def _load_config_local(self) -> Dict[str, Any]:
         """Load config for local development (config.json in project root)"""
         project_root = Path(__file__).resolve().parent.parent
-        config_file = project_root / "config.json"
+        config_file = project_root / "library_registry.json"
         if not config_file.exists():
             return self._create_default_config()
         try:

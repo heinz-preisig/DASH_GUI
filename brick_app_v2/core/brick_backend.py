@@ -24,7 +24,7 @@ class BrickBackendAPI:
             self.project_root = cwd.parent
         else:
             self.project_root = cwd
-        self.config_file = self.project_root / "config.json"
+        self.config_file = self.project_root / "app_settings.json"
         self._load_config()
         self._initialize_default_library()
     

@@ -9,7 +9,7 @@ import os
 from PyQt6.QtWidgets import QApplication
 
 # Change to correct directory and add to path
-os.chdir('/home/heinz/1_Gits/DASH_GUI')
+os.chdir('/home/heinz/1_Gits/ShaclForms/DASH_GUI')
 sys.path.insert(0, os.path.abspath('.'))
 
 print('Starting Schema App v2 GUI...')

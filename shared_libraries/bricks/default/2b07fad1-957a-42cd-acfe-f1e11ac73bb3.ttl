@@ -1,6 +1,0 @@
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix sh: <http://www.w3.org/ns/shacl#> .
-
-<http://example.org/2b07fad1-957a-42cd-acfe-f1e11ac73bb3> a sh:PropertyShape ;
-    rdfs:label "OrganisationName" .
-

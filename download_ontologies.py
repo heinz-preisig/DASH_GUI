@@ -7,6 +7,7 @@ import os
 import sys
 import requests
 from urllib.parse import urlparse
+from pathlib import Path
 
 # Add current directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -57,9 +58,10 @@ def download_ontology(name: str, url: str, cache_dir: str):
 
 def main():
     """Download all default ontologies"""
-    # Create cache directory
-    cache_dir = os.path.join(os.getcwd(), 'ontologies', 'cache')
-    os.makedirs(cache_dir, exist_ok=True)
+    # Use external shared_libraries/ontologies for cache
+    project_root = Path(__file__).resolve().parent
+    cache_dir = project_root.parent / "shared_libraries" / "ontologies" / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
     
     print(f"Cache directory: {cache_dir}")
     
