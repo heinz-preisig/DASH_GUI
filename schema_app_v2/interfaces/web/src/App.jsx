@@ -205,6 +205,7 @@ export function App() {
               sessionId={sessionId}
               schemaData={schemaData}
               allSchemas={schemas}
+              brickLibraries={brickLibraries}
               brickLib={activeBrickLib}
               onSaved={handleSaved}
               onToast={showToast}
@@ -223,6 +224,7 @@ export function App() {
       {showNewSchema && (
         <NewSchemaModal
           sessionId={sessionId}
+          brickLibraries={brickLibraries}
           brickLib={activeBrickLib}
           onCreated={handleCreated}
           onClose={() => setShowNewSchema(false)}

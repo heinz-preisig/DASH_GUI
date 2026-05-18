@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/DASH_GUI.iml" filepath="$PROJECT_DIR$/.idea/DASH_GUI.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/brick-app-v2.iml" filepath="$PROJECT_DIR$/.idea/brick-app-v2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/dash-gui.iml" filepath="$PROJECT_DIR$/.idea/dash-gui.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/schema-app-v2.iml" filepath="$PROJECT_DIR$/.idea/schema-app-v2.iml" />
     </modules>
   </component>
 </project>

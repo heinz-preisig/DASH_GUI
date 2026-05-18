@@ -332,12 +332,61 @@ class SchemaWebAPI:
                     if shacl:
                         lines += [f"# Component Brick: {brick_id}", shacl, ""]
                 content = "\n".join(lines)
+                # Save to library folder alongside schema JSON
+                lib_path = os.path.join(s.schema_core.repository_path, library or s.schema_core.active_library)
+                os.makedirs(lib_path, exist_ok=True)
+                ttl_path = os.path.join(lib_path, f"{schema_id}.ttl")
+                with open(ttl_path, 'w') as f:
+                    f.write(content)
                 return content, 200, {
                     'Content-Type': 'text/turtle',
                     'Content-Disposition': f'attachment; filename="{schema.name}.ttl"'
                 }
             except Exception as e:
                 return self._err(f"Export failed: {e}", 500)
+
+        @self.app.route('/api/session/<session_id>/schemas/<schema_id>/export/dash-form', methods=['GET'])
+        def export_dash_form(session_id, schema_id):
+            s = self._get_session(session_id)
+            if not s:
+                return self._err("Session not found", 404)
+            library = self._slib(s)
+            schema = s.schema_core.load_schema(schema_id, library)
+            if not schema:
+                return self._err("Schema not found", 404)
+            try:
+                from schema_app_v2.core.dash_integration import DASHFormGenerator
+                generator = DASHFormGenerator(s.brick_integration)
+                html = generator.generate_dash_html_form(schema, library)
+                # Save to library folder alongside schema JSON
+                lib_path = os.path.join(s.schema_core.repository_path, library or s.schema_core.active_library)
+                os.makedirs(lib_path, exist_ok=True)
+                html_path = os.path.join(lib_path, f"{schema_id}_form.html")
+                with open(html_path, 'w') as f:
+                    f.write(html)
+                return html, 200, {
+                    'Content-Type': 'text/html',
+                    'Content-Disposition': f'attachment; filename="{schema.name}_form.html"'
+                }
+            except Exception as e:
+                return self._err(f"Form generation failed: {e}", 500)
+
+        @self.app.route('/api/session/<session_id>/schemas/<schema_id>/preview/form', methods=['GET'])
+        def preview_form(session_id, schema_id):
+            s = self._get_session(session_id)
+            if not s:
+                return self._err("Session not found", 404)
+            library = self._slib(s)
+            schema = s.schema_core.load_schema(schema_id, library)
+            if not schema:
+                return self._err("Schema not found", 404)
+            try:
+                from schema_app_v2.core.dash_integration import DASHFormGenerator
+                generator = DASHFormGenerator(s.brick_integration)
+                html = generator.generate_dash_html_form(schema, library)
+                return html, 200, {'Content-Type': 'text/html'}
+            except Exception as e:
+                return self._err(f"Preview failed: {e}", 500)
 
         # ── Components ─────────────────────────────────────────────────────
 

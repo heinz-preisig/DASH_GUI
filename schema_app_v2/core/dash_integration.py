@@ -70,10 +70,11 @@ class DASHFormGenerator:
         
         # Form actions
         html_lines.append('  <div class="form-actions">')
-        html_lines.append('    <button type="submit" class="btn-primary">Save</button>')
+        html_lines.append('    <button type="submit" class="btn-primary">Review</button>')
         html_lines.append('    <button type="reset" class="btn-secondary">Reset</button>')
         html_lines.append('  </div>')
         html_lines.append('</form>')
+        html_lines.append('<div id="review-panel" class="review-panel" style="display:none"></div>')
         
         # JavaScript for dynamic form behavior
         html_lines.extend(self._generate_form_javascript(schema))
@@ -510,93 +511,148 @@ class DASHFormGenerator:
         .collapsed::before {
             content: "▶";
         }
+
+        .review-panel {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        .review-section {
+            margin: 16px 0;
+            padding: 14px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+
+        .review-section h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 6px;
+        }
+
+        .review-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .review-table tr:nth-child(even) { background: #f0f0f0; }
+
+        .review-label {
+            width: 40%;
+            padding: 6px 8px;
+            font-weight: bold;
+            color: #555;
+            font-size: 13px;
+        }
+
+        .review-value {
+            padding: 6px 8px;
+            font-size: 13px;
+        }
+
+        .review-ts {
+            color: #888;
+            font-size: 12px;
+            margin-bottom: 16px;
+        }
+
+        .review-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
         """
     
     def _generate_form_javascript(self, schema: Schema) -> List[str]:
         """Generate JavaScript for dynamic form behavior"""
         js = [
-            "</body>",
-            "</html>",
             "<script>",
-            "// DASH Form JavaScript",
             "document.addEventListener('DOMContentLoaded', function() {",
-            "    // Handle collapsible components",
-            "    const collapsibles = document.querySelectorAll('.collapsible');",
-            "    collapsibles.forEach(function(elem) {",
-            "        elem.addEventListener('click', function(e) {",
-            "            if (e.target === elem || elem.contains(e.target)) {",
-            "                elem.classList.toggle('collapsed');",
-            "            }",
+            "    const form = document.querySelector('.dash-form');",
+            "    const reviewPanel = document.getElementById('review-panel');",
+            "",
+            "    // Collapsible sections",
+            "    document.querySelectorAll('.collapsible').forEach(function(elem) {",
+            "        elem.querySelector('.component-label').style.cursor = 'pointer';",
+            "        elem.querySelector('.component-label').addEventListener('click', function() {",
+            "            elem.classList.toggle('collapsed');",
+            "            const body = elem.querySelector('.component-body');",
+            "            if (body) body.style.display = elem.classList.contains('collapsed') ? 'none' : '';",
             "        });",
             "    });",
-            "    ",
-            "    // Form submission and data collection",
-            "    const form = document.querySelector('.dash-form');",
+            "",
+            "    // Submit -> show review panel",
             "    if (form) {",
             "        form.addEventListener('submit', function(e) {",
             "            e.preventDefault();",
-            "            if (!validateForm()) { return; }",
-            "            ",
-            "            const formData = collectFormData();",
-            "            const blob = new Blob([JSON.stringify(formData, null, 2)], {type: 'application/json'});",
-            "            const url = URL.createObjectURL(blob);",
-            "            const a = document.createElement('a');",
-            "            a.href = url;",
-            "            a.download = form.id + '_data.json';",
-            "            document.body.appendChild(a);",
-            "            a.click();",
-            "            document.body.removeChild(a);",
-            "            URL.revokeObjectURL(url);",
-            "            alert('Data saved to ' + form.id + '_data.json');",
+            "            if (!form.checkValidity()) { form.reportValidity(); return; }",
+            "            const data = collectFormData();",
+            "            showReview(data);",
             "        });",
             "    }",
-            "    ",
+            "",
             "    function collectFormData() {",
             "        const data = { schema_id: form.id, timestamp: new Date().toISOString(), components: {} };",
             "        document.querySelectorAll('.component').forEach(function(comp) {",
             "            const brickId = comp.dataset.brickId;",
+            "            if (!brickId) return;",
             "            const componentData = {};",
             "            comp.querySelectorAll('.form-field').forEach(function(field) {",
-            "                componentData[field.name] = (field.type === 'checkbox') ? field.checked : field.value;",
+            "                if (!field.name) return;",
+            "                const label = comp.querySelector('label[for=\"' + field.name + '\"]');",
+            "                const displayName = label ? label.textContent.replace(':', '').trim() : field.name;",
+            "                componentData[displayName] = (field.type === 'checkbox') ? (field.checked ? 'Yes' : 'No') : field.value;",
             "            });",
-            "            if (Object.keys(componentData).length > 0) { data.components[brickId] = componentData; }",
+            "            if (Object.keys(componentData).length > 0) data.components[brickId] = componentData;",
             "        });",
             "        return data;",
             "    }",
-            "    ",
-            "    function validateForm() {",
-            "        const fields = document.querySelectorAll('.form-field');",
-            "        let isValid = true;",
-            "        ",
-            "        fields.forEach(function(field) {",
-            "            const name = field.name;",
-            "            const value = field.value;",
-            "            ",
-            "            // Check minLength",
-            "            const minLength = document.querySelector(name + '_minLength');",
-            "            if (minLength && value.length < parseInt(minLength.value)) {",
-            "                field.setCustomValidity('Minimum length is ' + minLength.value);",
-            "                isValid = false;",
-            "            }",
-            "            ",
-            "            // Check maxLength",
-            "            const maxLength = document.querySelector(name + '_maxLength');",
-            "            if (maxLength && value.length > parseInt(maxLength.value)) {",
-            "                field.setCustomValidity('Maximum length is ' + maxLength.value);",
-            "                isValid = false;",
-            "            }",
-            "            ",
-            "            // Check pattern",
-            "            const pattern = document.querySelector(name + '_pattern');",
-            "            if (pattern && !new RegExp(pattern.value).test(value)) {",
-            "                field.setCustomValidity('Invalid format');",
-            "                isValid = false;",
-            "            }",
+            "",
+            "    function showReview(data) {",
+            "        form.style.display = 'none';",
+            "        let html = '<h2>Review: ' + (form.querySelector('h2') ? form.querySelector('h2').textContent : '') + '</h2>';",
+            "        html += '<p class=\"review-ts\">Submitted: ' + new Date(data.timestamp).toLocaleString() + '</p>';",
+            "        Object.entries(data.components).forEach(function([brickId, fields]) {",
+            "            const compElem = document.querySelector('.component[data-brick-id=\"' + brickId + '\"]');",
+            "            const title = compElem ? (compElem.querySelector('.component-label') || {}).textContent || brickId : brickId;",
+            "            html += '<div class=\"review-section\">';",
+            "            html += '<h3>' + title + '</h3>';",
+            "            html += '<table class=\"review-table\">';",
+            "            Object.entries(fields).forEach(function([name, value]) {",
+            "                const display = (value === '' || value === null || value === undefined) ? '<em style=\"color:#aaa\">—</em>' : value;",
+            "                html += '<tr><td class=\"review-label\">' + name + '</td><td class=\"review-value\">' + display + '</td></tr>';",
+            "            });",
+            "            html += '</table></div>';",
             "        });",
-            "        ",
-            "        return isValid;",
+            "        html += '<div class=\"review-actions\">';",
+            "        html += '<button class=\"btn-secondary\" onclick=\"showForm()\">&#9664; Edit</button>';",
+            "        html += '<button class=\"btn-primary\" onclick=\"downloadData()\">Download JSON</button>';",
+            "        html += '</div>';",
+            "        reviewPanel.innerHTML = html;",
+            "        reviewPanel.style.display = 'block';",
+            "        window._reviewData = data;",
             "    }",
+            "",
+            "    window.showForm = function() {",
+            "        reviewPanel.style.display = 'none';",
+            "        form.style.display = '';",
+            "    };",
+            "",
+            "    window.downloadData = function() {",
+            "        const blob = new Blob([JSON.stringify(window._reviewData, null, 2)], {type: 'application/json'});",
+            "        const url = URL.createObjectURL(blob);",
+            "        const a = document.createElement('a');",
+            "        a.href = url; a.download = window._reviewData.schema_id + '_data.json';",
+            "        document.body.appendChild(a); a.click();",
+            "        document.body.removeChild(a); URL.revokeObjectURL(url);",
+            "    };",
             "});",
-            "</script>"
+            "</script>",
+            "</body>",
+            "</html>"
         ]
         return js

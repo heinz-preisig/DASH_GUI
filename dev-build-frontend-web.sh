@@ -1,93 +1,87 @@
 #!/bin/bash
-# Build script for Schema App v2 Web Frontend
-# This script builds the React/Vite frontend for production deployment
-#
-# Usage: ./build-web-frontend.sh
-# Requirements: Node.js 18+, npm
-# Output: static/dist/ directory with bundled frontend
-#
-# After building, start the Flask server:
-#   uv run python run_schema_app_web.py --port 5003
-# Then access: http://localhost:5003
+# Build script for Schema App Web UI
+# This script handles Node.js installation and React frontend build
 
-set -e  # Exit on error
+set -e
 
-echo "=========================================="
-echo "Building Schema App v2 Web Frontend"
-echo "=========================================="
-
-# Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WEB_DIR="${SCRIPT_DIR}/schema_app_v2/interfaces/web"
+WEB_DIR="$SCRIPT_DIR/schema_app_v2/interfaces/web"
 
+echo "=== Schema App Web UI Build Script ==="
 echo ""
-echo "Step 1: Checking Node.js installation..."
-if ! command -v node &> /dev/null; then
-    echo "ERROR: Node.js is not installed"
-    echo "Please install Node.js 18+ from https://nodejs.org/"
+
+# Function to check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Check if Node.js is installed
+if command_exists node; then
+    echo "✓ Node.js is already installed: $(node --version)"
+    NODE_VERSION=$(node --version)
+else
+    echo "✗ Node.js not found. Installing via nvm..."
+    
+    # Install nvm if not present
+    if [ ! -d "$HOME/.nvm" ]; then
+        echo "Installing nvm..."
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+    fi
+    
+    # Load nvm
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    
+    # Install Node.js LTS
+    echo "Installing Node.js LTS..."
+    nvm install --lts
+    nvm use --lts
+fi
+
+# Load nvm if we just installed it
+if [ -d "$HOME/.nvm" ]; then
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    nvm use --lts 2>/dev/null || true
+fi
+
+# Check if npm is installed
+if ! command_exists npm; then
+    echo "✗ npm not found. Please install Node.js properly."
     exit 1
 fi
 
-NODE_VERSION=$(node --version | cut -d'v' -f2 | cut -d'.' -f1)
-if [ "$NODE_VERSION" -lt 18 ]; then
-    echo "ERROR: Node.js version 18+ required, found $(node --version)"
-    exit 1
-fi
-
-echo "  ✓ Node.js $(node --version)"
-
-# Check if npm is available
-if ! command -v npm &> /dev/null; then
-    echo "ERROR: npm is not installed"
-    exit 1
-fi
-
-echo "  ✓ npm $(npm --version)"
-
+echo "✓ npm version: $(npm --version)"
 echo ""
-echo "Step 2: Installing dependencies..."
-cd "${WEB_DIR}"
 
+# Navigate to web directory
+cd "$WEB_DIR"
+
+# Install npm dependencies
+echo "Installing npm dependencies..."
 if [ ! -d "node_modules" ]; then
-    echo "  Installing npm packages (this may take a few minutes)..."
     npm install
 else
-    echo "  node_modules exists, skipping npm install"
-    echo "  (Run 'rm -rf node_modules' and re-run this script to force reinstall)"
+    echo "node_modules already exists, skipping npm install"
 fi
-
 echo ""
-echo "Step 3: Building production bundle..."
+
+# Build React app
+echo "Building React app..."
 npm run build
-
 echo ""
-echo "Step 4: Verifying build output..."
-if [ ! -f "static/dist/index.html" ]; then
-    echo "ERROR: Build failed - index.html not found in static/dist/"
+
+# Check if build succeeded
+if [ -d "static/dist" ]; then
+    echo "✓ Build successful! Static files are in: $WEB_DIR/static/dist"
+    echo ""
+    echo "To run the web interface:"
+    echo "  cd $SCRIPT_DIR"
+    echo "  uv run python run_schema_app_web.py"
+else
+    echo "✗ Build failed. static/dist directory not found."
     exit 1
 fi
 
-if [ ! -d "static/dist/assets" ]; then
-    echo "ERROR: Build failed - assets directory not found in static/dist/"
-    exit 1
-fi
-
-echo "  ✓ static/dist/index.html"
-echo "  ✓ static/dist/assets/"
-
 echo ""
-echo "=========================================="
-echo "Build completed successfully!"
-echo "=========================================="
-echo ""
-echo "To start the Flask server:"
-echo "  cd ${SCRIPT_DIR}"
-echo "  uv run python run_schema_app_web.py --port 5003"
-echo ""
-echo "Then open: http://localhost:5003"
-echo ""
-echo "Notes:"
-echo "  - Port 5000 may be in use by Docker/Qt app"
-echo "  - The built frontend is served from static/dist/"
-echo "  - Flask automatically serves static/dist/index.html"
-echo ""
+echo "=== Build Complete ==="

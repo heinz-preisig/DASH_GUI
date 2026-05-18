@@ -14,7 +14,7 @@ from .abstract_events import (
     create_error_event, create_status_event
 )
 
-from shared_libraries import SharedLibraryManager
+from common import SharedLibraryManager
 
 
 class MultiTenantBackend:

@@ -8,7 +8,7 @@ import { AddRefModal } from './AddRefModal';
  * SchemaEditor - Main component for editing a schema
  * Handles components, refs, groups, tree view, and validation
  */
-export function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, onSaved, onToast, onDeleted }) {
+export function SchemaEditor({ sessionId, schemaData, allSchemas, brickLibraries, brickLib, onSaved, onToast, onDeleted }) {
   const [form, setForm] = useState({ name: "", description: "" });
   const [dirty, setDirty] = useState(false);
   const [components, setComponents] = useState([]);
@@ -389,6 +389,7 @@ export function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, onSa
           sessionId={sessionId}
           schemaId={schemaData.schema_id}
           existingIds={schemaData.component_brick_ids || []}
+          brickLibraries={brickLibraries}
           brickLib={brickLib}
           onAdded={id => {
             setShowAddComp(false);

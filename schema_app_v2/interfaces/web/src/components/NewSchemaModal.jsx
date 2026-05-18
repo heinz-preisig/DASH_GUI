@@ -4,20 +4,21 @@ import { api } from '../api';
 /**
  * NewSchemaModal - Modal for creating a new schema
  */
-export function NewSchemaModal({ sessionId, brickLib, onCreated, onClose }) {
+export function NewSchemaModal({ sessionId, brickLibraries, brickLib, onCreated, onClose }) {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [rootBrick, setRootBrick] = useState("");
   const [nodeShapes, setNodeShapes] = useState([]);
-  const [lib, setLib] = useState(brickLib || "");
+  const [selectedLibrary, setSelectedLibrary] = useState(brickLib || "default");
 
   useEffect(() => {
     if (!sessionId) return;
+    const lib = selectedLibrary || "default";
     const q = lib ? `?library=${encodeURIComponent(lib)}` : "";
     api("GET", `/session/${sessionId}/bricks/node-shapes${q}`).then(r => {
       if (r.status === "success") setNodeShapes(r.data || []);
     });
-  }, [sessionId, lib]);
+  }, [sessionId, selectedLibrary]);
 
   const submit = async () => {
     if (!name.trim() || !rootBrick) return;
@@ -32,6 +33,16 @@ export function NewSchemaModal({ sessionId, brickLib, onCreated, onClose }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <h2>New Schema</h2>
+        <div className="form-row">
+          <label>Library</label>
+          <div className="field">
+            <select value={selectedLibrary} onChange={e => setSelectedLibrary(e.target.value)} style={{ width: "100%", padding: 6 }}>
+              {brickLibraries && brickLibraries.map(lib => (
+                <option key={lib} value={lib}>{lib}</option>
+              ))}
+            </select>
+          </div>
+        </div>
         <div className="form-row">
           <label>Name *</label>
           <div className="field"><input type="text" value={name} onChange={e => setName(e.target.value)} autoFocus/></div>

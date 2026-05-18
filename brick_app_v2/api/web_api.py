@@ -558,10 +558,8 @@ class BrickWebAPI:
         def get_pattern_presets():
             """Get pattern presets from shared_libraries/pattern_presets.json"""
             try:
-                from pathlib import Path
-                # Load from external shared_libraries
-                project_root = Path(__file__).resolve().parent.parent.parent
-                presets_file = project_root.parent / "shared_libraries" / "pattern_presets.json"
+                from common import shared_library_manager
+                presets_file = shared_library_manager.base_path / "pattern_presets.json"
                 
                 if not presets_file.exists():
                     return jsonify({

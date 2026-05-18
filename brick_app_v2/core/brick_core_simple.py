@@ -104,7 +104,7 @@ class BrickCore:
     def __init__(self, repository_path: str = None, use_shared_libraries: bool = True):
         # Use shared libraries by default
         if use_shared_libraries and repository_path is None:
-            from shared_libraries import shared_library_manager
+            from common import shared_library_manager
             self.repository_path = shared_library_manager.get_brick_library_path()
             self.shared_library_manager = shared_library_manager
         else:

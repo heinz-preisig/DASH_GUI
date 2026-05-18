@@ -20,9 +20,8 @@ from core.ontology_manager import OntologyManager
 def load_pattern_presets():
     """Load pattern presets from shared_libraries/pattern_presets.json"""
     try:
-        # Navigate to external shared_libraries
-        project_root = Path(__file__).resolve().parent.parent
-        presets_file = project_root.parent / "shared_libraries" / "pattern_presets.json"
+        from common import shared_library_manager
+        presets_file = shared_library_manager.base_path / "pattern_presets.json"
         
         if presets_file.exists():
             with open(presets_file, 'r') as f:

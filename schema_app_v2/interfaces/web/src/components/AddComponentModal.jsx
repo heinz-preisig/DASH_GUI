@@ -4,18 +4,20 @@ import { api } from '../api';
 /**
  * AddComponentModal - Modal for adding a brick component to a schema
  */
-export function AddComponentModal({ sessionId, schemaId, existingIds, brickLib, onAdded, onClose }) {
+export function AddComponentModal({ sessionId, schemaId, existingIds, brickLibraries, brickLib, onAdded, onClose }) {
   const [bricks, setBricks] = useState([]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
+  const [selectedLibrary, setSelectedLibrary] = useState(brickLib || "default");
 
   useEffect(() => {
     if (!sessionId) return;
-    const q = brickLib ? `?library=${encodeURIComponent(brickLib)}` : "";
+    const lib = selectedLibrary || "default";
+    const q = lib ? `?library=${encodeURIComponent(lib)}` : "";
     api("GET", `/session/${sessionId}/bricks${q}`).then(r => {
       if (r.status === "success") setBricks(r.data || []);
     });
-  }, [sessionId, brickLib]);
+  }, [sessionId, selectedLibrary]);
 
   const filtered = bricks.filter(b => {
     const s = search.toLowerCase();
@@ -33,6 +35,16 @@ export function AddComponentModal({ sessionId, schemaId, existingIds, brickLib, 
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <h2>Add Component Brick</h2>
+        <div className="form-row">
+          <label>Library</label>
+          <div className="field">
+            <select value={selectedLibrary} onChange={e => setSelectedLibrary(e.target.value)} style={{ width: "100%", padding: 6 }}>
+              {brickLibraries && brickLibraries.map(lib => (
+                <option key={lib} value={lib}>{lib}</option>
+              ))}
+            </select>
+          </div>
+        </div>
         <div className="form-row">
           <label>Search</label>
           <div className="field"><input type="text" placeholder="Filter bricks…" value={search} onChange={e => setSearch(e.target.value)} autoFocus/></div>

@@ -1,6 +1,24 @@
 # DASH GUI - Web Interface Only
 # Multi-stage build for smaller image
 
+FROM node:18-slim AS node-builder
+
+WORKDIR /app/web
+
+# Copy web interface package files
+COPY schema_app_v2/interfaces/web/package*.json ./
+
+# Install npm dependencies
+RUN npm install
+
+# Copy web interface source
+COPY schema_app_v2/interfaces/web/src ./src
+COPY schema_app_v2/interfaces/web/vite.config.js ./
+COPY schema_app_v2/interfaces/web/index.html ./
+
+# Build React app
+RUN npm run build
+
 FROM python:3.13-slim AS builder
 
 # Install uv
@@ -23,7 +41,10 @@ WORKDIR /app
 # Copy virtual environment from builder
 COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 
-# Copy application code
+# Copy React build from node-builder
+COPY --from=node-builder /app/web/static ./schema_app_v2/interfaces/web/static
+
+# Copy application code (excluding node_modules and other dev artifacts)
 COPY . .
 
 # Make entrypoint executable

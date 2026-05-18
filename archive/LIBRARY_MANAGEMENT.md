@@ -103,7 +103,7 @@ SaveLoadManager.load_schema_from_library(processor, schema_id, "project_schemas"
 
 ```bash
 # Start the application
-/home/heinz/.local/bin/uv run python run_schema_app.py
+/home/heinz/.local/bin/uv run python run_schema_app_qt.py
 ```
 
 1. **Open Library Manager**: Tools > Library Manager

@@ -2,6 +2,10 @@
 """
 Shared Library Manager
 Unified library management for brick_app_v2 and schema_app_v2
+
+The actual library data lives EXTERNAL to the project at:
+  <project_root>/../shared_libraries/
+For Docker, set SHARED_LIBRARIES_ROOT to the mounted data path.
 """
 
 import os
@@ -15,35 +19,21 @@ class SharedLibraryManager:
     """Manages shared libraries for both brick and schema applications"""
 
     def __init__(self):
-        # Check for Docker environment override (data mounted at /app/data)
-        docker_data_path = os.environ.get('SHARED_LIBRARIES_ROOT', '/app/data')
-        if os.path.exists(docker_data_path):
-            # Docker mode: data is mounted at /app/shared_libraries
+        # Check for Docker environment override
+        docker_data_path = os.environ.get('SHARED_LIBRARIES_ROOT')
+        if docker_data_path and os.path.exists(docker_data_path):
             self.base_path = Path(docker_data_path).resolve()
-            self.config_file = self.base_path / "library_registry.json"
-            self.config = self._load_config()
         else:
-            # Local dev mode: external shared_libraries at sibling of DASH_GUI project
+            # Local development: external shared_libraries at sibling of DASH_GUI project
             project_root = Path(__file__).resolve().parent.parent
             self.base_path = (project_root.parent / "shared_libraries").resolve()
-            self.config_file = self.base_path / "library_registry.json"
-            self.config = self._load_config()
+
+        self.config_file = self.base_path / "library_registry.json"
+        self.config = self._load_config()
 
         # Ensure all registered library directories exist
         self._ensure_directories()
 
-    def _load_config_local(self) -> Dict[str, Any]:
-        """Load config for local development (config.json in project root)"""
-        project_root = Path(__file__).resolve().parent.parent
-        config_file = project_root / "library_registry.json"
-        if not config_file.exists():
-            return self._create_default_config()
-        try:
-            with open(config_file, 'r') as f:
-                return json.load(f)
-        except Exception:
-            return self._create_default_config()
-    
     def _load_config(self) -> Dict[str, Any]:
         """Load library configuration"""
         if not self.config_file.exists():
@@ -73,6 +63,7 @@ class SharedLibraryManager:
                 }
             }
         }
+        self.base_path.mkdir(parents=True, exist_ok=True)
         with open(self.config_file, 'w') as f:
             json.dump(default_config, f, indent=2)
         return default_config
@@ -125,15 +116,9 @@ class SharedLibraryManager:
                      if lib["name"] == lib_dir.name), None
                 )
 
-                # Compute relative path if project_root is available (local dev), else use absolute
-                try:
-                    rel_path = str(lib_dir.relative_to(self.project_root)) if hasattr(self, 'project_root') else str(lib_dir)
-                except ValueError:
-                    rel_path = str(lib_dir)
-
                 brick_libs.append({
                     "name": lib_dir.name,
-                    "path": rel_path,
+                    "path": str(lib_dir),
                     "description": config_lib.get("description", f"Brick library '{lib_dir.name}'") if config_lib else f"Brick library '{lib_dir.name}'",
                     "type": "bricks",
                     "brick_count": brick_count,
@@ -158,15 +143,9 @@ class SharedLibraryManager:
                      if lib["name"] == lib_dir.name), None
                 )
 
-                # Compute relative path if project_root is available (local dev), else use absolute
-                try:
-                    rel_path = str(lib_dir.relative_to(self.project_root)) if hasattr(self, 'project_root') else str(lib_dir)
-                except ValueError:
-                    rel_path = str(lib_dir)
-
                 schema_libs.append({
                     "name": lib_dir.name,
-                    "path": rel_path,
+                    "path": str(lib_dir),
                     "description": config_lib.get("description", f"Schema library '{lib_dir.name}'") if config_lib else f"Schema library '{lib_dir.name}'",
                     "type": "schemas",
                     "absolute_path": str(lib_dir.absolute())
@@ -202,7 +181,7 @@ class SharedLibraryManager:
         except Exception as e:
             raise RuntimeError(f"Failed to create library directory: {e}")
 
-        # Add to configuration — no path stored, it is always derived
+        # Add to configuration
         new_lib = {
             "name": name,
             "description": description,
@@ -353,38 +332,6 @@ class SharedLibraryManager:
         """Save configuration to file"""
         with open(self.config_file, 'w') as f:
             json.dump(self.config, f, indent=2)
-    
-    def migrate_from_legacy(self, brick_source: str = "brick_app_v2/brick_repositories_v2", 
-                           schema_source: str = "schema_app_v2/repositories"):
-        """Migrate from legacy library structure"""
-        # Migrate bricks
-        brick_source_path = Path(brick_source)
-        if brick_source_path.exists():
-            for lib_dir in brick_source_path.iterdir():
-                if lib_dir.is_dir():
-                    target_dir = self.base_path / "bricks" / lib_dir.name
-                    if target_dir.exists():
-                        # Copy brick files
-                        brick_files = lib_dir / "bricks"
-                        if brick_files.exists():
-                            target_bricks = target_dir / "bricks"
-                            target_bricks.mkdir(parents=True, exist_ok=True)
-                            
-                            for brick_file in brick_files.glob("*.json"):
-                                target_file = target_bricks / brick_file.name
-                                if not target_file.exists():
-                                    import shutil
-                                    shutil.copy2(brick_file, target_file)
-        
-        # Migrate schemas
-        schema_source_path = Path(schema_source)
-        if schema_source_path.exists():
-            for lib_dir in schema_source_path.iterdir():
-                if lib_dir.is_dir():
-                    target_dir = self.base_path / "schemas" / lib_dir.name
-                    if not target_dir.exists():
-                        import shutil
-                        shutil.copytree(lib_dir, target_dir)
 
 
 # Global instance for easy access

@@ -185,7 +185,7 @@ pip install PyQt6 rdflib jsonschema pathlib
 /home/heinz/.local/bin/uv run python launch_schema_constructor.py
 
 # Alternative launcher
-/home/heinz/.local/bin/uv run python run_schema_app.py
+/home/heinz/.local/bin/uv run python run_schema_app_qt.py
 ```
 
 ### **3. Testing the Workflow**

@@ -191,18 +191,20 @@ function NewSchemaModal({ sessionId, brickLib, onCreated, onClose }) {
 }
 
 /* ── AddComponentModal ───────────────────────────────── */
-function AddComponentModal({ sessionId, schemaId, existingIds, brickLib, onAdded, onClose }) {
+function AddComponentModal({ sessionId, schemaId, existingIds, brickLib, brickLibraries, onAdded, onClose }) {
   const [bricks, setBricks] = useState([]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
+  const [selectedLib, setSelectedLib] = useState(brickLib || "");
 
   useEffect(() => {
     if (!sessionId) return;
-    const q = brickLib ? `?library=${encodeURIComponent(brickLib)}` : "";
+    const q = selectedLib ? `?library=${encodeURIComponent(selectedLib)}` : "";
     api("GET", `/api/session/${sessionId}/bricks${q}`).then(r => {
       if (r.status === "success") setBricks(r.data || []);
     });
-  }, [sessionId, brickLib]);
+    setSelected(null);
+  }, [sessionId, selectedLib]);
 
   const filtered = bricks.filter(b => {
     const s = search.toLowerCase();
@@ -220,6 +222,16 @@ function AddComponentModal({ sessionId, schemaId, existingIds, brickLib, onAdded
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <h2>Add Component Brick</h2>
+        {brickLibraries && brickLibraries.length > 1 && (
+          <div className="form-row">
+            <label>Brick Library</label>
+            <div className="field">
+              <select value={selectedLib} onChange={e => setSelectedLib(e.target.value)}>
+                {brickLibraries.map(l => <option key={l} value={l}>{l}</option>)}
+              </select>
+            </div>
+          </div>
+        )}
         <div className="form-row">
           <label>Search</label>
           <div className="field"><input type="text" placeholder="Filter bricks…" value={search} onChange={e => setSearch(e.target.value)} autoFocus/></div>
@@ -409,7 +421,7 @@ function AddChildModal({ sessionId, schemaId, parentId, components, onAdded, onC
 }
 
 /* ── SchemaEditor ────────────────────────────────────── */
-function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, onSaved, onToast, onDeleted }) {
+function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, brickLibraries, onSaved, onToast, onDeleted }) {
   const [form, setForm] = useState({ name: "", description: "" });
   const [dirty, setDirty] = useState(false);
   const [components, setComponents] = useState([]);
@@ -554,6 +566,14 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, onSaved, on
     window.open(`/api/session/${sessionId}/schemas/${schemaData.schema_id}/export/shacl`, '_blank');
   };
 
+  const generateForm = () => {
+    window.open(`/api/session/${sessionId}/schemas/${schemaData.schema_id}/export/dash-form`, '_blank');
+  };
+
+  const previewForm = () => {
+    window.open(`/api/session/${sessionId}/schemas/${schemaData.schema_id}/preview/form`, '_blank');
+  };
+
   const doDelete = async () => {
     if (!window.confirm(`Delete schema "${schemaData.name}"?`)) return;
     const r = await api("DELETE", `/api/session/${sessionId}/schemas/${schemaData.schema_id}`);
@@ -572,6 +592,8 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, onSaved, on
           <h2 style={{ margin:0, borderBottom:"none", paddingBottom:0 }}>Schema Details</h2>
           <div style={{ display:"flex", gap:6 }}>
             <button className="btn btn-success btn-sm" onClick={exportShacl} title="Download SHACL Turtle">Export SHACL</button>
+            <button className="btn btn-primary btn-sm" onClick={generateForm} title="Download DASH HTML Form">Generate Form</button>
+            <button className="btn btn-secondary btn-sm" onClick={previewForm} title="Open form in browser to test">Preview Form</button>
             <button className="btn btn-secondary btn-sm" onClick={validate}>Validate</button>
             <button className="btn btn-danger btn-sm" onClick={doDelete}>Delete</button>
           </div>
@@ -596,7 +618,7 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, onSaved, on
           </div>
         </div>
         <div style={{ display:"flex", justifyContent:"flex-end", gap:8, marginTop:8 }}>
-          <button className="btn btn-primary" disabled={!dirty} onClick={save}>Save</button>
+          <button className="btn btn-primary" disabled={!schemaData} onClick={save}>Save</button>
         </div>
         {validation && (
           <div style={{ marginTop:10 }}>
@@ -788,6 +810,7 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, onSaved, on
           schemaId={schemaData.schema_id}
           existingIds={schemaData.component_brick_ids || []}
           brickLib={brickLib}
+          brickLibraries={brickLibraries}
           onAdded={id => {
             setShowAddComp(false);
             onToast("Component added", "success");
@@ -1129,6 +1152,7 @@ function App() {
               schemaData={schemaData}
               allSchemas={schemas}
               brickLib={activeBrickLib}
+              brickLibraries={brickLibraries}
               onSaved={handleSaved}
               onToast={showToast}
               onDeleted={handleDeleted}

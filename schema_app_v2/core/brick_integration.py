@@ -8,7 +8,7 @@ from typing import List, Optional, Dict, Any
 try:
     from brick_app_v2.core.brick_core_simple import BrickCore, SHACLBrick
     from brick_app_v2.core.ontology_manager import OntologyManager
-    from shared_libraries import shared_library_manager
+    from common import shared_library_manager
 except Exception as e:
     print(f"Warning: Could not import brick_app_v2 modules: {e}")
     BrickCore = None

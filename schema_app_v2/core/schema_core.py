@@ -677,7 +677,7 @@ class SchemaCore:
     def __init__(self, repository_path: str = None, use_shared_libraries: bool = True):
         # Use shared libraries by default
         if use_shared_libraries:
-            from shared_libraries import shared_library_manager
+            from common import shared_library_manager
             self.repository_path = os.path.abspath(shared_library_manager.get_schema_library_path())
             self.shared_library_manager = shared_library_manager
         else:
