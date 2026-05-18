@@ -1,0 +1,35 @@
+{
+    "version": "2.0",
+    "shared_library_root": "../shared_libraries",
+    "libraries": {
+        "bricks": {
+            "libraries": [
+                {
+                    "name": "default",
+                    "description": "Default brick library"
+                }
+            ]
+        },
+        "schemas": {
+            "libraries": [
+                {
+                    "name": "default",
+                    "description": "Default schema library"
+                }
+            ]
+        }
+    },
+    "export": {
+        "last_directory": "",
+        "last_filename": ""
+    },
+    "ui": {
+        "window_geometry": "",
+        "window_state": ""
+    },
+    "integration": {
+        "cross_app_compatibility": true,
+        "shared_format": "json",
+        "version_control": "git"
+    }
+}
