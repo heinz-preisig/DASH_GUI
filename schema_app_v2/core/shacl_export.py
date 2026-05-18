@@ -4,6 +4,7 @@ Export schemas and bricks to SHACL Turtle format
 """
 
 import json
+import os
 from typing import Dict, List, Any, Optional
 from .schema_core import Schema
 from .brick_integration import BrickIntegration
@@ -14,7 +15,63 @@ class SHACLExporter:
     
     def __init__(self, brick_integration: BrickIntegration):
         self.brick_integration = brick_integration
-    
+
+    # ── High-level convenience ─────────────────────────────────────────────
+
+    def build_form_html(self, schema: Schema, turtle: str) -> str:
+        """Build a self-contained shacl-form HTML page with the Turtle embedded."""
+        escaped = turtle.replace('\\', '\\\\').replace('`', '\\`').replace('${', '\\${')
+        desc_html = f'<p>{schema.description}</p>' if schema.description else ''
+        return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{schema.name} \u2014 Form</title>
+  <script src="https://cdn.jsdelivr.net/npm/@ulb-darmstadt/shacl-form/dist/bundle.js" type="module"></script>
+  <style>
+    body {{ font-family: Arial, sans-serif; max-width: 860px; margin: 40px auto; padding: 0 20px; }}
+    h1 {{ font-size: 1.4rem; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 8px; }}
+    .actions {{ margin-top: 20px; display: flex; gap: 10px; }}
+    button {{ padding: 9px 18px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }}
+    .btn-submit {{ background: #007bff; color: white; }}
+    .btn-reset  {{ background: #6c757d; color: white; }}
+  </style>
+</head>
+<body>
+  <h1>{schema.name}</h1>
+  {desc_html}
+  <shacl-form id="shacl-form" data-collapse="open"></shacl-form>
+  <div class="actions">
+    <button class="btn-submit" onclick="submitForm()">Review &amp; Submit</button>
+    <button class="btn-reset" onclick="document.getElementById('shacl-form').reset()">Reset</button>
+  </div>
+  <pre id="output" style="display:none; background:#f4f4f4; padding:16px; border-radius:4px; font-size:12px; margin-top:20px; white-space:pre-wrap;"></pre>
+  <script type="module">
+    const form = document.getElementById('shacl-form');
+    form.setAttribute('data-shapes', `{escaped}`);
+    window.submitForm = async () => {{
+      const valid = await form.validate(false);
+      if (!valid) return;
+      const out = document.getElementById('output');
+      out.textContent = form.serialize();
+      out.style.display = 'block';
+      out.scrollIntoView({{behavior: 'smooth'}});
+    }};
+  </script>
+</body>
+</html>"""
+
+    def export_all(self, schema: Schema, output_dir: str, library_name: Optional[str] = None) -> None:
+        """Write <schema_id>.ttl and <schema_id>_form.html to output_dir."""
+        os.makedirs(output_dir, exist_ok=True)
+        turtle = self.export_schema(schema, library_name)
+        with open(os.path.join(output_dir, f"{schema.schema_id}.ttl"), 'w') as f:
+            f.write(turtle)
+        with open(os.path.join(output_dir, f"{schema.schema_id}_form.html"), 'w') as f:
+            f.write(self.build_form_html(schema, turtle))
+
+    # ── Schema export ──────────────────────────────────────────────────────
+
     def export_schema(self, schema: Schema, library_name: Optional[str] = None) -> str:
         """Export a complete schema to SHACL Turtle format"""
         lines = []
@@ -23,27 +80,26 @@ class SHACLExporter:
         lines.extend(self._generate_prefixes(schema, library_name))
         lines.append("")
         
-        # Export root brick
-        if schema.root_brick_id:
-            root_shacl = self.brick_integration.export_brick_as_shacl(
-                schema.root_brick_id, library_name
-            )
-            if root_shacl:
-                lines.append("# Root Brick")
-                lines.append(root_shacl)
-                lines.append("")
-        
-        # Export component bricks hierarchically
+        # Export all shapes using _generate_hierarchical_shacl (consistent schema: prefix)
         exported_bricks = set()
+
+        # Root brick first
+        if schema.root_brick_id:
+            root_brick = self.brick_integration.get_brick_by_id(schema.root_brick_id, library_name)
+            if root_brick:
+                lines.append("# Root Shape")
+                lines.append(self._generate_hierarchical_shacl(root_brick, schema, library_name, None, 0))
+                lines.append("")
+                exported_bricks.add(schema.root_brick_id)
+
+        # Component bricks hierarchically
         root_components = schema.get_ui_root_components()
-        
-        # Export root-level components first
         for brick_id in root_components:
             self._export_component_hierarchy(
                 schema, brick_id, library_name, lines, exported_bricks, 0
             )
-        
-        # Export any remaining components (orphaned or not in tree)
+
+        # Any remaining components (orphaned or not in tree)
         for brick_id in schema.component_brick_ids:
             if brick_id not in exported_bricks:
                 self._export_component_hierarchy(
@@ -68,6 +124,11 @@ class SHACLExporter:
                 lines.append(f"] .")
                 lines.append(f"# <{ref_shape_name}Shape> is defined in schema: {ref_schema_id}")
                 lines.append("")
+
+        # Export property groups (sh:PropertyGroup with DASH grouping)
+        groups_ttl = self.generate_property_groups(schema)
+        if groups_ttl:
+            lines.append(groups_ttl)
 
         # Add schema metadata
         lines.extend(self._generate_schema_metadata(schema))
@@ -133,18 +194,33 @@ class SHACLExporter:
         """Generate prefix declarations"""
         prefixes = [
             "@prefix sh: <http://www.w3.org/ns/shacl#> .",
+            "@prefix dash: <http://datashapes.org/dash#> .",
             "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .",
             "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .",
-            "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> ."
+            "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
+            f"@prefix schema: <http://example.org/schema/{schema.schema_id}/> .",
         ]
-        
-        # Add prefixes for brick classes
-        if schema.root_brick_id:
-            root_brick = self.brick_integration.get_brick_by_id(schema.root_brick_id, library_name)
-            if root_brick and root_brick.target_class and ":" in root_brick.target_class:
-                prefix = root_brick.target_class.split(":")[0]
-                prefixes.append(f"@prefix {prefix}: <http://example.org/{prefix}/#> .")
-        
+
+        # Collect prefixes from all bricks: target_class + leaf_property paths
+        seen_prefixes = set()
+        reserved = {"sh", "dash", "xsd", "rdf", "rdfs", "schema"}
+        all_brick_ids = ([schema.root_brick_id] if schema.root_brick_id else []) + schema.component_brick_ids
+        for brick_id in all_brick_ids:
+            brick = self.brick_integration.get_brick_by_id(brick_id, library_name)
+            if not brick:
+                continue
+            candidates = []
+            if getattr(brick, 'target_class', '') and ":" in brick.target_class:
+                candidates.append(brick.target_class.split(":")[0])
+            for lp in (getattr(brick, 'leaf_properties', []) or []):
+                path = lp.get('path', '')
+                if path and ":" in path:
+                    candidates.append(path.split(":")[0])
+            for prefix in candidates:
+                if prefix and prefix not in seen_prefixes and prefix not in reserved:
+                    prefixes.append(f"@prefix {prefix}: <http://example.org/{prefix}/#> .")
+                    seen_prefixes.add(prefix)
+
         return prefixes
     
     def _generate_schema_metadata(self, schema: Schema) -> List[str]:
@@ -346,93 +422,140 @@ class SHACLExporter:
                 schema, child_id, library_name, lines, exported_bricks, depth + 1
             )
     
+    def _get_dash_editor(self, datatype: str) -> str:
+        """Map xsd datatype to dash:editor IRI"""
+        mapping = {
+            "xsd:string": "dash:TextFieldEditor",
+            "xsd:integer": "dash:IntegerFieldEditor",
+            "xsd:decimal": "dash:DecimalFieldEditor",
+            "xsd:boolean": "dash:BooleanSelectEditor",
+            "xsd:date": "dash:DatePickerEditor",
+            "xsd:dateTime": "dash:DateTimePickerEditor",
+            "xsd:anyURI": "dash:URIEditor",
+            "rdf:HTML": "dash:TextAreaEditor",
+            "rdf:langString": "dash:TextAreaEditor",
+        }
+        return mapping.get(datatype, "dash:TextFieldEditor")
+
+    def _get_dash_viewer(self, datatype: str) -> str:
+        """Map xsd datatype to dash:viewer IRI"""
+        mapping = {
+            "xsd:string": "dash:LabelViewer",
+            "xsd:integer": "dash:LabelViewer",
+            "xsd:decimal": "dash:LabelViewer",
+            "xsd:boolean": "dash:BooleanViewer",
+            "xsd:date": "dash:LabelViewer",
+            "xsd:dateTime": "dash:LabelViewer",
+            "xsd:anyURI": "dash:URIViewer",
+            "rdf:HTML": "dash:HTMLViewer",
+            "rdf:langString": "dash:LabelViewer",
+        }
+        return mapping.get(datatype, "dash:LabelViewer")
+
+    def generate_property_groups(self, schema: Schema) -> str:
+        """Generate sh:PropertyGroup declarations for schema groups"""
+        if not schema.groups:
+            return ""
+        lines = ["# Property Groups"]
+        for group_id, group_data in schema.groups.items():
+            safe_id = group_id.replace(" ", "_")
+            label = group_data.get("label", group_id)
+            order = group_data.get("sequence", 0)
+            lines.append(f"schema:{safe_id} a sh:PropertyGroup ;")
+            lines.append(f'    rdfs:label "{label}" ;')
+            lines.append(f"    sh:order {order} .")
+            lines.append("")
+        return "\n".join(lines)
+
     def _generate_hierarchical_shacl(self, brick, schema: Schema, library_name: Optional[str],
                                    sequence: Optional[int], depth: int) -> str:
-        """Generate hierarchical SHACL for a brick"""
+        """Generate hierarchical SHACL with DASH annotations for a brick"""
         shacl_lines = []
-        
-        # Prefix declarations (only for root level or first brick)
-        if depth == 0:
-            shacl_lines.append("@prefix sh: <http://www.w3.org/ns/shacl#> .")
-            shacl_lines.append("@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .")
-            
-            if brick.target_class and ":" in brick.target_class:
-                prefix = brick.target_class.split(":")[0]
-                shacl_lines.append(f"@prefix {prefix}: <http://example.org/{prefix}/#> .")
-            
-            shacl_lines.append("")
-        
-        # Shape definition
-        if brick.object_type == "NodeShape":
-            shacl_lines.append(f"{brick.name} a sh:NodeShape ;")
-            if brick.target_class:
-                shacl_lines.append(f"    sh:targetClass {brick.target_class} ;")
-            
-            # Add hierarchical properties for children
-            children = schema.get_ui_children(brick.brick_id)
-            if children:
-                shacl_lines.append("    sh:property [")
-                for i, child_id in enumerate(children):
-                    child_brick = self.brick_integration.get_brick_by_id(child_id, library_name)
-                    if child_brick:
-                        if i > 0:
-                            shacl_lines.append("    ] ;")
-                            shacl_lines.append("    sh:property [")
-                        
-                        if child_brick.object_type == "PropertyShape":
-                            shacl_lines.append(f"        sh:path {child_brick.property_path or child_id} ;")
-                            shacl_lines.append(f"        sh:node {child_brick.name} ;")
-                        elif child_brick.object_type == "NodeShape":
-                            # For nested NodeShapes, create a property shape
-                            property_name = f"has{child_brick.name.capitalize()}"
-                            shacl_lines.append(f"        sh:path {property_name} ;")
-                            shacl_lines.append(f"        sh:node {child_brick.name} ;")
-                        
-                        # Add UI metadata as SHACL properties
-                        child_ui_metadata = schema.get_component_ui_metadata(child_id)
-                        if child_ui_metadata:
-                            if child_ui_metadata.sequence is not None:
-                                shacl_lines.append(f"        sh:order {child_ui_metadata.sequence} ;")
-                            if child_ui_metadata.label:
-                                shacl_lines.append(f"        sh:name \"{child_ui_metadata.label}\"@en ;")
-                            if child_ui_metadata.help_text:
-                                shacl_lines.append(f"        sh:description \"{child_ui_metadata.help_text}\"@en ;")
-                
-                shacl_lines.append("    ] ;")
-                
-        else:  # PropertyShape
-            shacl_lines.append(f"{brick.name} a sh:PropertyShape ;")
-            if brick.property_path:
-                shacl_lines.append(f"    sh:path {brick.property_path} ;")
-            
-            # Add properties
-            for prop_name, prop_value in brick.properties.items():
-                if prop_name == "datatype":
-                    shacl_lines.append(f"    sh:datatype {prop_value} ;")
-                elif prop_name in ["minCount", "maxCount", "minLength", "maxLength"]:
-                    shacl_lines.append(f"    sh:{prop_name} {prop_value} ;")
-        
-        # Add brick properties and constraints
-        for prop_name, prop_value in brick.properties.items():
-            if prop_name not in ["datatype", "minCount", "maxCount", "minLength", "maxLength"]:
-                shacl_lines.append(f"    sh:{prop_name} {prop_value} ;")
-        
-        # Add constraints
-        for constraint in brick.constraints:
-            for constraint_type, constraint_value in constraint.items():
-                if constraint_type == "pattern":
-                    shacl_lines.append(f"    sh:pattern \"{constraint_value}\" ;")
-                elif constraint_type in ["minInclusive", "maxInclusive"]:
-                    shacl_lines.append(f"    sh:{constraint_type} {constraint_value} ;")
-        
-        # Add sh:order if sequence is provided
+
+        # All modern bricks are NodeShapes with leaf_properties
+        shacl_lines.append(f"schema:{brick.name} a sh:NodeShape ;")
+        if getattr(brick, 'target_class', ''):
+            shacl_lines.append(f"    sh:targetClass {brick.target_class} ;")
+        if brick.name:
+            shacl_lines.append(f'    rdfs:label "{brick.name}" ;')
+        if getattr(brick, 'description', ''):
+            escaped = brick.description.replace('"', '\\"')
+            shacl_lines.append(f'    rdfs:comment "{escaped}" ;')
+
+        # Emit sh:property for each leaf_property (actual form fields)
+        leaf_props = getattr(brick, 'leaf_properties', []) or []
+        for order, lp in enumerate(leaf_props):
+            path = lp.get('path', '')
+            label = lp.get('label', path)
+            datatype = lp.get('datatype', 'xsd:string')
+            min_count = lp.get('min_count', 0)
+            max_count = lp.get('max_count', None)
+            description = lp.get('description', '')
+            in_values = lp.get('in_values', [])
+            min_incl = lp.get('min_inclusive', None)
+            max_incl = lp.get('max_inclusive', None)
+            if not path:
+                continue
+            shacl_lines.append("    sh:property [")
+            shacl_lines.append(f"        sh:path {path} ;")
+            shacl_lines.append(f'        sh:name "{label}"@en ;')
+            if description:
+                shacl_lines.append(f'        sh:description "{description}"@en ;')
+            shacl_lines.append(f"        sh:datatype {datatype} ;")
+            if min_count is not None:
+                shacl_lines.append(f"        sh:minCount {min_count} ;")
+            if max_count is not None:
+                shacl_lines.append(f"        sh:maxCount {max_count} ;")
+            if in_values:
+                vals = " ".join(f'"{v}"' for v in in_values)
+                shacl_lines.append(f"        sh:in ({vals}) ;")
+            if min_incl is not None:
+                shacl_lines.append(f"        sh:minInclusive {min_incl} ;")
+            if max_incl is not None:
+                shacl_lines.append(f"        sh:maxInclusive {max_incl} ;")
+            shacl_lines.append(f"        sh:order {order} ;")
+            shacl_lines.append(f"        dash:editor {self._get_dash_editor(datatype)} ;")
+            shacl_lines.append(f"        dash:viewer {self._get_dash_viewer(datatype)} ;")
+            shacl_lines.append("    ] ;")
+
+        # Emit sh:property for nested child NodeShape bricks (schema-level nesting)
+        children = schema.get_ui_children(brick.brick_id)
+        for child_id in children:
+            child_brick = self.brick_integration.get_brick_by_id(child_id, library_name)
+            if not child_brick:
+                continue
+            child_ui = schema.get_component_ui_metadata(child_id)
+            edge = schema.get_edge_to(child_id) if hasattr(schema, 'get_edge_to') else None
+            path = (edge.path_iri if edge and edge.path_iri
+                    else f"schema:has{child_brick.name.capitalize()}")
+            label = child_ui.label if child_ui and child_ui.label else child_brick.name
+            order = child_ui.sequence if child_ui else 0
+            shacl_lines.append("    sh:property [")
+            shacl_lines.append(f"        sh:path {path} ;")
+            shacl_lines.append(f"        sh:node schema:{child_brick.name} ;")
+            shacl_lines.append(f'        sh:name "{label}"@en ;')
+            if child_ui and child_ui.help_text:
+                shacl_lines.append(f'        sh:description "{child_ui.help_text}"@en ;')
+            shacl_lines.append(f"        sh:order {order} ;")
+            if child_ui and child_ui.group_id:
+                shacl_lines.append(f"        sh:group schema:{child_ui.group_id.replace(' ', '_')} ;")
+            if edge:
+                if edge.min_count is not None:
+                    shacl_lines.append(f"        sh:minCount {edge.min_count} ;")
+                if edge.max_count is not None:
+                    shacl_lines.append(f"        sh:maxCount {edge.max_count} ;")
+            shacl_lines.append("        dash:editor dash:DetailsEditor ;")
+            shacl_lines.append("        dash:viewer dash:DetailsViewer ;")
+            shacl_lines.append("    ] ;")
+
+        # sh:order at shape level
         if sequence is not None:
             shacl_lines.append(f"    sh:order {sequence} ;")
-        
-        # Remove trailing semicolon from last line
+
+        # Remove trailing semicolon on last line → period
         if shacl_lines and shacl_lines[-1].endswith(" ;"):
             shacl_lines[-1] = shacl_lines[-1][:-2] + " ."
-        
+
         return "\n".join(shacl_lines)
     
     def export_schema_hierarchical(self, schema: Schema, library_name: Optional[str] = None) -> str:

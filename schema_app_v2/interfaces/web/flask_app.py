@@ -68,6 +68,15 @@ class SchemaWebAPI:
             }
         return d
 
+    def _export_all(self, s, schema, library: str):
+        """Write .ttl and _form.html alongside the schema .json — called on every save."""
+        try:
+            from schema_app_v2.core.shacl_export import SHACLExporter
+            output_dir = os.path.join(s.schema_core.repository_path, library or s.schema_core.active_library)
+            SHACLExporter(s.brick_integration).export_all(schema, output_dir, library)
+        except Exception as e:
+            print(f"Warning: background export failed for {schema.schema_id}: {e}")
+
     # ── routes ────────────────────────────────────────────────────────────────
 
     def _setup_routes(self):
@@ -265,6 +274,7 @@ class SchemaWebAPI:
             s._emit_event('schema_updated', schema.to_dict())
             if s.schema_core.save_schema(schema):
                 s._emit_event('schema_saved', schema.to_dict())
+                self._export_all(s, schema, library)
                 return self._ok(self._serialize_schema(schema))
             return self._err("Failed to save schema", 500)
 
@@ -319,20 +329,9 @@ class SchemaWebAPI:
             if not schema:
                 return self._err("Schema not found", 404)
             try:
-                lines = [
-                    "@prefix sh: <http://www.w3.org/ns/shacl#> .",
-                    "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .",
-                    "",
-                ]
-                root_shacl = s.brick_integration.export_brick_as_shacl(schema.root_brick_id, library)
-                if root_shacl:
-                    lines += ["# Root Brick", root_shacl, ""]
-                for brick_id in schema.component_brick_ids:
-                    shacl = s.brick_integration.export_brick_as_shacl(brick_id, library)
-                    if shacl:
-                        lines += [f"# Component Brick: {brick_id}", shacl, ""]
-                content = "\n".join(lines)
-                # Save to library folder alongside schema JSON
+                from schema_app_v2.core.shacl_export import SHACLExporter
+                exporter = SHACLExporter(s.brick_integration)
+                content = exporter.export_schema(schema, library)
                 lib_path = os.path.join(s.schema_core.repository_path, library or s.schema_core.active_library)
                 os.makedirs(lib_path, exist_ok=True)
                 ttl_path = os.path.join(lib_path, f"{schema_id}.ttl")
@@ -355,21 +354,38 @@ class SchemaWebAPI:
             if not schema:
                 return self._err("Schema not found", 404)
             try:
-                from schema_app_v2.core.dash_integration import DASHFormGenerator
-                generator = DASHFormGenerator(s.brick_integration)
-                html = generator.generate_dash_html_form(schema, library)
-                # Save to library folder alongside schema JSON
+                from schema_app_v2.core.shacl_export import SHACLExporter
+                exporter = SHACLExporter(s.brick_integration)
                 lib_path = os.path.join(s.schema_core.repository_path, library or s.schema_core.active_library)
-                os.makedirs(lib_path, exist_ok=True)
-                html_path = os.path.join(lib_path, f"{schema_id}_form.html")
-                with open(html_path, 'w') as f:
-                    f.write(html)
+                exporter.export_all(schema, lib_path, library)
+                turtle = exporter.export_schema(schema, library)
+                html = exporter.build_form_html(schema, turtle)
                 return html, 200, {
                     'Content-Type': 'text/html',
                     'Content-Disposition': f'attachment; filename="{schema.name}_form.html"'
                 }
             except Exception as e:
                 return self._err(f"Form generation failed: {e}", 500)
+
+        @self.app.route('/api/session/<session_id>/schemas/<schema_id>/shapes', methods=['GET'])
+        def get_shapes(session_id, schema_id):
+            s = self._get_session(session_id)
+            if not s:
+                return self._err("Session not found", 404)
+            library = self._slib(s)
+            schema = s.schema_core.load_schema(schema_id, library)
+            if not schema:
+                return self._err("Schema not found", 404)
+            try:
+                from schema_app_v2.core.shacl_export import SHACLExporter
+                exporter = SHACLExporter(s.brick_integration)
+                turtle = exporter.export_schema(schema, library)
+                return turtle, 200, {
+                    'Content-Type': 'text/turtle',
+                    'Access-Control-Allow-Origin': '*',
+                }
+            except Exception as e:
+                return self._err(f"Shapes export failed: {e}", 500)
 
         @self.app.route('/api/session/<session_id>/schemas/<schema_id>/preview/form', methods=['GET'])
         def preview_form(session_id, schema_id):
@@ -380,13 +396,55 @@ class SchemaWebAPI:
             schema = s.schema_core.load_schema(schema_id, library)
             if not schema:
                 return self._err("Schema not found", 404)
-            try:
-                from schema_app_v2.core.dash_integration import DASHFormGenerator
-                generator = DASHFormGenerator(s.brick_integration)
-                html = generator.generate_dash_html_form(schema, library)
-                return html, 200, {'Content-Type': 'text/html'}
-            except Exception as e:
-                return self._err(f"Preview failed: {e}", 500)
+            shapes_url = f"/api/session/{session_id}/schemas/{schema_id}/shapes"
+            html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{schema.name} — Form Preview</title>
+  <script src="https://cdn.jsdelivr.net/npm/@ulb-darmstadt/shacl-form/dist/bundle.js" type="module"></script>
+  <style>
+    body {{ font-family: Arial, sans-serif; max-width: 860px; margin: 40px auto; padding: 0 20px; }}
+    h1 {{ font-size: 1.4rem; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 8px; }}
+    p.desc {{ color: #666; font-size: 0.9rem; margin-bottom: 24px; }}
+    .actions {{ margin-top: 20px; display: flex; gap: 10px; }}
+    button {{ padding: 9px 18px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }}
+    .btn-submit {{ background: #007bff; color: white; }}
+    .btn-reset  {{ background: #6c757d; color: white; }}
+  </style>
+</head>
+<body>
+  <h1>{schema.name}</h1>
+  {f'<p class="desc">{schema.description}</p>' if schema.description else ''}
+  <shacl-form id="shacl-form"
+    data-shapes-url="{shapes_url}"
+    data-collapse="open">
+  </shacl-form>
+  <div class="actions">
+    <button class="btn-submit" onclick="submitForm()">Review &amp; Submit</button>
+    <button class="btn-reset" onclick="document.getElementById('shacl-form').reset()">Reset</button>
+  </div>
+  <pre id="output" style="display:none; background:#f4f4f4; padding:16px; border-radius:4px; font-size:12px; margin-top:20px; white-space:pre-wrap;"></pre>
+  <script type="module">
+    const form = document.getElementById('shacl-form');
+    form.addEventListener('change', async (e) => {{
+      const valid = await form.validate(true);
+      document.querySelector('.btn-submit').style.opacity = valid ? '1' : '0.6';
+    }});
+    window.submitForm = async () => {{
+      const valid = await form.validate(false);
+      if (!valid) return;
+      const turtle = form.serialize();
+      const out = document.getElementById('output');
+      out.textContent = turtle;
+      out.style.display = 'block';
+      out.scrollIntoView({{behavior: 'smooth'}});
+    }};
+  </script>
+</body>
+</html>"""
+            return html, 200, {'Content-Type': 'text/html'}
 
         # ── Components ─────────────────────────────────────────────────────
 

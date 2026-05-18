@@ -59,32 +59,27 @@ class SchemaManagementMixin:
         try:
             self.state_manager.start_saving()
             self.schema_core.save_schema(self.current_schema)
-            self._write_shacl_to_library()
+            self._export_all()
             self.qt_session._emit_event('schema_saved', self.current_schema.to_dict())
             self.state_manager.mark_schema_saved()
             self.ui.statusbar.showMessage(
-                f"Saved schema: {self.current_schema.name} (JSON + SHACL)"
+                f"Saved schema: {self.current_schema.name} (JSON + SHACL + form)"
             )
         except Exception as e:
             self.qt_session._emit_event('error_occurred', {"message": f"Failed to save schema: {e}"})
             QMessageBox.critical(self, "Save Error", f"Failed to save schema: {e}")
 
-    def _write_shacl_to_library(self):
-        """Write SHACL .ttl alongside the JSON in the shared library"""
+    def _export_all(self):
+        """Write .ttl and _form.html alongside the schema .json — called on every save."""
         if not self.current_schema:
             return
         from schema_app_v2.core.shacl_export import SHACLExporter
         lib_name = self.schema_core.active_library
-        schemas_path = os.path.join(self.schema_core.repository_path, lib_name)
-        os.makedirs(schemas_path, exist_ok=True)
-        ttl_path = os.path.join(schemas_path, f"{self.current_schema.schema_id}.ttl")
+        output_dir = os.path.join(self.schema_core.repository_path, lib_name)
         try:
-            exporter = SHACLExporter(self.brick_integration)
-            turtle_str = exporter.export_schema(self.current_schema)
-            with open(ttl_path, 'w') as f:
-                f.write(turtle_str)
+            SHACLExporter(self.brick_integration).export_all(self.current_schema, output_dir)
         except Exception as e:
-            print(f"SHACL auto-export failed: {e}")
+            print(f"Auto-export failed: {e}")
 
     def export_shacl(self):
         """Export schema as SHACL to a user-chosen file"""
@@ -123,9 +118,10 @@ class SchemaManagementMixin:
             return
 
         try:
-            from schema_app_v2.core.dash_integration import DASHFormGenerator
-            generator = DASHFormGenerator(self.brick_integration)
-            html = generator.generate_dash_html_form(self.current_schema)
+            from schema_app_v2.core.shacl_export import SHACLExporter
+            exporter = SHACLExporter(self.brick_integration)
+            turtle = exporter.export_schema(self.current_schema)
+            html = exporter.build_form_html(self.current_schema, turtle)
             with open(file_path, 'w') as f:
                 f.write(html)
             self.ui.statusbar.showMessage(f"Generated web form: {file_path}")
