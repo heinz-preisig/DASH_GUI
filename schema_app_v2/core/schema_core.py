@@ -673,17 +673,11 @@ class DaisyChain:
 
 class SchemaCore:
     """Core schema management functionality - Simple Version"""
-    
+
     def __init__(self, repository_path: str = None, use_shared_libraries: bool = True):
         # Use shared libraries by default
         if use_shared_libraries:
-            # Import shared library manager
-            import sys
-            shared_libs_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'shared_libraries')
-            if shared_libs_path not in sys.path:
-                sys.path.insert(0, shared_libs_path)
-            
-            from library_manager import shared_library_manager
+            from shared_libraries import shared_library_manager
             self.repository_path = os.path.abspath(shared_library_manager.get_schema_library_path())
             self.shared_library_manager = shared_library_manager
         else:

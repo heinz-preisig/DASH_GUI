@@ -3,24 +3,12 @@ Brick Integration Module
 Interface between schema_app_v2 and brick_app_v2
 """
 
-import os
-import sys
 from typing import List, Optional, Dict, Any
-from pathlib import Path
-
-# Project root is three levels up from this file (schema_app_v2/core/brick_integration.py)
-_project_root = Path(__file__).resolve().parent.parent.parent
-_brick_app_path = str(_project_root / 'brick_app_v2')
-_shared_libs_path = str(_project_root / 'shared_libraries')
-
-for _p in [_brick_app_path, _shared_libs_path]:
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
 
 try:
     from brick_app_v2.core.brick_core_simple import BrickCore, SHACLBrick
     from brick_app_v2.core.ontology_manager import OntologyManager
-    from library_manager import shared_library_manager
+    from shared_libraries import shared_library_manager
 except Exception as e:
     print(f"Warning: Could not import brick_app_v2 modules: {e}")
     BrickCore = None

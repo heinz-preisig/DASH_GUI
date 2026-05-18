@@ -15,18 +15,35 @@ class SharedLibraryManager:
     """Manages shared libraries for both brick and schema applications"""
 
     def __init__(self):
-        # Project root = directory containing config.json, which lives one level
-        # above this file (shared_libraries/library_manager.py → project root).
-        self.project_root = Path(__file__).resolve().parent.parent
-        self.config_file = self.project_root / "config.json"
-        self.config = self._load_config()
-
-        # Single source of truth: shared_library_root from config.json
-        root_rel = self.config.get("shared_library_root", "shared_libraries")
-        self.base_path = (self.project_root / root_rel).resolve()
+        # Check for Docker environment override (data mounted at /app/data)
+        docker_data_path = os.environ.get('SHARED_LIBRARIES_ROOT', '/app/data')
+        if os.path.exists(docker_data_path):
+            # Docker mode: data is mounted at /app/shared_libraries
+            self.base_path = Path(docker_data_path).resolve()
+            self.config_file = self.base_path / "config.json"
+            self.config = self._load_config()
+        else:
+            # Local dev mode: look for shared_libraries in project root
+            self.project_root = Path(__file__).resolve().parent.parent
+            self.config = self._load_config_local()
+            root_rel = self.config.get("shared_library_root", "shared_libraries")
+            self.base_path = (self.project_root / root_rel).resolve()
+            self.config_file = self.base_path / "config.json"
 
         # Ensure all registered library directories exist
         self._ensure_directories()
+
+    def _load_config_local(self) -> Dict[str, Any]:
+        """Load config for local development (config.json in project root)"""
+        project_root = Path(__file__).resolve().parent.parent
+        config_file = project_root / "config.json"
+        if not config_file.exists():
+            return self._create_default_config()
+        try:
+            with open(config_file, 'r') as f:
+                return json.load(f)
+        except Exception:
+            return self._create_default_config()
     
     def _load_config(self) -> Dict[str, Any]:
         """Load library configuration"""
@@ -109,9 +126,15 @@ class SharedLibraryManager:
                      if lib["name"] == lib_dir.name), None
                 )
 
+                # Compute relative path if project_root is available (local dev), else use absolute
+                try:
+                    rel_path = str(lib_dir.relative_to(self.project_root)) if hasattr(self, 'project_root') else str(lib_dir)
+                except ValueError:
+                    rel_path = str(lib_dir)
+
                 brick_libs.append({
                     "name": lib_dir.name,
-                    "path": str(lib_dir.relative_to(self.project_root)),
+                    "path": rel_path,
                     "description": config_lib.get("description", f"Brick library '{lib_dir.name}'") if config_lib else f"Brick library '{lib_dir.name}'",
                     "type": "bricks",
                     "brick_count": brick_count,
@@ -136,9 +159,15 @@ class SharedLibraryManager:
                      if lib["name"] == lib_dir.name), None
                 )
 
+                # Compute relative path if project_root is available (local dev), else use absolute
+                try:
+                    rel_path = str(lib_dir.relative_to(self.project_root)) if hasattr(self, 'project_root') else str(lib_dir)
+                except ValueError:
+                    rel_path = str(lib_dir)
+
                 schema_libs.append({
                     "name": lib_dir.name,
-                    "path": str(lib_dir.relative_to(self.project_root)),
+                    "path": rel_path,
                     "description": config_lib.get("description", f"Schema library '{lib_dir.name}'") if config_lib else f"Schema library '{lib_dir.name}'",
                     "type": "schemas",
                     "absolute_path": str(lib_dir.absolute())
