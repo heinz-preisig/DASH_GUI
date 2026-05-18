@@ -102,7 +102,7 @@ const { useState, useEffect, useCallback, useRef } = React;
 const DEFAULT_NAMESPACE = "http://example.org/shapes#";
 
 const DATATYPES = [
-  "xsd:string","xsd:integer","xsd:decimal","xsd:boolean",
+  "xsd:string","xsd:integer","xsd:decimal","xsd:float","xsd:boolean",
   "xsd:date","xsd:dateTime","xsd:anyURI","rdf:HTML","rdf:langString"
 ];
 
@@ -112,6 +112,37 @@ const CONSTRAINT_TYPES = [
   "sh:pattern","sh:in","sh:hasValue","sh:languageIn","sh:uniqueLang",
   "sh:equals","sh:disjoint","sh:lessThan","sh:lessThanOrEquals"
 ];
+
+/* ── Pattern Presets for sh:pattern ──────────────────── */
+// Default presets loaded from shared_libraries/pattern_presets.json via API
+let PATTERN_PRESETS = [
+  { id: "custom", name: "Custom Pattern...", pattern: "", example: "" }
+];
+
+// Load pattern presets from API
+async function loadPatternPresets() {
+  try {
+    const response = await api("GET", "/api/pattern-presets");
+    if (response.status === "success" && response.data) {
+      // Add custom option at the beginning
+      PATTERN_PRESETS = [
+        { id: "custom", name: "Custom Pattern...", pattern: "", example: "" },
+        ...response.data.map(p => ({
+          id: p.id,
+          name: p.name,
+          pattern: p.pattern,
+          example: p.example || ""
+        }))
+      ];
+    }
+  } catch (e) {
+    console.error("Failed to load pattern presets:", e);
+    // Keep defaults if API fails
+  }
+}
+
+// Load presets on app initialization
+loadPatternPresets();
 
 /* ── API helpers ─────────────────────────────────────── */
 async function api(method, path, body) {
@@ -138,22 +169,23 @@ function OntologyBrowserModal({ mode, sessionId, onSelect, onClose }) {
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
-    api("GET", "/api/ontologies").then(r => {
+    if (!sessionId) return;
+    api("GET", `/api/session/${sessionId}/ontologies`).then(r => {
       if (r.status === "success") {
         setOntologies(Object.keys(r.data || {}));
       }
     });
-  }, []);
+  }, [sessionId]);
 
   useEffect(() => {
-    if (!selectedOnt) return;
+    if (!sessionId || !selectedOnt) return;
     const endpoint = mode === "classes"
-      ? `/api/ontologies/${encodeURIComponent(selectedOnt)}/classes`
-      : `/api/ontologies/${encodeURIComponent(selectedOnt)}/properties`;
+      ? `/api/session/${sessionId}/ontologies/${encodeURIComponent(selectedOnt)}/classes`
+      : `/api/session/${sessionId}/ontologies/${encodeURIComponent(selectedOnt)}/properties`;
     api("GET", endpoint).then(r => {
       if (r.status === "success") setItems(r.data || []);
     });
-  }, [selectedOnt]);
+  }, [sessionId, selectedOnt]);
 
   const filtered = items.filter(it => {
     const s = query.toLowerCase();
@@ -267,6 +299,34 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
 function ConstraintEditorModal({ propData, existing, onSave, onClose }) {
   const [ctype, setCtype] = useState(existing?.constraint_type || "sh:minCount");
   const [value, setValue] = useState(existing?.value ?? "");
+  const [patternPreset, setPatternPreset] = useState("custom");
+  const [testValue, setTestValue] = useState("");
+  const [testResult, setTestResult] = useState(null);
+
+  const handlePatternPresetChange = (presetId) => {
+    setPatternPreset(presetId);
+    const preset = PATTERN_PRESETS.find(p => p.id === presetId);
+    if (preset && preset.pattern) {
+      setValue(preset.pattern);
+    }
+  };
+
+  const testPattern = () => {
+    if (!value || !testValue) {
+      setTestResult(null);
+      return;
+    }
+    try {
+      const regex = new RegExp(value);
+      setTestResult(regex.test(testValue));
+    } catch (e) {
+      setTestResult("invalid");
+    }
+  };
+
+  const isPattern = ctype === "sh:pattern";
+  const selectedPreset = PATTERN_PRESETS.find(p => p.id === patternPreset);
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
@@ -279,10 +339,62 @@ function ConstraintEditorModal({ propData, existing, onSave, onClose }) {
             </select>
           </div>
         </div>
+        {isPattern && (
+          <div className="form-row">
+            <label>Pattern Preset</label>
+            <div className="field">
+              <select value={patternPreset} onChange={e => handlePatternPresetChange(e.target.value)}>
+                {PATTERN_PRESETS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+              {selectedPreset?.example && (
+                <small style={{color: "#666", display: "block", marginTop: "4px"}}>
+                  Example: {selectedPreset.example}
+                </small>
+              )}
+            </div>
+          </div>
+        )}
         <div className="form-row">
-          <label>Value</label>
-          <div className="field"><input type="text" value={value} onChange={e => setValue(e.target.value)}/></div>
+          <label>{isPattern ? "Regular Expression" : "Value"}</label>
+          <div className="field">
+            <input 
+              type="text" 
+              value={value} 
+              onChange={e => setValue(e.target.value)}
+              placeholder={isPattern ? "Enter regex pattern or select preset above" : "Enter value"}
+              style={{fontFamily: isPattern ? "monospace" : "inherit"}}
+            />
+          </div>
         </div>
+        {isPattern && value && (
+          <div className="form-row">
+            <label>Test Pattern</label>
+            <div className="field">
+              <div style={{display: "flex", gap: "8px"}}>
+                <input 
+                  type="text" 
+                  value={testValue} 
+                  onChange={e => {setTestValue(e.target.value); setTestResult(null);}}
+                  placeholder="Enter test value..."
+                  style={{flex: 1}}
+                />
+                <button className="btn btn-secondary" onClick={testPattern}>Test</button>
+              </div>
+              {testResult !== null && (
+                <div style={{
+                  marginTop: "8px", 
+                  padding: "6px 10px", 
+                  borderRadius: "4px",
+                  background: testResult === "invalid" ? "#fff3cd" : testResult ? "#d4edda" : "#f8d7da",
+                  color: testResult === "invalid" ? "#856404" : testResult ? "#155724" : "#721c24",
+                  fontSize: "13px"
+                }}>
+                  {testResult === "invalid" ? "Invalid regex pattern" : testResult ? "✓ Pattern matches" : "✗ Pattern does not match"}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         <div className="modal-footer">
           <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" disabled={!value} onClick={() => onSave({ constraint_type: ctype, value })}>Save</button>

@@ -1,5 +1,6 @@
 import sys
 import re
+import json
 from pathlib import Path
 from PyQt6.QtWidgets import QDialog, QMessageBox, QListWidgetItem
 from PyQt6.QtCore import Qt
@@ -14,6 +15,38 @@ sys.path.insert(0, str(app_dir / 'core'))
 
 from core.brick_core_simple import BrickCore, SHACLBrick
 from core.ontology_manager import OntologyManager
+
+
+def load_pattern_presets():
+    """Load pattern presets from shared_libraries/pattern_presets.json"""
+    try:
+        # Navigate to external shared_libraries
+        project_root = Path(__file__).resolve().parent.parent
+        presets_file = project_root.parent / "shared_libraries" / "pattern_presets.json"
+        
+        if presets_file.exists():
+            with open(presets_file, 'r') as f:
+                data = json.load(f)
+            
+            # Extract patterns from international section
+            patterns = []
+            if "presets" in data and "international" in data["presets"]:
+                patterns = data["presets"]["international"].get("patterns", [])
+            
+            return [{"id": p["id"], "name": p["name"], "pattern": p["pattern"], "example": p.get("example", "")} for p in patterns]
+    except Exception as e:
+        print(f"Error loading pattern presets: {e}")
+    
+    # Return default presets if file can't be loaded
+    return [
+        {"id": "email", "name": "Email Address", "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", "example": "user@example.com"},
+        {"id": "phone_e164", "name": "Phone (E.164 International)", "pattern": "^\\+[1-9]\\d{1,14}$", "example": "+12345678901"},
+        {"id": "url", "name": "URL/Website", "pattern": "^https?://.+\\..+", "example": "https://example.com"},
+        {"id": "postal_generic", "name": "Postal Code (Generic)", "pattern": "^[A-Z0-9\\s-]{3,10}$", "example": "12345, NW1 6XE"},
+        {"id": "iso_date", "name": "Date (ISO 8601)", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "example": "2026-05-18"},
+        {"id": "uuid", "name": "UUID", "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", "example": "550e8400-e29b-41d4-a716-446655440000"},
+        {"id": "ipv4", "name": "IP Address (IPv4)", "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$", "example": "192.168.1.1"}
+    ]
 class SimpleOntologyBrowser(QDialog):
     """Ontology browser - loads from ontology_browser_simple.ui"""
     
@@ -76,18 +109,52 @@ class ConstraintEditorDialog(QDialog):
         super().__init__(parent)
         self.prop_data = prop_data or {}
         self.selected_item = None
+        self.pattern_presets = load_pattern_presets()
         
         # Load UI from file
         ui_path = Path(__file__).parent / "ui" / "constraint_editor.ui"
         loadUi(str(ui_path), self)
         
+        # Populate pattern preset combo if it exists
+        self._populate_pattern_presets()
+        
         # Connect signals
         self.constraintTypeCombo.currentTextChanged.connect(self.on_constraint_type_changed)
+        if hasattr(self, 'patternPresetCombo'):
+            self.patternPresetCombo.currentIndexChanged.connect(self.on_pattern_preset_changed)
         self.okButton.clicked.connect(self.on_accept_clicked)
         self.cancelButton.clicked.connect(self.reject)
         
         # Initialize visibility
         self.on_constraint_type_changed()
+    
+    def _populate_pattern_presets(self):
+        """Populate pattern preset combo box from loaded presets"""
+        if hasattr(self, 'patternPresetCombo'):
+            self.patternPresetCombo.clear()
+            # Add "Custom Pattern..." first
+            self.patternPresetCombo.addItem("Custom Pattern...", "")
+            # Add presets from JSON
+            for preset in self.pattern_presets:
+                display_text = f"{preset['name']}"
+                if preset.get('example'):
+                    display_text += f" (e.g., {preset['example']})"
+                self.patternPresetCombo.addItem(display_text, preset['pattern'])
+    
+    def on_pattern_preset_changed(self, index):
+        """Handle pattern preset selection"""
+        if hasattr(self, 'patternPresetCombo') and hasattr(self, 'patternValueEdit'):
+            pattern = self.patternPresetCombo.currentData()
+            if pattern:  # Not the "Custom" option
+                self.patternValueEdit.setText(pattern)
+    
+    def on_constraint_type_changed(self):
+        """Show/hide pattern preset combo based on constraint type"""
+        is_pattern = self.constraintTypeCombo.currentText() == "pattern"
+        if hasattr(self, 'patternPresetCombo'):
+            self.patternPresetCombo.setVisible(is_pattern)
+        if hasattr(self, 'patternPresetLabel'):
+            self.patternPresetLabel.setVisible(is_pattern)
 
 class PropertyEditorDialog(QDialog):
     """Property editor dialog - loads from property_editor.ui"""

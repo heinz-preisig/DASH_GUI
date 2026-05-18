@@ -155,6 +155,67 @@
         <widget class="QWidget" name="patternValueWidget">
          <layout class="QVBoxLayout" name="patternValueLayout">
           <item>
+           <layout class="QHBoxLayout" name="patternPresetLayout">
+            <item>
+             <widget class="QLabel" name="patternPresetLabel">
+              <property name="text">
+               <string>Pattern Preset:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="patternPresetCombo">
+              <property name="minimumSize">
+               <size>
+                <width>250</width>
+                <height>0</height>
+               </size>
+              </property>
+              <item>
+               <property name="text">
+                <string>Custom Pattern...</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Email Address</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Phone (E.164 International)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>URL/Website</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Postal Code (Generic)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Date (ISO 8601)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>UUID</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>IP Address (IPv4)</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
            <widget class="QLabel" name="patternValueLabel">
             <property name="text">
              <string>Regular Expression Pattern:</string>

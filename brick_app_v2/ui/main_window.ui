@@ -233,6 +233,11 @@
         </item>
         <item>
          <property name="text">
+          <string>xsd:float</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
           <string>xsd:boolean</string>
          </property>
         </item>

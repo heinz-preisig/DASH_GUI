@@ -53,6 +53,7 @@ uv run python run_schema_app_web.py --port 5003
 ### User Documentation
 - **📖 Quick Start**: `docs/QUICK_START.md` - Get started in 5 minutes
 - **📖 User Guide**: `docs/USER_GUIDE.md` - Complete manual for all features
+- **🔍 Pattern Presets**: `docs/PATTERN_PRESETS.md` - Regex validation patterns guide
 - **🔧 Troubleshooting**: `docs/TROUBLESHOOTING.md` - Solutions to common issues
 
 ### System Documentation

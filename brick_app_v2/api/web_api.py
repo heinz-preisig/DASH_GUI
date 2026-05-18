@@ -394,15 +394,15 @@ class BrickWebAPI:
             })
         
         # Ontology operations
-        @self.app.route('/api/ontologies', methods=['GET'])
-        def get_ontologies():
-            """Get available ontologies"""
-            backend_session = self.backend.get_qt_session()
+        @self.app.route('/api/session/<session_id>/ontologies', methods=['GET'])
+        def get_ontologies(session_id):
+            """Get available ontologies for a session"""
+            backend_session = self.backend.get_session(session_id)
             if not backend_session:
                 return jsonify({
                     "status": "error",
-                    "message": "No session available"
-                }), 500
+                    "message": "Session not found"
+                }), 404
             
             ontologies = backend_session.editor_backend.ontology_manager.ontologies
             
@@ -411,15 +411,15 @@ class BrickWebAPI:
                 "data": ontologies
             })
         
-        @self.app.route('/api/ontologies/<ontology_name>/classes', methods=['GET'])
-        def get_ontology_classes(ontology_name):
-            """Get classes from specific ontology"""
-            backend_session = self.backend.get_qt_session()
+        @self.app.route('/api/session/<session_id>/ontologies/<ontology_name>/classes', methods=['GET'])
+        def get_ontology_classes(session_id, ontology_name):
+            """Get classes from specific ontology for a session"""
+            backend_session = self.backend.get_session(session_id)
             if not backend_session:
                 return jsonify({
                     "status": "error",
-                    "message": "No session available"
-                }), 500
+                    "message": "Session not found"
+                }), 404
             
             ontologies = backend_session.editor_backend.ontology_manager.ontologies
             if ontology_name in ontologies:
@@ -433,15 +433,15 @@ class BrickWebAPI:
                     "message": "Ontology not found"
                 }), 404
         
-        @self.app.route('/api/ontologies/<ontology_name>/properties', methods=['GET'])
-        def get_ontology_properties(ontology_name):
-            """Get properties from specific ontology"""
-            backend_session = self.backend.get_qt_session()
+        @self.app.route('/api/session/<session_id>/ontologies/<ontology_name>/properties', methods=['GET'])
+        def get_ontology_properties(session_id, ontology_name):
+            """Get properties from specific ontology for a session"""
+            backend_session = self.backend.get_session(session_id)
             if not backend_session:
                 return jsonify({
                     "status": "error",
-                    "message": "No session available"
-                }), 500
+                    "message": "Session not found"
+                }), 404
             
             ontologies = backend_session.editor_backend.ontology_manager.ontologies
             if ontology_name in ontologies:
@@ -552,6 +552,41 @@ class BrickWebAPI:
                 "status": "success",
                 "data": {**result.to_dict(), "library": library},
             })
+        
+        # Pattern presets endpoint - serves from shared_libraries/pattern_presets.json
+        @self.app.route('/api/pattern-presets', methods=['GET'])
+        def get_pattern_presets():
+            """Get pattern presets from shared_libraries/pattern_presets.json"""
+            try:
+                from pathlib import Path
+                # Load from external shared_libraries
+                project_root = Path(__file__).resolve().parent.parent.parent
+                presets_file = project_root.parent / "shared_libraries" / "pattern_presets.json"
+                
+                if not presets_file.exists():
+                    return jsonify({
+                        "status": "error",
+                        "message": "Pattern presets file not found"
+                    }), 404
+                
+                with open(presets_file, 'r') as f:
+                    presets_data = json.load(f)
+                
+                # Extract patterns from international section
+                patterns = []
+                if "presets" in presets_data and "international" in presets_data["presets"]:
+                    patterns = presets_data["presets"]["international"].get("patterns", [])
+                
+                return jsonify({
+                    "status": "success",
+                    "data": patterns,
+                    "version": presets_data.get("version", "unknown")
+                })
+            except Exception as e:
+                return jsonify({
+                    "status": "error",
+                    "message": f"Failed to load pattern presets: {str(e)}"
+                }), 500
     
     def _setup_error_handlers(self):
         """Setup error handlers"""

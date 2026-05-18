@@ -22,11 +22,11 @@ class OntologyManager:
     
     def __init__(self, cache_path: str = None):
         if cache_path is None:
-            # Relative path to ontologies/cache directory in DASH_GUI project
-            # Find project root (parent of brick_app_v2)
+            # Look for ontologies in external shared_libraries/ontologies directory
+            # Navigate: brick_app_v2/core -> brick_app_v2 -> DASH_GUI -> shared_libraries
             current_dir = Path(__file__).resolve()
             project_root = current_dir.parent.parent.parent  # brick_app_v2/core -> DASH_GUI
-            cache_path = project_root / "ontologies" / "cache"
+            cache_path = project_root.parent / "shared_libraries" / "ontologies" / "cache"
         else:
             cache_path = Path(cache_path)
         
