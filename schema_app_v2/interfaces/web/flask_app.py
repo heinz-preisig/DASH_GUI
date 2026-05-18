@@ -272,7 +272,7 @@ class SchemaWebAPI:
                 schema.component_brick_ids = data['component_brick_ids']
             schema.update_timestamp()
             s._emit_event('schema_updated', schema.to_dict())
-            if s.schema_core.save_schema(schema):
+            if s.schema_core.save_schema(schema, library):
                 s._emit_event('schema_saved', schema.to_dict())
                 self._export_all(s, schema, library)
                 return self._ok(self._serialize_schema(schema))
@@ -466,7 +466,7 @@ class SchemaWebAPI:
             schema.component_brick_ids.append(brick_id)
             schema.update_timestamp()
             s._emit_event('component_added', {'brick_id': brick_id})
-            s.schema_core.save_schema(schema)
+            s.schema_core.save_schema(schema, library)
             return self._ok({"message": "Component added"})
 
         @self.app.route('/api/session/<session_id>/schemas/<schema_id>/components/<brick_id>', methods=['DELETE'])
@@ -483,7 +483,7 @@ class SchemaWebAPI:
             schema.component_brick_ids.remove(brick_id)
             schema.update_timestamp()
             s._emit_event('component_removed', {'brick_id': brick_id})
-            s.schema_core.save_schema(schema)
+            s.schema_core.save_schema(schema, library)
             return self._ok({"message": "Component removed"})
 
         # ── Schema refs ────────────────────────────────────────────────────
@@ -520,7 +520,7 @@ class SchemaWebAPI:
                 property_path=prop_path,
                 label=data.get('label', '')
             )
-            s.schema_core.save_schema(schema)
+            s.schema_core.save_schema(schema, library)
             s._emit_event('schema_ref_added', {'schema_id': schema_id, 'ref': ref})
             return self._ok(ref, 201)
 
@@ -535,7 +535,7 @@ class SchemaWebAPI:
                 return self._err("Schema not found", 404)
             attach_to = request.args.get('attach_to_brick_id', '')
             schema.remove_schema_ref(ref_schema_id, attach_to)
-            s.schema_core.save_schema(schema)
+            s.schema_core.save_schema(schema, library)
             s._emit_event('schema_ref_removed', {'schema_id': schema_id, 'ref_schema_id': ref_schema_id})
             return self._ok({"message": "Schema ref removed"})
 
@@ -594,9 +594,9 @@ class SchemaWebAPI:
                 return self._err("group_id is required")
             if schema.create_group(group_id, data.get('label', group_id),
                                    data.get('description', ''), data.get('sequence', 0)):
-                s.schema_core.save_schema(schema)
+                s.schema_core.save_schema(schema, library)
                 s._emit_event('group_created', {'schema_id': schema_id, 'group_id': group_id})
-                return self._ok(schema.groups[group_id], 201)
+                return self._ok({'id': group_id, **schema.groups[group_id]})
             return self._err("Group already exists")
 
         @self.app.route('/api/session/<session_id>/schemas/<schema_id>/groups/<group_id>', methods=['DELETE'])
@@ -609,7 +609,7 @@ class SchemaWebAPI:
             if not schema:
                 return self._err("Schema not found", 404)
             if schema.delete_group(group_id):
-                s.schema_core.save_schema(schema)
+                s.schema_core.save_schema(schema, library)
                 s._emit_event('group_deleted', {'schema_id': schema_id, 'group_id': group_id})
                 return self._ok({"message": "Group deleted"})
             return self._err("Group not found", 404)
@@ -628,7 +628,7 @@ class SchemaWebAPI:
             if not group_id:
                 return self._err("group_id is required")
             if schema.add_component_to_group(brick_id, group_id):
-                s.schema_core.save_schema(schema)
+                s.schema_core.save_schema(schema, library)
                 return self._ok({"message": "Added to group"})
             return self._err("Group not found", 404)
 
@@ -642,7 +642,7 @@ class SchemaWebAPI:
             if not schema:
                 return self._err("Schema not found", 404)
             if schema.remove_component_from_group(brick_id):
-                s.schema_core.save_schema(schema)
+                s.schema_core.save_schema(schema, library)
                 return self._ok({"message": "Removed from group"})
             return self._err("Failed to remove from group", 500)
 
@@ -661,7 +661,8 @@ class SchemaWebAPI:
                 return self._err("Component not found", 404)
             meta = schema.get_component_ui_metadata(brick_id)
             if not meta:
-                return self._err("UI metadata not found", 404)
+                schema.initialize_component_ui_metadata(brick_id)
+                meta = schema.get_component_ui_metadata(brick_id)
             return self._ok(meta.to_dict())
 
         @self.app.route('/api/session/<session_id>/schemas/<schema_id>/components/<brick_id>/ui-metadata', methods=['PUT'])
@@ -687,7 +688,7 @@ class SchemaWebAPI:
                 is_visible=data.get('is_visible', True)
             )
             schema.set_component_ui_metadata(brick_id, meta)
-            s.schema_core.save_schema(schema)
+            s.schema_core.save_schema(schema, library)
             s._emit_event('ui_metadata_updated', {'schema_id': schema_id, 'brick_id': brick_id})
             return self._ok(meta.to_dict())
 

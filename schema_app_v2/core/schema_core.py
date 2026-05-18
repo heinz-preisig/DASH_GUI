@@ -727,7 +727,7 @@ class SchemaCore:
         except Exception:
             return None
     
-    def save_schema(self, schema: Optional[Schema] = None) -> bool:
+    def save_schema(self, schema: Optional[Schema] = None, library_name: Optional[str] = None) -> bool:
         """Save current schema to storage"""
         schema_to_save = schema or self.current_schema
         if not schema_to_save:
@@ -741,7 +741,7 @@ class SchemaCore:
         schema_to_save.update_timestamp()
         
         # Save to file
-        lib_name = self.active_library
+        lib_name = library_name or self.active_library
         schemas_path = os.path.join(self.repository_path, lib_name)
         schema_file = os.path.join(schemas_path, f"{schema_to_save.schema_id}.json")
 

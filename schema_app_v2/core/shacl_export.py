@@ -125,10 +125,36 @@ class SHACLExporter:
                 lines.append(f"# <{ref_shape_name}Shape> is defined in schema: {ref_schema_id}")
                 lines.append("")
 
-        # Export property groups (sh:PropertyGroup with DASH grouping)
+        # Export property groups (sh:PropertyGroup declarations)
         groups_ttl = self.generate_property_groups(schema)
         if groups_ttl:
             lines.append(groups_ttl)
+
+        # Patch root shape: add sh:property [sh:node; sh:group] for grouped components
+        if schema.root_brick_id and schema.groups:
+            root_brick = self.brick_integration.get_brick_by_id(schema.root_brick_id, library_name)
+            if root_brick:
+                root_name = f"schema:{root_brick.name}"
+                patch_lines = [f"# Group assignments on root shape"]
+                for brick_id in schema.component_brick_ids:
+                    ui = schema.get_component_ui_metadata(brick_id)
+                    if not (ui and ui.group_id):
+                        continue
+                    comp_brick = self.brick_integration.get_brick_by_id(brick_id, library_name)
+                    if not comp_brick:
+                        continue
+                    safe_group = ui.group_id.replace(' ', '_')
+                    path = f"schema:has{comp_brick.name}"
+                    patch_lines.append(f"{root_name} sh:property [")
+                    patch_lines.append(f"    sh:path {path} ;")
+                    patch_lines.append(f"    sh:node schema:{comp_brick.name} ;")
+                    patch_lines.append(f'    sh:name "{comp_brick.name}"@en ;')
+                    patch_lines.append(f"    sh:group schema:{safe_group} ;")
+                    patch_lines.append(f"    sh:order {ui.sequence} ;")
+                    patch_lines.append(f"] .")
+                    patch_lines.append("")
+                if len(patch_lines) > 1:
+                    lines.extend(patch_lines)
 
         # Add schema metadata
         lines.extend(self._generate_schema_metadata(schema))
@@ -402,10 +428,11 @@ class SHACLExporter:
         # Get UI metadata
         ui_metadata = schema.get_component_ui_metadata(brick_id)
         sequence = ui_metadata.sequence if ui_metadata else None
+        group_id = ui_metadata.group_id if ui_metadata else None
         
         # Generate hierarchical SHACL
         hierarchical_shacl = self._generate_hierarchical_shacl(
-            brick, schema, library_name, sequence, depth
+            brick, schema, library_name, sequence, depth, group_id
         )
         
         if hierarchical_shacl:
@@ -468,7 +495,7 @@ class SHACLExporter:
         return "\n".join(lines)
 
     def _generate_hierarchical_shacl(self, brick, schema: Schema, library_name: Optional[str],
-                                   sequence: Optional[int], depth: int) -> str:
+                                   sequence: Optional[int], depth: int, group_id: Optional[str] = None) -> str:
         """Generate hierarchical SHACL with DASH annotations for a brick"""
         shacl_lines = []
 
@@ -514,6 +541,8 @@ class SHACLExporter:
             if max_incl is not None:
                 shacl_lines.append(f"        sh:maxInclusive {max_incl} ;")
             shacl_lines.append(f"        sh:order {order} ;")
+            if group_id:
+                shacl_lines.append(f"        sh:group schema:{group_id.replace(' ', '_')} ;")
             shacl_lines.append(f"        dash:editor {self._get_dash_editor(datatype)} ;")
             shacl_lines.append(f"        dash:viewer {self._get_dash_viewer(datatype)} ;")
             shacl_lines.append("    ] ;")

@@ -428,6 +428,7 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, brickLibrar
   const [refs, setRefs] = useState([]);
   const [tree, setTree] = useState({ tree: {}, roots: [] });
   const [groups, setGroups] = useState([]);
+  const [newGroupForm, setNewGroupForm] = useState(null);
   const [validation, setValidation] = useState(null);
   const [rootBrickName, setRootBrickName] = useState("");
   const [tab, setTab] = useState("details");
@@ -446,14 +447,19 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, brickLibrar
     loadRootBrickName();
   }, [schemaData?.schema_id]);
 
-  const loadComponents = async () => {
+  const loadComponents = async (overrideIds) => {
     if (!schemaData) return;
-    const compIds = schemaData.component_brick_ids || [];
+    const compIds = overrideIds || schemaData.component_brick_ids || [];
     const details = await Promise.all(
-      compIds.map(id =>
-        api("GET", `/api/session/${sessionId}/bricks/${encodeURIComponent(id)}`)
-          .then(r => r.status === "success" ? r.data : { brick_id: id, name: id })
-      )
+      compIds.map(async id => {
+        const [brickR, metaR] = await Promise.all([
+          api("GET", `/api/session/${sessionId}/bricks/${encodeURIComponent(id)}`),
+          api("GET", `/api/session/${sessionId}/schemas/${schemaData.schema_id}/components/${encodeURIComponent(id)}/ui-metadata`)
+        ]);
+        const brick = brickR.status === "success" ? brickR.data : { brick_id: id, name: id };
+        const meta = metaR.status === "success" ? metaR.data : {};
+        return { ...brick, group_id: meta.group_id || null, ui_metadata: meta };
+      })
     );
     setComponents(details);
   };
@@ -532,7 +538,8 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, brickLibrar
     });
     if (r.status === "success") {
       onToast(`Group '${groupId}' created`, "success");
-      loadGroups();
+      await loadGroups();
+      await loadComponents();
       return true;
     } else {
       onToast(r.message || "Failed to create group", "error");
@@ -642,7 +649,7 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, brickLibrar
         <div className={`tab ${tab === "refs" ? "active" : ""}`} onClick={() => setTab("refs")}>
           Schema Refs ({refs.length})
         </div>
-        <div className={`tab ${tab === "groups" ? "active" : ""}`} onClick={() => setTab("groups")}>
+        <div className={`tab ${tab === "groups" ? "active" : ""}`} onClick={() => { setTab("groups"); loadGroups(); loadComponents(); }}>
           Groups ({groups.length})
         </div>
         <div className={`tab ${tab === "tree" ? "active" : ""}`} onClick={() => setTab("tree")}>
@@ -704,15 +711,37 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, brickLibrar
         <div className="card">
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
             <h2 style={{ margin:0, borderBottom:"none", paddingBottom:0 }}>Groups</h2>
-            <button className="btn btn-primary btn-sm" onClick={() => {
-              const id = prompt("Group ID (e.g., 'products'):");
-              if (id) {
-                const label = prompt("Group label (optional):", id);
-                const desc = prompt("Description (optional):", "");
-                createGroup(id, label, desc, groups.length);
-              }
-            }}>+ New Group</button>
+            {!newGroupForm && <button className="btn btn-primary btn-sm" onClick={() => setNewGroupForm({id:"", label:"", desc:""})}>+ New Group</button>}
           </div>
+
+          {newGroupForm && (
+            <div style={{ background:"#f8f9fa", border:"1px solid #dee2e6", borderRadius:4, padding:12, marginBottom:12 }}>
+              <div style={{ fontWeight:600, marginBottom:8 }}>New Group</div>
+              <div className="form-row" style={{ marginBottom:6 }}>
+                <label style={{ width:90 }}>ID</label>
+                <div className="field"><input type="text" placeholder="e.g. products" value={newGroupForm.id}
+                  onChange={e => setNewGroupForm(f => ({...f, id: e.target.value}))} /></div>
+              </div>
+              <div className="form-row" style={{ marginBottom:6 }}>
+                <label style={{ width:90 }}>Label</label>
+                <div className="field"><input type="text" placeholder="Display label" value={newGroupForm.label}
+                  onChange={e => setNewGroupForm(f => ({...f, label: e.target.value}))} /></div>
+              </div>
+              <div className="form-row" style={{ marginBottom:10 }}>
+                <label style={{ width:90 }}>Description</label>
+                <div className="field"><input type="text" placeholder="Optional" value={newGroupForm.desc}
+                  onChange={e => setNewGroupForm(f => ({...f, desc: e.target.value}))} /></div>
+              </div>
+              <div style={{ display:"flex", gap:8 }}>
+                <button className="btn btn-primary btn-sm" onClick={() => {
+                  if (!newGroupForm.id.trim()) return;
+                  createGroup(newGroupForm.id.trim(), newGroupForm.label || newGroupForm.id.trim(), newGroupForm.desc, groups.length);
+                  setNewGroupForm(null);
+                }}>Create</button>
+                <button className="btn btn-secondary btn-sm" onClick={() => setNewGroupForm(null)}>Cancel</button>
+              </div>
+            </div>
+          )}
 
           {groups.length === 0
             ? <div className="empty-hint">No groups — create groups to organize components visually</div>
@@ -724,10 +753,9 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, brickLibrar
                     <span style={{ color:"#888", marginLeft:8, fontSize:12 }}>({g.id})</span>
                   </div>
                   <button className="btn btn-danger btn-sm" onClick={() => {
-                    if (confirm(`Delete group '${g.id}'? Components will be ungrouped.`)) {
-                      api("DELETE", `/api/session/${sessionId}/schemas/${schemaData.schema_id}/groups/${g.id}`)
-                        .then(r => { if (r.status === "success") { onToast("Group deleted", "success"); loadGroups(); loadComponents(); }});
-                    }
+                    api("DELETE", `/api/session/${sessionId}/schemas/${schemaData.schema_id}/groups/${g.id}`)
+                      .then(r => { if (r.status === "success") { onToast("Group deleted", "success"); loadGroups(); loadComponents(); }
+                               else onToast(r.message || "Failed", "error"); });
                   }}>✕</button>
                 </div>
                 {g.description && <div style={{ color:"#666", fontSize:12, marginTop:4 }}>{g.description}</div>}
@@ -737,49 +765,48 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, brickLibrar
                   <div style={{ fontSize:11, color:"#888", marginBottom:4 }}>Members:</div>
                   {(() => {
                     const members = components.filter(c =>
-                      (c.group_id === g.id || c.ui_metadata?.group_id === g.id) &&
-                      !Object.values(tree.tree || {}).flat().includes(c.brick_id)
+                      (c.group_id === g.id || c.ui_metadata?.group_id === g.id)
                     );
-                    return members.length === 0
-                      ? <div style={{ fontSize:12, color:"#aaa", fontStyle:"italic" }}>No components assigned</div>
-                      : members.map(m => (
-                        <div key={m.brick_id} style={{ display:"flex", alignItems:"center", gap:8, padding:"2px 0", fontSize:12 }}>
-                          <span>{m.name || m.brick_id}</span>
-                          <span className={`brick-type-badge ${m.object_type === "NodeShape" ? "badge-node" : "badge-prop"}`} style={{ fontSize:10 }}>
-                            {m.object_type === "NodeShape" ? "N" : "P"}
-                          </span>
-                          <button className="btn btn-secondary btn-sm" style={{ fontSize:10, padding:"2px 6px" }}
-                            onClick={() => removeFromGroup(m.brick_id)}>Remove</button>
-                        </div>
-                      ));
+                    const assignable = components.filter(c =>
+                      !c.group_id && !(c.ui_metadata?.group_id)
+                    );
+                    return (<>
+                      {members.length === 0
+                        ? <div style={{ fontSize:12, color:"#aaa", fontStyle:"italic", marginBottom:6 }}>No components assigned yet</div>
+                        : members.map(m => (
+                          <div key={m.brick_id} style={{ display:"flex", alignItems:"center", gap:8, padding:"3px 0", fontSize:12, borderBottom:"1px solid #f0f0f0" }}>
+                            <span style={{ flex:1 }}>{m.name || m.brick_id}</span>
+                            <span className={`brick-type-badge ${m.object_type === "NodeShape" ? "badge-node" : "badge-prop"}`} style={{ fontSize:10 }}>
+                              {m.object_type === "NodeShape" ? "Node" : "Prop"}
+                            </span>
+                            <button className="btn btn-secondary btn-sm" style={{ fontSize:10, padding:"2px 6px" }}
+                              onClick={() => removeFromGroup(m.brick_id)}>✕ Remove</button>
+                          </div>
+                        ))
+                      }
+                      <div style={{ marginTop:6, display:"flex", alignItems:"center", gap:6 }}>
+                        <select style={{ fontSize:12, padding:"2px 6px", flex:1 }}
+                          onChange={e => { if (e.target.value) { assignToGroup(e.target.value, g.id); e.target.value = ""; }}}>
+                          <option value="">{assignable.length > 0 ? `+ Add component to this group… (${assignable.length} available)` : "— all components already assigned —"}</option>
+                          {assignable.map(c => <option key={c.brick_id} value={c.brick_id}>{c.name || c.brick_id}</option>)}
+                        </select>
+                      </div>
+                    </>);
                   })()}
                 </div>
               </div>
             ))
           }
 
-          {/* Ungrouped components - quick assign */}
-          {components.length > 0 && groups.length > 0 && (
-            <div style={{ marginTop:20, borderTop:"1px solid #eee", paddingTop:15 }}>
-              <h3 style={{ margin:"0 0 10px 0", fontSize:14 }}>Ungrouped Components</h3>
-              <div style={{ fontSize:12, color:"#666", marginBottom:8 }}>Click a group to assign:</div>
-              {(() => {
-                const groupedIds = new Set(components.filter(c => c.group_id || c.ui_metadata?.group_id).map(c => c.brick_id));
-                const ungrouped = components.filter(c => !groupedIds.has(c.brick_id) && !Object.values(tree.tree || {}).flat().includes(c.brick_id));
-                return ungrouped.length === 0
-                  ? <div style={{ fontSize:12, color:"#aaa", fontStyle:"italic" }}>All components are grouped</div>
-                  : ungrouped.map(c => (
-                    <div key={c.brick_id} style={{ display:"flex", alignItems:"center", gap:8, padding:"4px 0", borderBottom:"1px solid #f5f5f5" }}>
-                      <span style={{ flex:1 }}>{c.name || c.brick_id}</span>
-                      <select style={{ fontSize:12, padding:"2px 4px" }} onChange={e => { if (e.target.value) { assignToGroup(c.brick_id, e.target.value); e.target.value = ""; }}}>
-                        <option value="">Assign to group...</option>
-                        {groups.map(g => <option key={g.id} value={g.id}>{g.label || g.id}</option>)}
-                      </select>
-                    </div>
-                  ));
-              })()}
-            </div>
-          )}
+          {/* Summary: unassigned components */}
+          {(() => {
+            const unassigned = components.filter(c => !c.group_id && !c.ui_metadata?.group_id);
+            return unassigned.length > 0 && groups.length > 0 ? (
+              <div style={{ marginTop:12, fontSize:12, color:"#888", fontStyle:"italic" }}>
+                {unassigned.length} component{unassigned.length > 1 ? "s" : ""} not yet assigned to any group.
+              </div>
+            ) : null;
+          })()}
         </div>
       )}
 
@@ -811,12 +838,14 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, brickLibrar
           existingIds={schemaData.component_brick_ids || []}
           brickLib={brickLib}
           brickLibraries={brickLibraries}
-          onAdded={id => {
+          onAdded={async id => {
             setShowAddComp(false);
             onToast("Component added", "success");
-            const updated = { ...schemaData, component_brick_ids: [...(schemaData.component_brick_ids || []), id] };
-            onSaved(updated);
-            loadComponents();
+            const r = await api("GET", `/api/session/${sessionId}/schemas/${schemaData.schema_id}`);
+            if (r.status === "success") {
+              onSaved(r.data);
+              await loadComponents(r.data.component_brick_ids || []);
+            }
             loadTree();
           }}
           onClose={() => setShowAddComp(false)}
