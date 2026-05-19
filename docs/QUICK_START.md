@@ -7,11 +7,11 @@
 ### Option A: Docker (No Python Setup Required)
 ```bash
 # Start Schema App
-./start-schema-app.sh
+./dev-start-schema-docker.sh
 # → Open http://localhost:5000
 
 # Start Brick App (in another terminal)
-./start-brick-app.sh
+./dev-start-brick-docker.sh
 # → Open http://localhost:5001
 ```
 
@@ -19,13 +19,11 @@
 
 #### Prerequisites
 - Python 3.13+
-- Virtual environment (`.venv/`)
-- Dependencies installed (see `pyproject.toml`)
+- [uv](https://github.com/astral-sh/uv) package manager
 
-#### Quick Setup Check
+#### Quick Setup
 ```bash
-# Verify everything is ready
-python3 run_tasks.py setup
+uv sync
 ```
 
 ## 🎯 5-Minute Quick Start (Local)
@@ -33,13 +31,12 @@ python3 run_tasks.py setup
 ### Step 1: Launch Interface (30 seconds)
 ```bash
 # PyQt6 Desktop (Recommended)
-python3 run_tasks.py qt
+uv run python run_schema_app_qt.py    # Schema editor
+uv run python run_brick_app_qt.py     # Brick editor
 
-# OR DASH Web Interface
-python3 run_tasks.py dash
-
-# OR Flask Web Interface
-.venv/bin/python run_schema_app_web.py
+# OR Web Interface (Flask)
+uv run python run_schema_app_web.py   # → http://localhost:5000
+uv run python run_brick_app_web.py    # → http://localhost:5001
 ```
 
 ### Step 2: Create First Schema (2 minutes)
@@ -87,14 +84,13 @@ A: Place JSON brick files in `brick_repositories/default/bricks/`
 
 **Q: Can I use the web interface?**
 A: Yes! Multiple options:
-- Docker: `./start-schema-app.sh` → http://localhost:5000
-- Flask: `.venv/bin/python run_schema_app_web.py` → http://localhost:5000
-- DASH: `python3 run_tasks.py dash` → http://localhost:8050
+- Docker: `./dev-start-schema-docker.sh` → http://localhost:5000
+- Flask: `uv run python run_schema_app_web.py` → http://localhost:5000
 
 **Q: How do I stop the application?**
-A: 
+A:
 - Docker: Press Ctrl+C or run `docker stop <container>`
-- Local: Run `python3 run_tasks.py stop` or close the window
+- Local: Close the window or press Ctrl+C in the terminal
 
 ## 📚 Further Reading
 

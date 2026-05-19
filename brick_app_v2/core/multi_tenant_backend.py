@@ -4,6 +4,12 @@ Multi-Tenant Backend Architecture
 Provides isolated backend instances for multiple clients (Qt, Web, API)
 """
 
+import sys
+from pathlib import Path as _Path
+_dash_gui_root = str(_Path(__file__).parent.parent.parent)
+if _dash_gui_root not in sys.path:
+    sys.path.insert(0, _dash_gui_root)
+
 from typing import Dict, Any, Optional, List
 
 from .session_manager import SessionManager, BackendSession

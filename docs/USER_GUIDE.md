@@ -24,24 +24,19 @@
 # Clone or download project
 cd DASH_GUI
 
-# Setup virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r pyproject.toml
-
-# Verify installation
-python3 run_tasks.py setup
+# Install dependencies (using uv)
+uv sync
 ```
 
 ### First Launch
 ```bash
 # Desktop Interface
-python3 run_tasks.py qt
+uv run python run_schema_app_qt.py
+uv run python run_brick_app_qt.py
 
 # Web Interface
-python3 run_tasks.py dash
+uv run python run_schema_app_web.py   # → http://localhost:5000
+uv run python run_brick_app_web.py    # → http://localhost:5001
 ```
 
 ## Interface Overview
@@ -210,7 +205,7 @@ Advanced library operations:
 **Solution**:
 1. Check brick repository path
 2. Verify brick files are valid JSON
-3. Run `python3 run_tasks.py setup` to diagnose
+3. Run `uv run python -c "from brick_app_v2.core.brick_core_simple import BrickCore; print('OK')"` to diagnose
 4. Restart application
 
 #### Interface Errors
@@ -242,9 +237,8 @@ Advanced library operations:
 - **Troubleshooting**: `docs/TROUBLESHOOTING.md`
 
 #### Support
-- **Status Check**: `python3 run_tasks.py status`
-- **System Tests**: `python3 run_tasks.py test`
-- **Environment Info**: `python3 run_tasks.py setup`
+- **Environment Check**: `uv sync` then `uv run python -c "import brick_app_v2; print('OK')"`
+- **Logs**: Check terminal output when launching
 
 ---
 

@@ -157,16 +157,34 @@ function onBrickTypeChanged(type) {
 // Display properties
 function displayProperties(brick) {
     const propertiesElement = document.getElementById('propertiesSection');
-    const properties = brick.properties || {};
     
-    const propertyEntries = Object.values(properties).filter(p => typeof p === 'object' && p !== null);
-    if (propertyEntries.length === 0) {
+    // Build properties from both modern leaf_properties and legacy properties
+    const allProperties = [];
+    
+    // Modern format: leaf_properties array
+    if (brick.leaf_properties && Array.isArray(brick.leaf_properties)) {
+        brick.leaf_properties.forEach(prop => {
+            const name = prop.label || (prop.path && prop.path.split(':').pop()) || 'Unnamed';
+            allProperties.push([name, prop]);
+        });
+    }
+    
+    // Legacy format: properties dict
+    if (brick.properties) {
+        for (const [key, value] of Object.entries(brick.properties)) {
+            if (key !== 'datatype' && typeof value === 'object' && value !== null) {
+                allProperties.push([key, value]);
+            }
+        }
+    }
+    
+    if (allProperties.length === 0) {
         propertiesElement.innerHTML = '<p>No properties defined.</p>';
         return;
     }
     
     let html = '<ul class="properties-list">';
-    for (const [path, property] of Object.entries(properties)) {
+    for (const [path, property] of allProperties) {
         // Skip scalar metadata entries (e.g., datatype stored at brick level for PropertyShape)
         if (typeof property !== 'object' || property === null) continue;
         // Handle SHACL property structure

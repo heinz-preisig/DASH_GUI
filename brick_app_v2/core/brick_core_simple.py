@@ -8,7 +8,12 @@ It's designed to be interface-agnostic and can be used by GUI, web, or CLI inter
 import json
 import os
 import re
+import sys
 import uuid
+from pathlib import Path as _Path
+_dash_gui_root = str(_Path(__file__).parent.parent.parent)
+if _dash_gui_root not in sys.path:
+    sys.path.insert(0, _dash_gui_root)
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Union
@@ -149,7 +154,11 @@ class BrickCore:
                 continue
 
             for filename in os.listdir(library_path):
-                if filename.endswith(f"_{brick_id}.json") or filename == f"{brick_id}.json":
+                # Match full brick_id or partial (first 8 chars of UUID)
+                if (filename.endswith(f"_{brick_id}.json") or 
+                    filename == f"{brick_id}.json" or
+                    filename.endswith(f"_{brick_id[:8]}.json") or
+                    filename == f"{brick_id[:8]}.json"):
                     brick_file = os.path.join(library_path, filename)
                     try:
                         with open(brick_file, 'r') as f:
@@ -254,10 +263,13 @@ class BrickCore:
         lib_name = library_name or self.active_library
         library_path = os.path.join(self.repository_path, lib_name)
         
-        # Find file ending with brick_id.json (supports both old and new name_UUID format)
+        # Find file ending with brick_id.json (supports full UUID or first 8 chars)
         brick_file = None
         for filename in os.listdir(library_path):
-            if filename.endswith(f"_{brick_id}.json") or filename == f"{brick_id}.json":
+            if (filename.endswith(f"_{brick_id}.json") or 
+                filename == f"{brick_id}.json" or
+                filename.endswith(f"_{brick_id[:8]}.json") or
+                filename == f"{brick_id[:8]}.json"):
                 brick_file = os.path.join(library_path, filename)
                 break
         
@@ -270,7 +282,8 @@ class BrickCore:
             ttl_file = brick_file.replace('.json', '.ttl')
             if os.path.exists(ttl_file):
                 os.remove(ttl_file)
-            if self.current_brick and self.current_brick.brick_id == brick_id:
+            if self.current_brick and (self.current_brick.brick_id == brick_id or 
+                                        self.current_brick.brick_id.startswith(brick_id[:8])):
                 self.current_brick = None
             return True
         except Exception:

@@ -70,8 +70,8 @@ class OntologyManager:
             graph = Graph()
             graph.parse(str(cache_file), format="xml")
             self._extract_ontology_data(graph, cache_file.stem)
-        except Exception as e:
-            print(f"Error parsing RDF file {cache_file}: {e}")
+        except Exception:
+            pass
     
     def _extract_ontology_data(self, graph: Graph, ontology_name: str):
         """Extract classes and properties from RDF graph"""

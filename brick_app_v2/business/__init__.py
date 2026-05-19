@@ -2,8 +2,8 @@
 Business Logic Module
 """
 
-from .brick_operations import BrickBusinessLogic, brick_business_logic
+from .brick_service import BrickService, brick_service, OperationResult
 
 __all__ = [
-    'BrickBusinessLogic', 'brick_business_logic'
+    'BrickService', 'brick_service', 'OperationResult'
 ]

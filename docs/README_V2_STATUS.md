@@ -1,16 +1,42 @@
 # Schema App v2 - Current Status & Architecture
 
-**Date**: April 17, 2026  
-**Status**: Ready for Testing
+**Date**: May 19, 2026  
+**Status**: Refactored & Operational
 
 ## Architecture Overview
 
 ### Core Components
-- **brick_app_v2/**: Core brick management system
-- **schema_app_v2/**: Schema construction and management system
+- **brick_app_v2/**: Core brick management system (local state)
+- **schema_app_v2/**: Schema construction and management system (local state)
 - **brick_repositories/**: Active brick repository (7 bricks available)
 - **schema_repositories/**: Schema storage repository
 - **ontologies/**: Ontology cache for brick system
+
+### Recent Architecture Changes (May 2026)
+
+#### Local State Refactoring
+Both Qt applications have been refactored from **global state** to **local state** architecture:
+
+| Before | After |
+|--------|-------|
+| Global `app_state_manager` | Instance variables (`self.ui_state`, `self.current_brick`) |
+| `state/app_state.py` module | Removed (archived) |
+| `business/brick_operations.py` | Replaced by `business/brick_service.py` |
+| `ui/ui_abstraction.py` | Removed (archived) |
+| `ui/constraint_manager.py` | Removed (archived) |
+
+#### Benefits
+- **Simpler to understand**: State is local to each GUI instance
+- **No global dependencies**: Each window manages its own state
+- **Easier to maintain**: Clear data flow, no hidden state changes
+- **Better for testing**: Can create multiple independent instances
+
+#### File Renames
+- `brick_app_v2/refactored_gui.py` → `brick_app_v2/brick_editor.py`
+
+#### New Features
+- **Property editing**: Double-click any property to edit name/path
+- **Schema double-click**: Double-click schema in list to open for editing
 
 ### Interface Options
 
@@ -30,7 +56,7 @@
 - **Location**: `schema_app_v2/interfaces/web/`
 - **Main File**: `flask_app.py`
 - **Frontend**: React + Vite modular architecture
-- **Build Script**: `build-web-frontend.sh`
+- **Build Script**: `dev-build-frontend-web.sh`
 - **Status**: Fully functional, ready for testing
 - **Features**:
   - Schema creation, editing, saving
@@ -86,26 +112,25 @@ DASH_GUI/
 └── archive/                  # Legacy components
 ```
 
-## Task Management
+## Launch Commands
 
-### 🚀 Centralized Task Runner
-- **Script**: `run_tasks.py` - Unified command-line interface
-- **Documentation**: `TASK_MANAGER.md` - Complete reference guide
-- **Commands**: Status, launch interfaces, process management, testing
-
-### 📋 Available Commands
 ```bash
-python3 run_tasks.py status    # System status
-python3 run_tasks.py qt        # PyQt6 interface
-python3 run_tasks.py dash       # DASH web interface
-python3 run_tasks.py stop      # Stop all processes
-python3 run_tasks.py setup     # Environment check
+# Desktop
+uv run python run_schema_app_qt.py
+uv run python run_brick_app_qt.py
+
+# Web
+uv run python run_schema_app_web.py   # → http://localhost:5000
+uv run python run_brick_app_web.py    # → http://localhost:5001
+
+# Docker
+./dev-start-schema-docker.sh
+./dev-start-brick-docker.sh
 ```
 
 ## Next Steps
 
-1. **Immediate**: Use `run_tasks.py` for all operations
-2. **Testing**: Verify all interface launchers work
+1. **Testing**: Verify all interface launchers work
 3. **Enhancement**: Add more bricks to repository
 4. **Documentation**: Expand troubleshooting guides
 

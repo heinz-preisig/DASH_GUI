@@ -1,11 +1,14 @@
 README.md
 pyproject.toml
+api/web_api.py
 brick_app_v2.egg-info/PKG-INFO
 brick_app_v2.egg-info/SOURCES.txt
 brick_app_v2.egg-info/dependency_links.txt
 brick_app_v2.egg-info/entry_points.txt
 brick_app_v2.egg-info/requires.txt
 brick_app_v2.egg-info/top_level.txt
+business/__init__.py
+business/brick_service.py
 core/__init__.py
 core/abstract_events.py
 core/brick_backend.py
@@ -16,3 +19,4 @@ core/multi_tenant_backend.py
 core/ontology_manager.py
 core/session_manager.py
 core/shacl_importer.py
+ui/property_formatters.py

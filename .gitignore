@@ -180,6 +180,9 @@ cython_debug/
 # Virtual environment
 .venv/
 
+# Developer session notes
+progress.txt
+
 # Repository data (user content - keep structure but allow tracking)
 # *_repositories/  # Removed - these are project directories
 # *_repositories_v2/  # Removed - these are project directories

@@ -5,8 +5,12 @@ Clean backend API that can work with different frontend types (Qt, web, etc.)
 """
 
 import json
+import sys
 from typing import Dict, List, Any, Optional, Union
 from pathlib import Path
+_dash_gui_root = str(Path(__file__).parent.parent.parent)
+if _dash_gui_root not in sys.path:
+    sys.path.insert(0, _dash_gui_root)
 from .brick_generator import (
     BrickRepository, BrickLibrary, SHACLBrickGenerator, SHACLBrick,
     SHACLConstraint, SHACLTarget, SHACLObjectType

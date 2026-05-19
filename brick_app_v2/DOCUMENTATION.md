@@ -412,7 +412,7 @@ python main.py --web --debug
 ```
 brick_app_v2/
 ├── main.py                    # Application entry point
-├── refactored_gui.py          # Qt GUI frontend
+├── brick_editor.py            # Qt GUI frontend (local state)
 ├── gui_components.py          # Dialog components (load from .ui files)
 ├── pyproject.toml             # Modern Python packaging
 ├── README.md                  # Basic documentation
@@ -437,10 +437,14 @@ brick_app_v2/
 │   ├── property_brick_browser.ui
 │   ├── constraint_editor.ui
 │   └── property_editor.ui
-├── state/                    # State management
-│   └── app_state.py
-└── business/                 # Business logic
-    └── brick_operations.py
+├── business/                 # Business logic
+│   └── brick_service.py      # Clean service layer (local state)
+└── archive/                  # Archived obsolete modules
+    ├── state/                # (old global state - archived)
+    │   └── app_state.py
+    ├── brick_operations.py   # (replaced by brick_service)
+    ├── ui_abstraction.py     # (unused abstraction)
+    └── constraint_manager.py # (depends on old state)
 ```
 
 ### Adding New Features

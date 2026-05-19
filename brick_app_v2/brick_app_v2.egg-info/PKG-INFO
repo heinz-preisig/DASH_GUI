@@ -123,7 +123,7 @@ python examples/basic_usage.py
 brick_app_v2/
 |
 |__ main.py                  # Application entry point
-|__ refactored_gui.py        # Qt GUI frontend
+|__ brick_editor.py          # Qt GUI frontend (local state)
 |__ gui_components.py        # Dialog components (load from .ui files)
 |__ pyproject.toml           # Package configuration
 |__ README.md                # This file
@@ -146,13 +146,14 @@ brick_app_v2/
 |   |__ property_editor.ui
 |
 |__ business/                # Business logic
-|   |__ brick_operations.py
+|   |__ brick_service.py     # Clean service layer (replaces brick_operations)
 |
 |__ api/                     # Web interface
 |   |__ web_api.py            # Flask web server
 |
-|__ state/                   # State management
-|   |__ app_state.py
+|__ archive/                 # Archived obsolete modules
+|   |__ state/               # (old global state - now local)
+|   |__ brick_operations.py  # (replaced by brick_service)
 ```
 
 ## Core Components
@@ -176,15 +177,17 @@ Manages multiple brick libraries:
 - Set active library
 - Repository-wide operations
 
-### BrickBackendAPI
-Clean backend API with:
-- Event-driven communication
-- JSON responses
+### BrickService
+Clean service layer with:
+- Local state management (no global state)
+- Direct data operations
 - Frontend/backend separation
 
-### BrickGUI
+### BrickEditor
 PyQt6 frontend with:
+- Local UI state (BROWSE/EDIT/CREATE)
 - Visual brick creation
+- Property editing (double-click)
 - Search and filtering
 - SHACL export
 - Library management
@@ -330,8 +333,8 @@ The main project documentation is maintained in `../project_memory.md` and conta
 ### Files Created
 - `brick_app_v2/core/brick_generator.py` - Core SHACL brick system
 - `brick_app_v2/core/brick_core_simple.py` - Brick core implementation
-- `brick_app_v2/refactored_gui.py` - Qt GUI frontend
-- `brick_app_v2/gui_components.py` - Dialog components (load from .ui files)
+- `brick_app_v2/brick_editor.py` - Qt GUI frontend (local state architecture)
+- `brick_app_v2/gui_components.py` - Dialog components (PropertyEditor, etc.)
 - `brick_app_v2/ui/` - Qt Designer .ui files for all dialogs
 - `run_brick_app_qt.py` - Qt GUI launcher script
 - `run_brick_app_web.py` - Web interface launcher script

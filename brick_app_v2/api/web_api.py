@@ -21,12 +21,15 @@ except ImportError:
 
 import sys
 import os
+from pathlib import Path as _Path
+_dash_gui_root = str(_Path(__file__).parent.parent.parent)
+if _dash_gui_root not in sys.path:
+    sys.path.insert(0, _dash_gui_root)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../business'))
 
 from core.multi_tenant_backend import MultiTenantBackend
 from core.abstract_events import EventType, ClientType
-from brick_operations import brick_business_logic
 
 
 class BrickWebAPI:
@@ -228,18 +231,15 @@ class BrickWebAPI:
                     "message": "No property data provided"
                 }), 400
             
-            success, message = brick_business_logic.add_property(data)
-            
-            if success:
-                return jsonify({
-                    "status": "success",
-                    "message": "Property added successfully"
-                })
-            else:
-                return jsonify({
-                    "status": "error",
-                    "message": message
-                }), 400
+            # Add property via brick_core
+            prop_name = data.get('name')
+            if not prop_name:
+                return jsonify({"status": "error", "message": "Property name required"}), 400
+            self.backend.brick_core.add_property(prop_name, data)
+            return jsonify({
+                "status": "success",
+                "message": f"Property '{prop_name}' added successfully"
+            })
         
         @self.app.route('/api/session/<session_id>/brick/properties/<property_name>', methods=['DELETE'])
         def remove_property(session_id, property_name):
@@ -251,18 +251,12 @@ class BrickWebAPI:
                     "message": "Session not found"
                 }), 404
             
-            success, message = brick_business_logic.remove_property(property_name)
-            
-            if success:
-                return jsonify({
-                    "status": "success",
-                    "message": "Property removed successfully"
-                })
-            else:
-                return jsonify({
-                    "status": "error",
-                    "message": message
-                }), 400
+            # Remove property via brick_core
+            self.backend.brick_core.remove_property(property_name)
+            return jsonify({
+                "status": "success",
+                "message": f"Property '{property_name}' removed successfully"
+            })
         
         # Constraint operations
         @self.app.route('/api/session/<session_id>/brick/properties/<property_name>/constraints', methods=['POST'])
@@ -288,20 +282,16 @@ class BrickWebAPI:
                 'name': data.get('constraint_type', 'minLength')
             }
             
-            success, message = brick_business_logic.add_constraint(
-                property_name, constraint_data
-            )
-            
-            if success:
-                return jsonify({
-                    "status": "success",
-                    "message": "Constraint added successfully"
-                })
-            else:
-                return jsonify({
-                    "status": "error",
-                    "message": message
-                }), 400
+            # Add constraint via brick_core (stored in property)
+            brick = self.backend.brick_core.current_brick
+            if brick and property_name in brick.properties:
+                if 'constraints' not in brick.properties[property_name]:
+                    brick.properties[property_name]['constraints'] = []
+                brick.properties[property_name]['constraints'].append(constraint_data)
+            return jsonify({
+                "status": "success",
+                "message": "Constraint added successfully"
+            })
         
         @self.app.route('/api/session/<session_id>/brick/properties/<property_name>/constraints/<int:index>', methods=['PUT'])
         def update_constraint(session_id, property_name, index):
@@ -326,20 +316,16 @@ class BrickWebAPI:
                 'name': data.get('constraint_type', 'minLength')
             }
             
-            success, message = brick_business_logic.update_constraint(
-                property_name, index, constraint_data
-            )
-            
-            if success:
-                return jsonify({
-                    "status": "success",
-                    "message": "Constraint updated successfully"
-                })
-            else:
-                return jsonify({
-                    "status": "error",
-                    "message": message
-                }), 400
+            # Update constraint via brick_core
+            brick = self.backend.brick_core.current_brick
+            if brick and property_name in brick.properties:
+                constraints = brick.properties[property_name].get('constraints', [])
+                if 0 <= index < len(constraints):
+                    constraints[index] = constraint_data
+            return jsonify({
+                "status": "success",
+                "message": "Constraint updated successfully"
+            })
         
         @self.app.route('/api/session/<session_id>/brick/properties/<property_name>/constraints/<int:index>', methods=['DELETE'])
         def remove_constraint(session_id, property_name, index):
@@ -351,20 +337,16 @@ class BrickWebAPI:
                     "message": "Session not found"
                 }), 404
             
-            success, message = brick_business_logic.remove_constraint(
-                property_name, index
-            )
-            
-            if success:
-                return jsonify({
-                    "status": "success",
-                    "message": "Constraint removed successfully"
-                })
-            else:
-                return jsonify({
-                    "status": "error",
-                    "message": message
-                }), 400
+            # Remove constraint via brick_core
+            brick = self.backend.brick_core.current_brick
+            if brick and property_name in brick.properties:
+                constraints = brick.properties[property_name].get('constraints', [])
+                if 0 <= index < len(constraints):
+                    constraints.pop(index)
+            return jsonify({
+                "status": "success",
+                "message": "Constraint removed successfully"
+            })
         
         # Target class operations
         @self.app.route('/api/session/<session_id>/brick/target-class', methods=['PUT'])

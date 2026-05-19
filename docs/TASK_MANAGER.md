@@ -1,5 +1,11 @@
 # V2 Task Manager - Centralized Running Tasks
 
+> **⚠️ Note**: The `run_tasks.py` script described in this document has been removed.
+> Use the launcher scripts directly instead:
+> - Desktop: `uv run python run_brick_app_qt.py` / `uv run python run_schema_app_qt.py`
+> - Web: `uv run python run_brick_app_web.py` / `uv run python run_schema_app_web.py`
+> - Docker: `./dev-start-schema-docker.sh` / `./dev-start-brick-docker.sh`
+
 **Purpose**: Single place to manage all running tasks, services, and processes for version 2 applications.
 
 ## Current Available Tasks

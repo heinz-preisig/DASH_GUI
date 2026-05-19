@@ -27,7 +27,7 @@ brick-app-v2 = "main:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["core*", "interfaces*", "main"]
+include = ["core*", "business*", "api*", "ui*"]
 
 [tool.setuptools.package-data]
 "*" = ["ui/*.ui"]

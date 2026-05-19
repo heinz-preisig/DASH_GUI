@@ -608,11 +608,30 @@ function PropertyPane({ sessionId, brickData, onRefresh, onToast }) {
   const [showAdd, setShowAdd] = useState(false);
   const [showConstraintMgr, setShowConstraintMgr] = useState(false);
 
-  const properties = brickData?.properties
-    ? Object.entries(brickData.properties).filter(([k]) => k !== "datatype")
-    : [];
+  // Build properties list from both modern leaf_properties and legacy properties
+  const allProperties = [];
+  // Modern format: leaf_properties array
+  if (brickData?.leaf_properties && Array.isArray(brickData.leaf_properties)) {
+    brickData.leaf_properties.forEach(prop => {
+      const name = prop.label || prop.path?.split(':').pop() || 'Unnamed';
+      allProperties.push([name, prop]);
+    });
+  }
+  // Legacy format: properties dict
+  if (brickData?.properties) {
+    Object.entries(brickData.properties).forEach(([k, v]) => {
+      if (k !== "datatype") {
+        allProperties.push([k, v]);
+      }
+    });
+  }
+  const properties = allProperties;
 
-  const selectedPropData = selected ? (brickData?.properties?.[selected] || {}) : null;
+  const selectedPropData = selected
+    ? (brickData?.properties?.[selected] || brickData?.leaf_properties?.find(p =>
+        (p.label || p.path?.split(':').pop()) === selected
+      ) || {})
+    : null;
   const fullPropData = selectedPropData ? { name: selected, ...selectedPropData } : null;
 
   const addProperty = async (data) => {

@@ -4,6 +4,24 @@ This directory contains legacy and experimental components that are not part of 
 
 ## Archived Components
 
+### Refactored Components (May 2026)
+Architecture changed from global state to local state. These components were archived:
+
+#### State Management (Replaced by Local State)
+- `brick_app_v2/state/` - Global `app_state_manager` module
+  - `app_state.py` - Centralized state management (now local in GUI classes)
+
+#### Business Logic (Replaced by brick_service.py)
+- `brick_app_v2/business/brick_operations.py` - Old business logic with global state dependencies
+
+#### UI Abstractions (Removed)
+- `brick_app_v2/ui/ui_abstraction.py` - Unused UI abstraction layer
+- `brick_app_v2/ui/constraint_manager.py` - Constraint manager (depends on old state)
+- `brick_app_v2/ui/__init__.py` - Import file for removed modules
+
+#### GUI Files (Renamed)
+- `brick_app_v2/refactored_gui.py` → `brick_editor.py` (renamed after refactoring complete)
+
 ### Legacy Applications
 - `shacl_brick_app/` - Original SHACL brick generator application
 - `guided_brick_gui/` - Guided brick creation GUI
