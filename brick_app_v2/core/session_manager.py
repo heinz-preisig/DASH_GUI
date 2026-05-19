@@ -26,7 +26,7 @@ class SessionInfo:
 class BackendSession:
     """Isolated backend session for a single client"""
     
-    def __init__(self, session_id: str, client_type: str, repository_path: str = "brick_repositories"):
+    def __init__(self, session_id: str, client_type: str, repository_path: str = None):
         self.session_id = session_id
         self.client_type = client_type
         self.created_at = datetime.now()
@@ -96,7 +96,7 @@ class BackendSession:
 class SessionManager:
     """Manages multiple backend sessions for different clients"""
     
-    def __init__(self, repository_path: str = "brick_repositories"):
+    def __init__(self, repository_path: str = None):
         self.repository_path = repository_path
         self.sessions: Dict[str, BackendSession] = {}
         self.session_info: Dict[str, SessionInfo] = {}

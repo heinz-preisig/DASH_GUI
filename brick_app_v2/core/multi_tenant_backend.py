@@ -20,7 +20,7 @@ from common import SharedLibraryManager
 class MultiTenantBackend:
     """Main multi-tenant backend coordinator"""
 
-    def __init__(self, repository_path: str = "brick_repositories"):
+    def __init__(self, repository_path: str = None):
         self.repository_path = repository_path
 
         # Shared library manager for filesystem-based library discovery

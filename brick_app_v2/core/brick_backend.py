@@ -15,8 +15,11 @@ from .brick_generator import (
 class BrickBackendAPI:
     """Backend API for SHACL brick generation with clean frontend separation"""
     
-    def __init__(self, repository_path: str = "brick_repositories"):
+    def __init__(self, repository_path: str = None):
         """Initialize the backend"""
+        if repository_path is None:
+            from common import shared_library_manager
+            repository_path = shared_library_manager.get_brick_library_path()
         self.repository = BrickRepository(repository_path)
         # Find project root (parent of brick_app_v2 or current dir)
         cwd = Path.cwd()

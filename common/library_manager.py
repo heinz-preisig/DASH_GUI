@@ -4,7 +4,7 @@ Shared Library Manager
 Unified library management for brick_app_v2 and schema_app_v2
 
 The actual library data lives EXTERNAL to the project at:
-  <project_root>/../shared_libraries/
+  <project_root>/../ShaclForm-library/
 For Docker, set SHARED_LIBRARIES_ROOT to the mounted data path.
 """
 
@@ -24,9 +24,9 @@ class SharedLibraryManager:
         if docker_data_path and os.path.exists(docker_data_path):
             self.base_path = Path(docker_data_path).resolve()
         else:
-            # Local development: external shared_libraries at sibling of DASH_GUI project
+            # Local development: external ShaclForm-library at sibling of DASH_GUI project
             project_root = Path(__file__).resolve().parent.parent
-            self.base_path = (project_root.parent / "shared_libraries").resolve()
+            self.base_path = (project_root.parent / "ShaclForm-library").resolve()
 
         self.config_file = self.base_path / "library_registry.json"
         self.config = self._load_config()

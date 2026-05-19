@@ -20,7 +20,7 @@ fi
 docker run -it \
     --rm \
     -p "$PORT:$PORT" \
-    -v "$(pwd)/shared_libraries:/app/data" \
+    -v "$(pwd)/ShaclForm-library:/app/data" \
     --user "$(id -u):$(id -g)" \
     -e APP=brick \
     -e PORT="$PORT" \

@@ -1,6 +1,6 @@
 {
     "version": "2.0",
-    "shared_library_root": "../shared_libraries",
+    "shared_library_root": "../ShaclForm-library",
     "libraries": {
         "bricks": {
             "libraries": [

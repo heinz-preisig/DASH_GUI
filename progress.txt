@@ -133,7 +133,7 @@ Brick app:
     .venv/bin/python run_brick_app_web.py
     → http://localhost:5001
 
-DigiPass libraries are now bundled in the repo (shared_libraries/bricks/digipass_*).
+DigiPass libraries are now bundled in the repo (ShaclForm-library/bricks/digipass_*).
 
 To re-import from source SHACL (if source files change):
     .venv/bin/python parse_shacl_to_bricks.py \

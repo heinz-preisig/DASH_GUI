@@ -38,7 +38,7 @@ echo "Starting container..."
 docker run -it \
     --rm \
     -p "$PORT:$PORT" \
-    -v "$(pwd)/shared_libraries:/app/data" \
+    -v "$(pwd)/ShaclForm-library:/app/data" \
     --user "$(id -u):$(id -g)" \
     -e APP=schema \
     -e PORT="$PORT" \
