@@ -32,11 +32,7 @@ Last updated: 2026-05-20
 
 4. ~~**"Import SHACL" UI button**~~ ✅ Done (2026-05-20) — added to `main_window.ui` + `on_import_shacl()` handler in `brick_editor.py`; calls `SHACLImporter` directly, refreshes list on completion
 
-5. **Docker Hub publish**
-   ```bash
-   ./dev-docker-publish-hub.sh
-   ```
-   Only after Docker smoke test passes.
+5. ~~**Docker Hub publish**~~ ✅ Done (2026-05-20) — triggered via CI on GitHub push
 
 ## How to Launch
 

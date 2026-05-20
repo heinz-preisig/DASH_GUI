@@ -9,6 +9,10 @@ on:
   release:
     types: [ published ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   REGISTRY: docker.io
   IMAGE_NAME: hapdocker/dash-gui
@@ -64,3 +68,17 @@ jobs:
         run: |
           echo "Image published: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
           echo "Tags: ${{ steps.meta.outputs.tags }}"
+
+  cleanup-old-runs:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: always()
+    permissions:
+      actions: write
+    steps:
+      - name: Delete old workflow runs
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ github.token }}
+          retain_days: 0
+          keep_latest: 5
