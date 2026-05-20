@@ -358,9 +358,24 @@ function DownloadOntologyModal({ onClose, onToast }) {
 
 /* ── PropertyEditorModal ─────────────────────────────── */
 function PropertyEditorModal({ sessionId, onSave, onClose }) {
-  const [form, setForm] = useState({ name: "", property_path: "", datatype: "xsd:string", description: "", min_count: "", max_count: "" });
+  const EMPTY_FORM = {
+    name: "", property_path: "", datatype: "xsd:string", description: "",
+    min_count: "", max_count: "",
+    min_length: "", max_length: "", pattern: "",
+    min_inclusive: "", max_inclusive: "", min_exclusive: "", max_exclusive: "",
+    language_in: "", unique_lang: false,
+    in_values: "", has_value: "",
+  };
+  const [form, setForm] = useState(EMPTY_FORM);
   const [showOntBrowser, setShowOntBrowser] = useState(false);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const dt = form.datatype;
+  const isString  = dt === "xsd:string" || dt === "xsd:anyURI" || dt === "rdf:HTML";
+  const isLang    = dt === "rdf:langString";
+  const isNumeric = ["xsd:integer","xsd:decimal","xsd:float"].includes(dt);
+  const isTemporal= dt === "xsd:date" || dt === "xsd:dateTime";
+  const hasBounds = isNumeric || isTemporal;
 
   const generateIri = () => {
     if (!form.name) return;
@@ -383,16 +398,30 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
   const save = () => {
     if (!form.name || !form.property_path) return;
     const data = { ...form };
-    if (form.min_count) data.min_count = parseInt(form.min_count);
-    if (form.max_count) data.max_count = parseInt(form.max_count);
+    if (form.min_count)     data.min_count     = parseInt(form.min_count);
+    if (form.max_count)     data.max_count     = parseInt(form.max_count);
+    if (form.min_length)    data.min_length    = parseInt(form.min_length);
+    if (form.max_length)    data.max_length    = parseInt(form.max_length);
+    if (!form.pattern)      delete data.pattern;
+    if (!form.min_inclusive)  delete data.min_inclusive;
+    if (!form.max_inclusive)  delete data.max_inclusive;
+    if (!form.min_exclusive)  delete data.min_exclusive;
+    if (!form.max_exclusive)  delete data.max_exclusive;
+    if (!form.language_in)    delete data.language_in;
+    if (!form.unique_lang)    delete data.unique_lang;
+    if (!form.in_values)      delete data.in_values;
+    if (!form.has_value)      delete data.has_value;
     onSave(data);
   };
+
+  const placeholderBounds = isTemporal ? "e.g. 2020-01-01" : "optional number";
 
   return (
     <>
       <div className="modal-overlay" onClick={onClose}>
         <div className="modal" onClick={e => e.stopPropagation()}>
           <h2>Add Property</h2>
+
           <div className="form-row"><label>Name *</label><div className="field"><input type="text" value={form.name} onChange={e => set("name", e.target.value)}/></div></div>
           <div className="form-row">
             <label>Property Path *</label>
@@ -405,8 +434,36 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
             </div>
           </div>
           <div className="form-row"><label>Datatype</label><div className="field"><select value={form.datatype} onChange={e => set("datatype", e.target.value)}>{DATATYPES.map(d => <option key={d} value={d}>{d}</option>)}</select></div></div>
+
           <div className="form-row"><label>Min Count</label><div className="field"><input type="text" value={form.min_count} onChange={e => set("min_count", e.target.value)} placeholder="optional"/></div></div>
           <div className="form-row"><label>Max Count</label><div className="field"><input type="text" value={form.max_count} onChange={e => set("max_count", e.target.value)} placeholder="optional"/></div></div>
+
+          {(isString || isLang) && <>
+            <div className="form-row"><label>Min Length</label><div className="field"><input type="text" value={form.min_length} onChange={e => set("min_length", e.target.value)} placeholder="optional"/></div></div>
+            <div className="form-row"><label>Max Length</label><div className="field"><input type="text" value={form.max_length} onChange={e => set("max_length", e.target.value)} placeholder="optional"/></div></div>
+            <div className="form-row"><label>Pattern</label><div className="field"><input type="text" value={form.pattern} onChange={e => set("pattern", e.target.value)} placeholder="optional regex, e.g. ^[A-Za-z]+$" style={{fontFamily:"monospace"}}/></div></div>
+          </>}
+
+          {isLang && <>
+            <div className="form-row"><label>Language In</label><div className="field"><input type="text" value={form.language_in} onChange={e => set("language_in", e.target.value)} placeholder='e.g. "en","de","fr"'/></div></div>
+            <div className="form-row">
+              <label>Unique Lang</label>
+              <div className="field" style={{paddingTop:"6px"}}>
+                <input type="checkbox" checked={form.unique_lang} onChange={e => set("unique_lang", e.target.checked)}/> <small>one value per language tag</small>
+              </div>
+            </div>
+          </>}
+
+          {hasBounds && <>
+            <div className="form-row"><label>Min Inclusive</label><div className="field"><input type="text" value={form.min_inclusive} onChange={e => set("min_inclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
+            <div className="form-row"><label>Max Inclusive</label><div className="field"><input type="text" value={form.max_inclusive} onChange={e => set("max_inclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
+            <div className="form-row"><label>Min Exclusive</label><div className="field"><input type="text" value={form.min_exclusive} onChange={e => set("min_exclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
+            <div className="form-row"><label>Max Exclusive</label><div className="field"><input type="text" value={form.max_exclusive} onChange={e => set("max_exclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
+          </>}
+
+          <div className="form-row"><label>sh:in</label><div className="field"><input type="text" value={form.in_values} onChange={e => set("in_values", e.target.value)} placeholder='comma-separated, e.g. "red","green","blue"'/></div></div>
+          <div className="form-row"><label>sh:hasValue</label><div className="field"><input type="text" value={form.has_value} onChange={e => set("has_value", e.target.value)} placeholder="optional fixed value"/></div></div>
+
           <div className="form-row"><label>Description</label><div className="field"><textarea value={form.description} onChange={e => set("description", e.target.value)}/></div></div>
           <div className="modal-footer">
             <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
