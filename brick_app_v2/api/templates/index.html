@@ -193,7 +193,7 @@ function OntologyBrowserModal({ mode, sessionId, onSelect, onClose }) {
   });
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" style={{zIndex:1100}} onClick={e => { e.stopPropagation(); onClose(); }}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <h2>Ontology Browser — {mode === "classes" ? "Classes" : "Properties"}</h2>
         <div className="form-row">
@@ -280,7 +280,7 @@ function DownloadOntologyModal({ onClose, onToast }) {
   const canDownload = tab === "search" ? !!selected : !!directUrl.trim();
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={e => { e.stopPropagation(); onClose(); }}>
       <div className="modal" style={{ minWidth: 500 }} onClick={e => e.stopPropagation()}>
         <h2>Download Ontology to Cache</h2>
 
@@ -509,7 +509,7 @@ function ConstraintEditorModal({ propData, existing, onSave, onClose }) {
   const selectedPreset = PATTERN_PRESETS.find(p => p.id === patternPreset);
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" style={{zIndex:1100}} onClick={e => { e.stopPropagation(); onClose(); }}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <h2>{existing ? "Edit" : "Add"} Constraint — {propData.name}</h2>
         <div className="form-row">
@@ -648,7 +648,7 @@ function LibraryManagerModal({ libraries, onClose, onRefresh }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={e => { e.stopPropagation(); onClose(); }}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <h2>Manage Libraries</h2>
         <div style={{ marginBottom: 12 }}>
