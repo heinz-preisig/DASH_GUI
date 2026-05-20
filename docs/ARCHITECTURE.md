@@ -1,7 +1,6 @@
 # DASH GUI — Architecture Reference
 
-> Last updated: 2026-05-07
-> Branch: `feature/shacl-tree-redesign`
+> Last updated: 2026-05-20
 
 ---
 
@@ -11,9 +10,19 @@ The system builds hierarchical SHACL schemas that drive DASH browser-based data-
 It has two independent Qt applications that share a common data layer:
 
 ```
-run_brick_app_qt.py   →  brick_app_v2/   (create & edit SHACL bricks)
-run_schema_app.py     →  schema_app_v2/  (assemble bricks into schemas, export TTL)
+run_brick_app_qt.py    →  brick_app_v2/   (create & edit SHACL bricks)
+run_schema_app_qt.py   →  schema_app_v2/  (assemble bricks into schemas, export TTL + HTML)
 ```
+
+Both apps also expose a Flask REST API (`run_brick_app_web.py` / `run_schema_app_web.py`) and
+share brick/schema data via an external library directory (`ShaclForm_library/` sibling to `DASH_GUI/`).
+
+### Form Rendering
+
+Schemas are exported as self-contained HTML files that load the
+[`@ulb-darmstadt/shacl-form`](https://www.npmjs.com/package/@ulb-darmstadt/shacl-form)
+JavaScript web component from CDN. The Python side generates the SHACL Turtle;
+the Darmstadt component renders the interactive form in the browser.
 
 ---
 
@@ -190,21 +199,29 @@ ui/                            UIManager, formatters, constraint_manager
 ### Schema App (`schema_app_v2/`)
 
 ```
-interfaces/qt/schema_gui.py    SchemaGUI — thin shell, delegates to mixins
-interfaces/qt/mixins/          SchemaManagementMixin, ComponentTreeMixin,
-                               ComponentListMixin, BrickPanelMixin,
-                               FlowManagementMixin
-core/schema_core.py            Schema, SchemaEdge, UIMetadata, SchemaCore
-core/shacl_export.py           SHACLExporter — BFS edge-walk TTL export
-core/brick_integration.py      bridges schema_app to brick library
+interfaces/qt/schema_gui.py              SchemaGUI — Qt main window (no mixins)
+interfaces/qt/ui_metadata_panel_dialog.py UIMetadataPanelDialog — sequence/group/nesting editor
+interfaces/qt/ui_components.py           UiLoader, ComponentManager utilities
+interfaces/web/flask_app.py              Flask REST API (port 5000)
+core/schema_core.py                      Schema, SchemaEdge, UIMetadata, SchemaCore
+core/shacl_export.py                     SHACLExporter — BFS TTL + HTML form export
+core/brick_integration.py                bridges schema_app to brick library
+core/multi_tenant_backend.py             session isolation for web API
 ```
 
 ### Shared
 
 ```
-shared_libraries/              on-disk brick & schema JSON stores
-  library_manager.py           LibraryManager — path resolution
+common/library_manager.py      SharedLibraryManager — resolves ShaclForm_library/ path
 ontologies/cache/              pre-loaded ontology JSON caches
+```
+
+### External Data
+
+```
+../ShaclForm_library/          sibling directory (outside the code repo)
+  default/bricks/              brick JSON + TTL files
+  default/schemas/             schema JSON files
 ```
 
 ---
@@ -235,9 +252,8 @@ ontologies/cache/              pre-loaded ontology JSON caches
 
 ---
 
-## Pending Work
+## Known Limitations
 
-- Schema GUI mixins (`component_tree.py`, `component_list.py`) need updating
-  to use `SchemaEdge` API for drag-drop parent assignment.
-- DASH web output (Plotly Dash) not yet wired to the schema export pipeline.
+- `common/` module is outside both sub-packages — fine for local/Docker use, breaks `pip install`.
+- `extend_schema` is only available in the Qt GUI, not exposed in the web API.
 - `xone_choice` multi-alternative editor in the brick GUI is not yet implemented.

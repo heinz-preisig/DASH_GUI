@@ -30,6 +30,15 @@ class UiLoader:
         loadUi(ui_file, parent)
         return parent
     
+    def load_dialog(self, ui_filename: str, parent=None) -> QDialog:
+        """Load a dialog .ui file onto a new QDialog"""
+        ui_file = os.path.join(self.ui_directory, ui_filename)
+        if not os.path.exists(ui_file):
+            raise FileNotFoundError(f"UI file not found: {ui_file}")
+        dialog = QDialog(parent)
+        loadUi(ui_file, dialog)
+        return dialog
+
     def load_ui_file(self, ui_filename: str, parent=None) -> QMainWindow:
         """Load a generic .ui file"""
         ui_file = os.path.join(self.ui_directory, ui_filename)

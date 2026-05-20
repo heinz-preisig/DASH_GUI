@@ -55,8 +55,11 @@ The desktop interface provides a rich, native experience with:
 - **New Schema**: Create new schema from scratch
 - **Open Schema**: Load existing schema
 - **Save Schema**: Save current work
-- **Export SHACL**: Generate SHACL file
-- **Validate**: Check schema for errors
+- **Export SHACL**: Generate SHACL Turtle file
+- **Generate Web Form**: Export SHACL + HTML form and open preview in browser
+- **Validate**: Check schema tree for cycles and orphaned nodes
+- **Add Schema Ref**: Attach another schema via `sh:node` to a selected brick
+- **Extend Schema**: Create a new schema that inherits all bricks from the current one
 
 ### DASH Web Interface
 The web interface provides browser-based access with:
@@ -111,9 +114,14 @@ The web interface provides browser-based access with:
 
 #### Export SHACL
 1. Click "Export SHACL" or menu: File → Export SHACL
-2. Choose file location and name
-3. Select format (Turtle recommended)
-4. SHACL file generated for use in other tools
+2. SHACL Turtle file saved to the active library directory
+3. File is immediately usable in other SHACL tools
+
+#### Generate Web Form & Preview
+1. Click "Generate Web Form" button
+2. Both a `.ttl` and `_form.html` file are written to the active library directory
+3. The form opens automatically in your system browser
+4. The form uses the `@ulb-darmstadt/shacl-form` web component (requires internet for CDN)
 
 ## Brick Management
 
@@ -136,42 +144,56 @@ The web interface provides browser-based access with:
 2. Available bricks update automatically
 3. Library status shows in status bar
 
+#### Import SHACL Bricks (Brick App)
+1. Click "Import SHACL" button in the Brick App
+2. Select a `.ttl` file containing `sh:NodeShape` definitions
+3. Each NodeShape is converted to a brick and added to the active library
+
 #### Add Custom Bricks
 1. Create brick files in JSON format
-2. Place in `brick_repositories/default/bricks/`
-3. Bricks appear automatically in interface
+2. Place in `ShaclForm_library/default/bricks/`
+3. Bricks appear automatically in the interface
 
 ## Advanced Features
 
 ### Schema Validation
-The system provides comprehensive validation:
+Checks the component tree for structural problems:
 
-#### Validation Rules
-- **Required Fields**: Name and root brick must be specified
-- **Target Class**: NodeShape bricks need valid target class
-- **Property Paths**: PropertyShape bricks need valid paths
-- **Data Types**: All properties must have valid data types
+#### What is checked
+- **Circular references**: detects cycles in parent-child nesting
+- **Orphaned nodes**: components whose parent is not in the schema
+- **Deep nesting**: warns if any component is nested more than 5 levels deep
 
 #### Validation Process
-1. Click "Validate Schema" or menu: Tools → Validate
-2. System checks all validation rules
-3. Results show in validation dialog
-4. Fix errors before saving
+1. Menu: Tools → Validate Schema
+2. Results show component count, max depth, issues (✗) and warnings (⚠)
+3. Green dialog = valid; yellow dialog = valid with warnings; red = issues found
 
-### Flow Management
-Configure data flows for your schemas:
+### UI Metadata Editor
+Double-click any component in the component list or tree to open the metadata editor:
 
-#### Flow Types
-- **Linear**: Sequential data processing
-- **Branching**: Conditional data flows
-- **Looping**: Iterative processing
-- **Parallel**: Concurrent processing
+- **Sequence tab**: set `sh:order` for display ordering
+- **Grouping tab**: assign the component to a `PropertyGroup` (maps to `sh:group` in SHACL)
+- **Nesting tab**: set a parent component (`sh:node` reference)
+- **Display tab**: label, help text, visibility, collapsible
 
-#### Flow Configuration
-1. Select flow type in flow dropdown
-2. Configure flow steps and conditions
-3. Test flow with sample data
-4. Save flow configuration
+### Schema References
+Attach one schema's NodeShape to a brick in the current schema:
+
+1. Click "Add Schema Ref" button (or toolbar)
+2. Select the target schema from the list
+3. Select the brick in the current schema to attach to
+4. Enter the `sh:path` IRI (e.g. `ex:hasAddress`)
+5. The reference is stored and emitted as `sh:property [ sh:path … ; sh:node … ]` on export
+
+### Extend Schema
+Create a new schema pre-loaded with all bricks from an existing one:
+
+1. Open the schema you want to extend
+2. Menu: Tools → Extend Schema
+3. Enter a name and optional description
+4. A new schema is created with the parent's bricks — add more as needed
+5. The `inheritance_chain` tracks the lineage
 
 ### Library Management
 Advanced library operations:
@@ -219,10 +241,11 @@ Advanced library operations:
 #### Web Interface Issues
 **Problem**: Can't access web interface
 **Solution**:
-1. Check port 8050 is available
-2. Verify no firewall blocking
-3. Try different browser
-4. Check console for error messages
+1. Schema App: check port 5000 is available
+2. Brick App: check port 5001 is available
+3. Verify no firewall blocking
+4. Try different browser
+5. Check terminal output for error messages
 
 ### Getting Help
 

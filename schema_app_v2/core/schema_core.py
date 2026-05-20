@@ -642,35 +642,6 @@ class Schema:
         return leaves
 
 
-@dataclass
-class DaisyChain:
-    """Daisy-chain configuration for multi-step interfaces"""
-    chain_id: str
-    name: str
-    description: str
-    schema_ids: List[str]  # Schema IDs in chain order
-    navigation_rules: Dict[str, Any] = field(default_factory=dict)
-    shared_data: Dict[str, Any] = field(default_factory=dict)  # Data shared between steps
-    conditional_logic: Dict[str, Any] = field(default_factory=dict)
-    ui_theme: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    created_at: str = field(default_factory=lambda: datetime.now().isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary"""
-        return asdict(self)
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'DaisyChain':
-        """Create from dictionary"""
-        return cls(**data)
-    
-    def update_timestamp(self):
-        """Update the modification timestamp"""
-        self.updated_at = datetime.now().isoformat()
-
-
 class SchemaCore:
     """Core schema management functionality - Simple Version"""
 
@@ -688,7 +659,6 @@ class SchemaCore:
         os.makedirs(self.repository_path, exist_ok=True)
         self.current_schema: Optional[Schema] = None
         self.active_library: str = "default"
-        self.daisy_chains: Dict[str, DaisyChain] = {}  # Store daisy chains
         
         # Ensure default library exists
         self._ensure_library_exists("default")
@@ -875,43 +845,6 @@ class SchemaCore:
         libraries = self.get_libraries()
         if library_name in libraries:
             self.active_library = library_name
-            return True
-        return False
-    
-    def create_daisy_chain(self, name: str, description: str, schema_ids: List[str],
-                         navigation_rules: Dict[str, Any] = None) -> Optional[DaisyChain]:
-        """Create a daisy-chain of schemas for multi-step interfaces"""
-        # Validate schemas exist
-        for schema_id in schema_ids:
-            schema = self.load_schema(schema_id)
-            if not schema:
-                return None
-        
-        chain_id = str(uuid.uuid4())
-        
-        daisy_chain = DaisyChain(
-            chain_id=chain_id,
-            name=name,
-            description=description,
-            schema_ids=schema_ids,
-            navigation_rules=navigation_rules or {}
-        )
-        
-        self.daisy_chains[chain_id] = daisy_chain
-        return daisy_chain
-    
-    def get_daisy_chain(self, chain_id: str) -> Optional[DaisyChain]:
-        """Get daisy chain by ID"""
-        return self.daisy_chains.get(chain_id)
-    
-    def get_all_daisy_chains(self) -> List[DaisyChain]:
-        """Get all daisy chains"""
-        return list(self.daisy_chains.values())
-    
-    def delete_daisy_chain(self, chain_id: str) -> bool:
-        """Delete a daisy chain"""
-        if chain_id in self.daisy_chains:
-            del self.daisy_chains[chain_id]
             return True
         return False
     

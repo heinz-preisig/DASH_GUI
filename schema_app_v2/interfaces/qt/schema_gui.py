@@ -11,12 +11,13 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 
-from schema_app_v2.core.schema_core import Schema
-from schema_app_v2.core.multi_tenant_backend import MultiTenantBackend
-from schema_app_v2.core.schema_helper import SchemaHelper
-from schema_app_v2.core.shacl_export import SHACLExporter
+from ...core.schema_core import Schema
+from ...core.multi_tenant_backend import MultiTenantBackend
+from ...core.schema_helper import SchemaHelper
+from ...core.shacl_export import SHACLExporter
 
 from .ui_components import UiLoader, ComponentManager
+from .ui_metadata_panel_dialog import UIMetadataPanelDialog
 
 
 class SchemaGUI(QMainWindow):
@@ -71,8 +72,6 @@ class SchemaGUI(QMainWindow):
         self.ui.validateSchemaAction.triggered.connect(self.validate_schema)
 
         # Schema menu
-        daisy_chain_action = self.ui.toolsMenu.addAction("Create Daisy Chain")
-        daisy_chain_action.triggered.connect(self.create_daisy_chain)
         extend_schema_action = self.ui.toolsMenu.addAction("Extend Schema")
         extend_schema_action.triggered.connect(self.extend_schema)
 
@@ -294,8 +293,54 @@ class SchemaGUI(QMainWindow):
             QMessageBox.critical(self, "Error", f"Failed to add component: {e}")
 
     def add_schema_reference(self):
-        """Add reference to another schema"""
-        QMessageBox.information(self, "Not Implemented", "Schema references not yet implemented.")
+        """Add reference to another schema via sh:node on a selected brick"""
+        if not self.current_schema:
+            QMessageBox.warning(self, "No Schema", "Please create or open a schema first.")
+            return
+        if not self.current_schema.component_brick_ids:
+            QMessageBox.warning(self, "No Components", "Add at least one brick to the schema first.")
+            return
+
+        # Pick the target schema
+        all_schemas = self.schema_core.get_all_schemas()
+        other = [s for s in all_schemas if s.schema_id != self.current_schema.schema_id]
+        if not other:
+            QMessageBox.warning(self, "No Other Schemas", "Create at least one other schema to reference.")
+            return
+        schema_names = [s.name for s in other]
+        ref_name, ok = QInputDialog.getItem(self, "Select Referenced Schema",
+                                            "Schema to attach:", schema_names, 0, False)
+        if not ok:
+            return
+        ref_schema = next(s for s in other if s.name == ref_name)
+
+        # Pick the brick to attach to
+        brick_labels = []
+        for bid in self.current_schema.component_brick_ids:
+            b = self.brick_integration.get_brick_by_id(bid)
+            brick_labels.append(b.name if b and hasattr(b, 'name') else bid[:8])
+        attach_label, ok = QInputDialog.getItem(self, "Attach to Brick",
+                                                "Attach reference to:", brick_labels, 0, False)
+        if not ok:
+            return
+        attach_idx = brick_labels.index(attach_label)
+        attach_brick_id = self.current_schema.component_brick_ids[attach_idx]
+
+        # Ask for property path IRI
+        path_iri, ok = QInputDialog.getText(self, "Property Path",
+                                            "sh:path IRI (e.g. ex:hasAddress):")
+        if not ok or not path_iri.strip():
+            return
+
+        self.current_schema.add_schema_ref(
+            schema_id=ref_schema.schema_id,
+            attach_to_brick_id=attach_brick_id,
+            property_path=path_iri.strip(),
+            label=ref_name,
+        )
+        self.mark_modified()
+        self.ui.statusbar.showMessage(
+            f"Schema reference '{ref_name}' attached to brick '{attach_label}'.")
 
     def remove_component_brick(self):
         """Remove selected component from schema"""
@@ -362,7 +407,8 @@ class SchemaGUI(QMainWindow):
         for brick_id in self.current_schema.component_brick_ids:
             brick = self.brick_integration.get_brick_by_id(brick_id)
             brick_name = brick.name if hasattr(brick, 'name') else brick_id[:8]
-            QTreeWidgetItem(root, [brick_name])
+            child = QTreeWidgetItem(root, [brick_name])
+            child.setData(0, Qt.ItemDataRole.UserRole, brick_id)
         root.setExpanded(True)
 
     # -------------------------------------------------------------------------
@@ -477,37 +523,114 @@ class SchemaGUI(QMainWindow):
 
     def open_ui_metadata_editor(self):
         """Open metadata editor for selected component"""
-        QMessageBox.information(self, "Not Implemented", "UI metadata editor not yet implemented.")
+        if not self.current_schema:
+            return
+        item = self.ui.componentBricksListWidget.currentItem()
+        if not item:
+            return
+        brick_id = item.data(Qt.ItemDataRole.UserRole)
+        if not brick_id:
+            return
+        dialog = UIMetadataPanelDialog(
+            self.current_schema, brick_id, self.brick_integration, self
+        )
+        if dialog.exec() == dialog.DialogCode.Accepted:
+            self.mark_modified()
+            self.refresh_component_list()
 
-    def open_ui_metadata_editor_tree(self):
+    def open_ui_metadata_editor_tree(self, item=None):
         """Open metadata editor for tree-selected component"""
-        self.open_ui_metadata_editor()
+        if not self.current_schema:
+            return
+        if item is None:
+            item = self.ui.componentTreeWidget.currentItem()
+        if not item:
+            return
+        # Tree items store brick_id in column 0 user data; fall back to list handler
+        brick_id = item.data(0, Qt.ItemDataRole.UserRole)
+        if not brick_id:
+            self.open_ui_metadata_editor()
+            return
+        dialog = UIMetadataPanelDialog(
+            self.current_schema, brick_id, self.brick_integration, self
+        )
+        if dialog.exec() == dialog.DialogCode.Accepted:
+            self.mark_modified()
+            self.refresh_component_list()
 
     def validate_schema(self):
         """Validate current schema"""
         if not self.current_schema:
             QMessageBox.warning(self, "No Schema", "Please create or open a schema first.")
             return
-        QMessageBox.information(self, "Validation", "Schema validation not yet implemented.")
-
-    def create_daisy_chain(self):
-        """Create daisy chain from current schema"""
-        QMessageBox.information(self, "Not Implemented", "Daisy chain creation not yet implemented.")
+        result = self.current_schema.validate_tree_structure()
+        stats = result.get('tree_stats', {})
+        lines = [f"Components: {stats.get('total_components', 0)}",
+                 f"Max depth: {stats.get('max_depth', 0)}",
+                 f"Root components: {stats.get('root_components', 0)}",
+                 ""]
+        if result['issues']:
+            lines.append("Issues:")
+            lines.extend(f"  ✗ {i}" for i in result['issues'])
+            lines.append("")
+        if result['warnings']:
+            lines.append("Warnings:")
+            lines.extend(f"  ⚠ {w}" for w in result['warnings'])
+            lines.append("")
+        if result['valid'] and not result['warnings']:
+            lines.append("✓ Schema is valid.")
+        msg = "\n".join(lines)
+        if result['valid']:
+            QMessageBox.information(self, "Validation Result", msg)
+        else:
+            QMessageBox.warning(self, "Validation Result", msg)
 
     def extend_schema(self):
-        """Extend current schema"""
-        QMessageBox.information(self, "Not Implemented", "Schema extension not yet implemented.")
+        """Create a new schema that extends the current one with additional bricks"""
+        if not self.current_schema:
+            QMessageBox.warning(self, "No Schema", "Please create or open a schema first.")
+            return
+
+        name, ok = QInputDialog.getText(self, "Extended Schema Name",
+                                        "Name for the new extended schema:")
+        if not ok or not name.strip():
+            return
+        desc, ok = QInputDialog.getText(self, "Description", "Description (optional):")
+        if not ok:
+            return
+
+        new_schema = self.schema_core.extend_schema(
+            parent_schema_id=self.current_schema.schema_id,
+            name=name.strip(),
+            description=desc.strip(),
+            additional_brick_ids=[],
+            brick_integration=self.brick_integration,
+        )
+        if not new_schema:
+            QMessageBox.critical(self, "Error", "Failed to extend schema.")
+            return
+
+        self.schema_core.save_schema(new_schema)
+        self.current_schema = new_schema
+        self.mark_modified()
+        self.refresh_component_list()
+        self.refresh_schema_list()
+        self.ui.statusbar.showMessage(
+            f"Extended schema '{new_schema.name}' created — add more bricks as needed.")
 
     def generate_web_form(self):
-        """Generate web form for current schema"""
+        """Generate web form for current schema and open it in the system browser"""
         if not self.current_schema:
             QMessageBox.warning(self, "No Schema", "Please create or open a schema first.")
             return
         try:
+            import webbrowser
             lib_name = self.schema_core.active_library
             output_dir = os.path.join(self.schema_core.repository_path, lib_name)
             SHACLExporter(self.brick_integration).export_all(self.current_schema, output_dir)
-            self.ui.statusbar.showMessage(f"Generated web form in: {output_dir}")
+            html_path = os.path.join(output_dir, f"{self.current_schema.schema_id}_form.html")
+            webbrowser.open(f"file://{html_path}")
+            self.ui.statusbar.showMessage(f"Form opened in browser: {html_path}")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to generate form: {e}")
 

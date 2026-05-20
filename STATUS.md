@@ -22,17 +22,22 @@ Last updated: 2026-05-20
   - `docs/README_V2_STATUS.md`
   - `docs/TASK_MANAGER.md` — deprecation notice added at top
 
-## Next Steps (Priority Order)
+## Completed (2026-05-20)
 
-1. ~~**Docker smoke test**~~ ✅ Done (2026-05-20) — schema:200, brick:200. Fixed `SHARED_LIBRARIES_ROOT` missing from Docker scripts + `ShaclForm-library` → `ShaclForm_library` in 4 files.
-
-2. ~~**Fix `docs/TROUBLESHOOTING.md`**~~ ✅ Done (2026-05-20) — all `run_tasks.py`, `brick_repositories/`, `object_type` references replaced
-
-3. ~~**Add smoke test script**~~ ✅ Done (2026-05-20) — `test_smoke.py` at root, 11/11 passed (`BrickCore`, `OntologyManager`, `SchemaCore`, `BrickIntegration`, `SHACLExporter`, `MultiTenantBackend`, `SharedLibraryManager`)
-
-4. ~~**"Import SHACL" UI button**~~ ✅ Done (2026-05-20) — added to `main_window.ui` + `on_import_shacl()` handler in `brick_editor.py`; calls `SHACLImporter` directly, refreshes list on completion
-
-5. ~~**Docker Hub publish**~~ ✅ Done (2026-05-20) — triggered via CI on GitHub push
+1. ✅ Docker smoke test — schema:200, brick:200
+2. ✅ Fix `docs/TROUBLESHOOTING.md` — stale references replaced
+3. ✅ Smoke test script — `test_smoke.py`, 11/11 passing
+4. ✅ "Import SHACL" UI button — brick app Qt GUI
+5. ✅ Docker Hub publish — via GitHub CI
+6. ✅ Schema App Qt — `open_ui_metadata_editor` wired to `UIMetadataPanelDialog`
+7. ✅ Schema App Qt — `create_daisy_chain` removed (out of scope for this tool)
+8. ✅ Schema App Qt — `validate_schema` implemented (tree structure check)
+9. ✅ Schema App Qt — `add_schema_reference` implemented (sh:node cross-schema ref)
+10. ✅ Schema App Qt — `extend_schema` implemented (inheritance-based schema copy)
+11. ✅ Schema App Qt — `generate_web_form` now opens browser preview automatically
+12. ✅ `UiLoader.load_dialog()` method added
+13. ✅ Absolute imports → relative imports in `schema_gui.py`
+14. ✅ Tree items now store `brick_id` as UserRole data
 
 ## How to Launch
 
@@ -48,9 +53,11 @@ uv run python run_schema_app_web.py   # → http://localhost:5000
 # Docker
 ./dev-start-schema-docker.sh          # → http://localhost:5000
 ./dev-start-brick-docker.sh           # → http://localhost:5001
+
+# Tests
+uv run python -m pytest test_smoke.py -v
 ```
 
 ## Known Issues
-- `docs/TROUBLESHOOTING.md` still has stale `run_tasks.py` references (non-critical)
 - `common/` module is outside both sub-packages — fine for local/Docker use, breaks `pip install`
-- No automated test suite yet
+- `extend_schema` not exposed in web API (authoring-only feature)
