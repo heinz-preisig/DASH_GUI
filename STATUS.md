@@ -1,5 +1,5 @@
 # Session Status
-Last updated: 2026-05-19
+Last updated: 2026-05-20
 
 ## What Was Done This Session
 
@@ -24,23 +24,13 @@ Last updated: 2026-05-19
 
 ## Next Steps (Priority Order)
 
-1. **Docker smoke test**
-   ```bash
-   ./dev-start-schema-docker.sh
-   # verify http://localhost:5000 loads
-   ./dev-start-brick-docker.sh
-   # verify http://localhost:5001 loads
-   ```
+1. ~~**Docker smoke test**~~ ✅ Done (2026-05-20) — schema:200, brick:200. Fixed `SHARED_LIBRARIES_ROOT` missing from Docker scripts + `ShaclForm-library` → `ShaclForm_library` in 4 files.
 
-2. **Fix `docs/TROUBLESHOOTING.md`** — still has `run_tasks.py` references
+2. ~~**Fix `docs/TROUBLESHOOTING.md`**~~ ✅ Done (2026-05-20) — all `run_tasks.py`, `brick_repositories/`, `object_type` references replaced
 
-3. **Add smoke test script** — create `tests/test_smoke.py` that instantiates:
-   - `BrickCore`, `BrickService`, `OntologyManager` from `brick_app_v2`
-   - `SchemaBackend` / equivalent from `schema_app_v2`
+3. ~~**Add smoke test script**~~ ✅ Done (2026-05-20) — `test_smoke.py` at root, 11/11 passed (`BrickCore`, `OntologyManager`, `SchemaCore`, `BrickIntegration`, `SHACLExporter`, `MultiTenantBackend`, `SharedLibraryManager`)
 
-4. **"Import SHACL" UI button** in brick app Qt GUI
-   - API endpoint already exists: `POST /api/import/shacl` in `brick_app_v2/api/web_api.py`
-   - Just needs a button + file dialog in `brick_editor.py`
+4. ~~**"Import SHACL" UI button**~~ ✅ Done (2026-05-20) — added to `main_window.ui` + `on_import_shacl()` handler in `brick_editor.py`; calls `SHACLImporter` directly, refreshes list on completion
 
 5. **Docker Hub publish**
    ```bash

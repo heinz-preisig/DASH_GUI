@@ -265,7 +265,7 @@ class SHACLImporter:
             if brick_core_or_path is None:
                 from pathlib import Path as _P
                 _root = _P(__file__).resolve().parent.parent.parent
-                self.repository_path = str(_root / "ShaclForm-library" / "bricks")
+                self.repository_path = str(_root / "ShaclForm_library" / "bricks")
             else:
                 self.repository_path = str(brick_core_or_path)
         else:

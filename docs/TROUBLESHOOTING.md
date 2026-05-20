@@ -92,16 +92,12 @@ chmod +x script_name.py
 
 **Solutions**:
 ```bash
-# Check system requirements
-python3 run_tasks.py setup
-
 # Install PyQt6
-source .venv/bin/activate
-pip install PyQt6
+uv add PyQt6
 
 # Use system PyQt6 (if available)
 export PYTHONPATH=/usr/lib/python3/dist-packages:$PYTHONPATH
-python3 run_schema_app_v2.py
+uv run python run_schema_app_qt.py
 ```
 
 #### Problem: Web Interface Not Accessible
@@ -113,17 +109,16 @@ python3 run_schema_app_v2.py
 
 **Solutions**:
 ```bash
-# Check what's running
-python3 run_tasks.py ps
-
 # Check port usage
-python3 run_tasks.py ports
+lsof -i :5000
+lsof -i :5001
 
 # Kill conflicting processes
-python3 run_tasks.py stop
+kill $(lsof -t -i :5000)
+kill $(lsof -t -i :5001)
 
 # Use different port
-# Edit dash_app.py: app.run_server(port=8051)
+# Edit run_schema_app_web.py or run_brick_app_web.py and change the port argument
 ```
 
 ### Bricks Not Loading
@@ -138,7 +133,7 @@ python3 run_tasks.py stop
 **Solutions**:
 ```bash
 # Check repository structure
-ls -la brick_repositories/default/bricks/
+ls -la shared_libraries/bricks/
 
 # Verify brick files
 python3 -c "
@@ -155,12 +150,12 @@ for file in ['brick1.json', 'brick2.json']:
 # Check brick format
 python3 -c "
 from schema_app_v2.core.brick_integration import BrickIntegration
-bi = BrickIntegration('brick_repositories')
+bi = BrickIntegration('shared_libraries')
 try:
     bricks = bi.get_available_bricks()
     print(f'Found {len(bricks)} bricks')
     for brick in bricks[:3]:
-        print(f'  - {brick.name} ({brick.object_type})')
+        print(f'  - {brick.name} ({brick.template_type})')
 except Exception as e:
     print(f'Error: {e}')
 "
@@ -184,7 +179,7 @@ def validate_brick(file_path):
     try:
         with open(file_path) as f:
             data = json.load(f)
-        required = ['brick_id', 'name', 'description', 'object_type']
+        required = ['brick_id', 'name', 'description', 'template_type']
         missing = [field for field in required if field not in data]
         if missing:
             print(f'{file_path}: Missing fields: {missing}')
@@ -197,7 +192,7 @@ def validate_brick(file_path):
 
 # Validate all bricks
 import os
-brick_dir = 'brick_repositories/default/bricks'
+brick_dir = 'shared_libraries/bricks/default'
 for file in os.listdir(brick_dir):
     if file.endswith('.json'):
         validate_brick(os.path.join(brick_dir, file))
@@ -255,7 +250,7 @@ from schema_app_v2.core.brick_integration import BrickIntegration
 
 # Create test schema
 sc = SchemaCore()
-bi = BrickIntegration('brick_repositories')
+bi = BrickIntegration('shared_libraries')
 schema = sc.create_schema('test', 'test', 'test_brick')
 
 # Test export
@@ -285,7 +280,7 @@ except Exception as e:
 # Check brick target classes
 python3 -c "
 from schema_app_v2.core.brick_integration import BrickIntegration
-bi = BrickIntegration('brick_repositories')
+bi = BrickIntegration('shared_libraries')
 bricks = bi.get_node_shape_bricks()
 for brick in bricks:
     print(f'{brick.name}: target_class = \"{brick.target_class}\"')
@@ -359,7 +354,7 @@ iotop  # Check disk I/O
 
 # Increase memory limits
 export PYTHONMALLOC=malloc_debug
-python3 run_tasks.py qt
+uv run python run_brick_app_qt.py
 ```
 
 ### Memory Issues
@@ -385,31 +380,27 @@ sudo swapon /swapfile
 
 # Use memory-efficient settings
 export PYTHONOPTIMIZE=2
-python3 run_tasks.py qt
+uv run python run_brick_app_qt.py
 ```
 
 ## Getting Help
 
 ### Diagnostic Commands
 ```bash
-# Full system check
-python3 run_tasks.py setup
-
 # Check logs
 tail -f ~/.local/share/schema_app_*.log
 
 # Generate debug report
-python3 run_tasks.py test > debug_report.txt 2>&1
+uv run python -m pytest > debug_report.txt 2>&1
 ```
 
 ### Contact & Support
 - **Documentation**: `docs/` directory
-- **Task Manager**: `python3 run_tasks.py --help`
-- **Status Check**: `python3 run_tasks.py status`
+- **Task Manager**: see `docs/TASK_MANAGER.md` (deprecated — use launch scripts directly)
 
 ### Report Issues
 When reporting issues, include:
-1. **System Information**: Output of `python3 run_tasks.py setup`
+1. **System Information**: Python version (`python3 --version`), OS, installed packages (`uv pip list`)
 2. **Error Messages**: Full error text and screenshots
 3. **Steps to Reproduce**: What you were doing when error occurred
 4. **Expected Behavior**: What you expected to happen

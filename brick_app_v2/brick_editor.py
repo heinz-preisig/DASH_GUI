@@ -9,8 +9,8 @@ import os
 from datetime import datetime
 from pathlib import Path
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, 
-    QMessageBox, QDialog, QListWidgetItem, QInputDialog
+    QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
+    QMessageBox, QDialog, QListWidgetItem, QInputDialog, QFileDialog
 )
 from PyQt6.QtCore import Qt
 from PyQt6.uic import loadUi
@@ -80,6 +80,7 @@ class BrickEditor(QMainWindow):
         self.newLibrary.clicked.connect(self.on_new_library)
         self.deleteLibrary.clicked.connect(self.on_delete_library)
         self.downloadOntology.clicked.connect(self.on_download_ontology)
+        self.importShacl.clicked.connect(self.on_import_shacl)
         
         # Brick selection signals for delete button visibility
         self.nodeBrickList.itemSelectionChanged.connect(self.on_brick_selection_changed)
@@ -815,6 +816,42 @@ class BrickEditor(QMainWindow):
         """Handle download ontology button click"""
         dialog = OntologySearchDialog(self, brick_service.ontology_manager)
         dialog.exec()
+
+    def on_import_shacl(self):
+        """Import NodeShape bricks from a SHACL Turtle (.ttl) file"""
+        ttl_path, _ = QFileDialog.getOpenFileName(
+            self, "Import SHACL Turtle file", "", "Turtle files (*.ttl);;All files (*)"
+        )
+        if not ttl_path:
+            return
+
+        library = self.active_library or "default"
+
+        try:
+            from core.shacl_importer import SHACLImporter
+            importer = SHACLImporter(brick_service.brick_core)
+            result = importer.import_file(ttl_path=ttl_path, library=library)
+        except ImportError as e:
+            QMessageBox.critical(self, "Import Error", f"rdflib is required:\n{e}")
+            return
+        except Exception as e:
+            QMessageBox.critical(self, "Import Error", f"Import failed:\n{e}")
+            return
+
+        if result.errors:
+            QMessageBox.warning(
+                self, "Import completed with errors",
+                f"Imported: {result.imported}  Skipped: {result.skipped}\n\nErrors:\n" +
+                "\n".join(result.errors)
+            )
+        else:
+            QMessageBox.information(
+                self, "Import successful",
+                f"Imported {result.imported} brick(s) into library '{library}'."
+                + (f"\nSkipped {result.skipped} duplicate(s)." if result.skipped else "")
+            )
+
+        self.load_library()
 
 
 class OntologySearchDialog(QDialog):

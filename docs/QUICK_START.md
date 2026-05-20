@@ -77,10 +77,10 @@ You've created your first schema using DASH GUI v2!
 
 ### Common Questions
 **Q: Where are my schemas saved?**
-A: In `schema_repositories/default/schemas/`
+A: In `shared_libraries/schemas/default/`
 
 **Q: How do I add more bricks?**
-A: Place JSON brick files in `brick_repositories/default/bricks/`
+A: Place JSON brick files in `shared_libraries/bricks/default/`
 
 **Q: Can I use the web interface?**
 A: Yes! Multiple options:

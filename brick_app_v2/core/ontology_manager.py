@@ -22,11 +22,11 @@ class OntologyManager:
     
     def __init__(self, cache_path: str = None):
         if cache_path is None:
-            # Look for ontologies in external ShaclForm-library/ontologies directory
-            # Navigate: brick_app_v2/core -> brick_app_v2 -> DASH_GUI -> ShaclForm-library
+            # Look for ontologies in external ShaclForm_library/ontologies directory
+            # Navigate: brick_app_v2/core -> brick_app_v2 -> DASH_GUI -> ShaclForm_library
             current_dir = Path(__file__).resolve()
             project_root = current_dir.parent.parent.parent  # brick_app_v2/core -> DASH_GUI
-            cache_path = project_root.parent / "ShaclForm-library" / "ontologies" / "cache"
+            cache_path = project_root.parent / "ShaclForm_library" / "ontologies" / "cache"
         else:
             cache_path = Path(cache_path)
         
