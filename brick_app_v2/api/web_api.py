@@ -231,14 +231,52 @@ class BrickWebAPI:
                     "message": "No property data provided"
                 }), 400
             
-            # Add property via brick_core
+            # Convert form data into LeafProperty format and append to leaf_properties
             prop_name = data.get('name')
             if not prop_name:
                 return jsonify({"status": "error", "message": "Property name required"}), 400
-            self.backend.brick_core.add_property(prop_name, data)
+
+            brick = self.backend.brick_core.current_brick
+            if not brick:
+                return jsonify({"status": "error", "message": "No brick loaded"}), 400
+
+            # Build a LeafProperty-compatible dict
+            leaf = {
+                "path": data.get('property_path', ''),
+                "label": prop_name,
+                "datatype": data.get('datatype', None),
+                "node_kind": None,
+                "in_values": [],
+                "has_value": None,
+                "min_count": int(data['min_count']) if data.get('min_count') not in (None, '') else 0,
+                "max_count": int(data['max_count']) if data.get('max_count') not in (None, '') else None,
+                "description": data.get('description', ''),
+                "min_inclusive": float(data['min_inclusive']) if data.get('min_inclusive') not in (None, '') else None,
+                "max_inclusive": float(data['max_inclusive']) if data.get('max_inclusive') not in (None, '') else None,
+                "single_line": None,
+            }
+            if data.get('pattern'):
+                leaf['pattern'] = data['pattern']
+            if data.get('min_length') not in (None, ''):
+                leaf['min_length'] = int(data['min_length'])
+            if data.get('max_length') not in (None, ''):
+                leaf['max_length'] = int(data['max_length'])
+            if data.get('in_values'):
+                leaf['in_values'] = [v.strip().strip('"') for v in data['in_values'].split(',') if v.strip()]
+            if data.get('has_value'):
+                leaf['has_value'] = data['has_value']
+            if data.get('language_in'):
+                leaf['language_in'] = data['language_in']
+            if data.get('unique_lang'):
+                leaf['unique_lang'] = bool(data['unique_lang'])
+
+            brick.leaf_properties.append(leaf)
+            brick.update_timestamp()
+
             return jsonify({
                 "status": "success",
-                "message": f"Property '{prop_name}' added successfully"
+                "message": f"Property '{prop_name}' added successfully",
+                "data": brick.to_dict()
             })
         
         @self.app.route('/api/session/<session_id>/brick/properties/<property_name>', methods=['DELETE'])
@@ -251,8 +289,15 @@ class BrickWebAPI:
                     "message": "Session not found"
                 }), 404
             
-            # Remove property via brick_core
-            self.backend.brick_core.remove_property(property_name)
+            # Remove property from current brick (leaf_properties and legacy dict)
+            brick = self.backend.brick_core.current_brick
+            if brick:
+                brick.leaf_properties = [
+                    p for p in brick.leaf_properties
+                    if (p.get('label') or p.get('path', '').split(':')[-1]) != property_name
+                ]
+                brick.properties.pop(property_name, None)
+                brick.update_timestamp()
             return jsonify({
                 "status": "success",
                 "message": f"Property '{property_name}' removed successfully"

@@ -818,7 +818,7 @@ function PropertyPane({ sessionId, brickData, onRefresh, onToast }) {
   const addProperty = async (data) => {
     const r = await api("POST", `/api/session/${sessionId}/brick/properties`, data);
     if (r.status === "success") { onToast("Property added", "success"); onRefresh(); setShowAdd(false); }
-    else onToast(r.message || "Failed", "error");
+    else { console.error("add_property failed:", r); onToast(r.message || "Failed", "error"); }
   };
 
   const deleteProperty = async () => {
@@ -851,7 +851,7 @@ function PropertyPane({ sessionId, brickData, onRefresh, onToast }) {
                          onDoubleClick={() => { setSelected(name); setShowConstraintMgr(true); }}>
                       <div className="prop-name">{name}</div>
                       <div className="prop-meta">
-                        {data.property_path && <span>{data.property_path}</span>}
+                        {(data.property_path || data.path) && <span>{data.property_path || data.path}</span>}
                         {data.datatype && <span> · {data.datatype}</span>}
                       </div>
                       {constraints.length > 0 && (
