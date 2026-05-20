@@ -232,6 +232,130 @@ function OntologyBrowserModal({ mode, sessionId, onSelect, onClose }) {
   );
 }
 
+/* ── DownloadOntologyModal ──────────────────────────── */
+function DownloadOntologyModal({ onClose, onToast }) {
+  const [tab, setTab] = useState("search");          // "search" | "url"
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [searchStatus, setSearchStatus] = useState("");
+  const [directUrl, setDirectUrl] = useState("");
+  const [directName, setDirectName] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const search = async () => {
+    if (!query.trim()) return;
+    setSearchStatus("Searching LOV…");
+    setResults([]);
+    setSelected(null);
+    const r = await api("POST", "/api/ontologies/search", { query });
+    if (r.status === "success") {
+      setResults(r.data || []);
+      setSearchStatus(r.data?.length ? `Found ${r.data.length} ontologies — select one to download.` : "No results found.");
+    } else {
+      setSearchStatus(`Search failed: ${r.message}`);
+    }
+  };
+
+  const download = async () => {
+    setBusy(true);
+    let body;
+    if (tab === "search") {
+      if (!selected) return;
+      body = { prefix: selected.prefix };
+    } else {
+      if (!directUrl.trim()) return;
+      body = { url: directUrl.trim(), name: directName.trim() };
+    }
+    const r = await api("POST", "/api/ontologies/download", body);
+    setBusy(false);
+    if (r.status === "success") {
+      onToast(r.message || "Ontology downloaded", "success");
+      onClose();
+    } else {
+      onToast(r.message || "Download failed", "error");
+    }
+  };
+
+  const canDownload = tab === "search" ? !!selected : !!directUrl.trim();
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" style={{ minWidth: 500 }} onClick={e => e.stopPropagation()}>
+        <h2>Download Ontology to Cache</h2>
+
+        {/* Tab bar */}
+        <div style={{ display:"flex", gap:0, marginBottom:14, borderBottom:"2px solid #dde3ea" }}>
+          {[["search","Search LOV"],["url","Direct URL"]].map(([t,label]) => (
+            <button key={t} className="btn btn-sm" onClick={() => setTab(t)}
+              style={{ borderRadius:"4px 4px 0 0", marginBottom:-2,
+                       background: tab===t ? "#2a6db5" : "#e2e8f0",
+                       color: tab===t ? "#fff" : "#333",
+                       borderBottom: tab===t ? "2px solid #2a6db5" : "2px solid transparent" }}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === "search" && (
+          <>
+            <div className="form-row">
+              <label>Keyword</label>
+              <div className="field">
+                <div className="input-with-btn">
+                  <input type="text" placeholder="e.g. foaf, schema, brick…" value={query}
+                    onChange={e => setQuery(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && search()}/>
+                  <button className="btn btn-secondary btn-sm" onClick={search}>Search</button>
+                </div>
+              </div>
+            </div>
+            {searchStatus && <div style={{ fontSize:12, color:"#555", marginBottom:8 }}>{searchStatus}</div>}
+            <div className="ont-results" style={{ maxHeight:220 }}>
+              {results.length === 0
+                ? <div className="empty-hint">Enter a keyword and press Search</div>
+                : results.map((r,i) => (
+                  <div key={i}
+                    className={`ont-result-item ${selected===r ? "selected" : ""}`}
+                    onClick={() => setSelected(r)}>
+                    <div><strong>{r.prefix}</strong>: {r.title}</div>
+                    <div className="ont-uri">{r.uri}</div>
+                  </div>
+                ))}
+            </div>
+          </>
+        )}
+
+        {tab === "url" && (
+          <>
+            <div className="form-row">
+              <label>URL *</label>
+              <div className="field">
+                <input type="text" placeholder="https://example.org/ontology.ttl"
+                  value={directUrl} onChange={e => setDirectUrl(e.target.value)}/>
+              </div>
+            </div>
+            <div className="form-row">
+              <label>Name (stem)</label>
+              <div className="field">
+                <input type="text" placeholder="auto-detected if empty"
+                  value={directName} onChange={e => setDirectName(e.target.value)}/>
+              </div>
+            </div>
+          </>
+        )}
+
+        <div className="modal-footer">
+          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" disabled={!canDownload || busy} onClick={download}>
+            {busy ? "Downloading…" : "Download"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── PropertyEditorModal ─────────────────────────────── */
 function PropertyEditorModal({ sessionId, onSave, onClose }) {
   const [form, setForm] = useState({ name: "", property_path: "", datatype: "xsd:string", description: "", min_count: "", max_count: "" });
@@ -716,6 +840,7 @@ function App() {
   const [status, setStatus] = useState("Initialising…");
   const [toast, setToast] = useState(null);
   const [showLibMgr, setShowLibMgr] = useState(false);
+  const [showOntDl, setShowOntDl] = useState(false);
 
   const showToast = (msg, type = "success") => setToast({ msg, type });
 
@@ -809,6 +934,7 @@ function App() {
           {libraries.map(l => <option key={l} value={l}>{l}</option>)}
         </select>
         <button className="btn btn-secondary" onClick={() => setShowLibMgr(true)}>Manage Libraries</button>
+        <button className="btn btn-secondary" onClick={() => setShowOntDl(true)}>⬇ Ontology</button>
         <div style={{ flex:1 }}/>
         <button className="btn btn-primary" disabled={!sessionId} onClick={newBrick}>+ New Brick</button>
         <button className="btn btn-danger" disabled={!selectedBrickId} onClick={deleteBrick}>Delete</button>
@@ -854,6 +980,7 @@ function App() {
 
       {toast && <Toast msg={toast.msg} type={toast.type} onDone={() => setToast(null)}/>}
       {showLibMgr && <LibraryManagerModal libraries={libraries} onClose={() => setShowLibMgr(false)} onRefresh={loadLibraries}/>}
+      {showOntDl && <DownloadOntologyModal onClose={() => setShowOntDl(false)} onToast={showToast}/>}
     </div>
   );
 }

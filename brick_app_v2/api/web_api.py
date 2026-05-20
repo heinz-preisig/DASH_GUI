@@ -535,6 +535,170 @@ class BrickWebAPI:
                 "data": {**result.to_dict(), "library": library},
             })
         
+        # Ontology download endpoints (session-independent, affect shared cache)
+        @self.app.route('/api/ontologies/search', methods=['POST'])
+        def search_ontologies():
+            """Search LOV for ontologies by keyword"""
+            import urllib.request
+            import urllib.parse
+
+            data = request.get_json() or {}
+            query = data.get('query', '').strip()
+            if not query:
+                return jsonify({"status": "error", "message": "No query provided"}), 400
+
+            url = (
+                "https://lov.linkeddata.es/dataset/lov/api/v2/vocabulary/search"
+                f"?q={urllib.parse.quote(query)}"
+            )
+            req = urllib.request.Request(url, headers={'Accept': 'application/json'})
+            try:
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    raw = json.loads(resp.read().decode('utf-8'))
+            except Exception as e:
+                return jsonify({"status": "error", "message": f"LOV search failed: {e}"}), 502
+
+            results = []
+            for item in raw.get('results', []):
+                vocab = item.get('_source', {})
+                prefix = vocab.get('prefix', '')
+                title = ''
+                for key in vocab.keys():
+                    if 'title' in key.lower():
+                        title = vocab.get(key)
+                        break
+                results.append({
+                    'prefix': prefix,
+                    'title': title or prefix,
+                    'uri': vocab.get('uri', ''),
+                })
+
+            return jsonify({"status": "success", "data": results})
+
+        @self.app.route('/api/ontologies/download', methods=['POST'])
+        def download_ontology():
+            """
+            Download an ontology into the shared cache.
+
+            JSON body (one of):
+              { "prefix": "<lov_prefix>" }          – resolves download URL via LOV
+              { "url": "<direct_url>", "name": "<filename_stem>" }
+            """
+            import urllib.request
+            import urllib.error
+
+            data = request.get_json() or {}
+            prefix = data.get('prefix', '').strip()
+            direct_url = data.get('url', '').strip()
+            name = data.get('name', '').strip()
+
+            # Resolve via LOV if only prefix given
+            if prefix and not direct_url:
+                info_url = (
+                    "https://lov.linkeddata.es/dataset/lov/api/v2/vocabulary/info"
+                    f"?vocab={urllib.parse.quote(prefix)}"
+                )
+                req = urllib.request.Request(info_url, headers={'Accept': 'application/json'})
+                try:
+                    with urllib.request.urlopen(req, timeout=10) as resp:
+                        vocab_info = json.loads(resp.read().decode('utf-8'))
+                except Exception as e:
+                    return jsonify({"status": "error", "message": f"LOV info lookup failed: {e}"}), 502
+
+                # Try graphs -> distributions first
+                download_url = None
+                for graph in vocab_info.get('graphs', []):
+                    for dist in graph.get('distributions', []):
+                        download_url = dist.get('downloadURL')
+                        if download_url:
+                            break
+                    if download_url:
+                        break
+                # Fallback: versions fileURL
+                if not download_url:
+                    versions = vocab_info.get('versions', [])
+                    if versions:
+                        download_url = versions[0].get('fileURL')
+                # Fallback: homepage
+                if not download_url:
+                    download_url = vocab_info.get('homepage')
+
+                if not download_url:
+                    return jsonify({
+                        "status": "error",
+                        "message": "Could not find a download URL for this ontology in LOV"
+                    }), 422
+                name = name or prefix
+                direct_url = download_url
+
+            if not direct_url:
+                return jsonify({"status": "error", "message": "Provide 'prefix' or 'url'"}), 400
+            if not name:
+                name = direct_url.rstrip('/').split('/')[-1].rsplit('.', 1)[0] or "ontology"
+
+            # Fetch ontology
+            req = urllib.request.Request(
+                direct_url,
+                headers={
+                    'Accept': (
+                        'application/rdf+xml,text/turtle;q=0.9,'
+                        'application/n-triples;q=0.8,*/*;q=0.5'
+                    ),
+                    'User-Agent': 'Mozilla/5.0 (compatible; BrickApp/2.0; ontology downloader)',
+                }
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=60) as resp:
+                    content = resp.read()
+                    content_type = resp.headers.get('Content-Type', '')
+                    final_url = resp.url if hasattr(resp, 'url') else direct_url
+            except urllib.error.URLError as e:
+                return jsonify({"status": "error", "message": f"Download failed: {e}"}), 502
+
+            # Reject HTML responses
+            if content[:200].lstrip().startswith(b'<!') or b'<html' in content[:200].lower():
+                return jsonify({
+                    "status": "error",
+                    "message": (
+                        "Server returned an HTML page instead of RDF data. "
+                        "Try a direct .rdf/.ttl download URL."
+                    )
+                }), 422
+
+            # Determine extension
+            if 'turtle' in content_type or final_url.endswith('.ttl') or direct_url.endswith('.ttl'):
+                ext = '.ttl'
+            elif 'xml' in content_type or 'rdf' in content_type or final_url.endswith('.rdf') or direct_url.endswith('.rdf'):
+                ext = '.rdf'
+            elif content.lstrip().startswith(b'@') or content.lstrip().startswith(b'<http'):
+                ext = '.ttl'
+            elif content.lstrip().startswith(b'<?xml') or content.lstrip().startswith(b'<rdf'):
+                ext = '.rdf'
+            else:
+                ext = '.rdf'
+
+            # Persist to cache
+            from core.ontology_manager import OntologyManager
+            om = OntologyManager()
+            from pathlib import Path as _P
+            cache_dir = _P(om.cache_path)
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            out_file = cache_dir / f"{name}{ext}"
+            out_file.write_bytes(content)
+
+            # Reload all session ontology managers
+            for sess in self.backend.session_manager.sessions.values():
+                try:
+                    sess.editor_backend.ontology_manager.load_cached_ontologies()
+                except Exception:
+                    pass
+
+            return jsonify({
+                "status": "success",
+                "message": f"Ontology '{name}' downloaded and cached.",
+                "data": {"name": name, "file": str(out_file), "size_bytes": len(content)},
+            })
+
         # Pattern presets endpoint - serves from shared_libraries/pattern_presets.json
         @self.app.route('/api/pattern-presets', methods=['GET'])
         def get_pattern_presets():
