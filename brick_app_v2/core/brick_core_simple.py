@@ -187,10 +187,6 @@ class BrickCore:
             print(f"DEBUG: Brick ID is missing")
             return False
         
-        if brick_to_save.object_type == "NodeShape" and not brick_to_save.target_class.strip():
-            print(f"DEBUG: NodeShape missing target_class")
-            return False
-        
         if brick_to_save.object_type == "PropertyShape" and not brick_to_save.property_path.strip():
             print(f"DEBUG: PropertyShape missing property_path")
             return False

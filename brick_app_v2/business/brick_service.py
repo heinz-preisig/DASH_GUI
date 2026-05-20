@@ -94,8 +94,6 @@ class BrickService:
                 return OperationResult(success=False, message="Brick name is required")
             
             object_type = brick_data.get("object_type", "")
-            if object_type == "NodeShape" and not brick_data.get("target_class", "").strip():
-                return OperationResult(success=False, message="Target class is required for NodeShape")
             if object_type == "PropertyShape" and not brick_data.get("property_path", "").strip():
                 return OperationResult(success=False, message="Property path is required for PropertyShape")
             
