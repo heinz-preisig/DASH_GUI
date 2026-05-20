@@ -405,10 +405,12 @@ class BrickWebAPI:
             
             ontologies = backend_session.editor_backend.ontology_manager.ontologies
             if ontology_name in ontologies:
-                return jsonify({
-                    "status": "success",
-                    "data": ontologies[ontology_name].get('classes', [])
-                })
+                raw = ontologies[ontology_name].get('classes', {})
+                items = [
+                    {"uri": uri, "label": meta.get("name", uri.split("#")[-1].split("/")[-1]), "comment": meta.get("comment", "")}
+                    for uri, meta in (raw.items() if isinstance(raw, dict) else [])
+                ]
+                return jsonify({"status": "success", "data": sorted(items, key=lambda x: x["label"].lower())})
             else:
                 return jsonify({
                     "status": "error",
@@ -427,10 +429,12 @@ class BrickWebAPI:
             
             ontologies = backend_session.editor_backend.ontology_manager.ontologies
             if ontology_name in ontologies:
-                return jsonify({
-                    "status": "success",
-                    "data": ontologies[ontology_name].get('properties', [])
-                })
+                raw = ontologies[ontology_name].get('properties', {})
+                items = [
+                    {"uri": uri, "label": meta.get("name", uri.split("#")[-1].split("/")[-1]), "comment": meta.get("comment", ""), "domain": meta.get("domain", ""), "range": meta.get("range", "")}
+                    for uri, meta in (raw.items() if isinstance(raw, dict) else [])
+                ]
+                return jsonify({"status": "success", "data": sorted(items, key=lambda x: x["label"].lower())})
             else:
                 return jsonify({
                     "status": "error",
