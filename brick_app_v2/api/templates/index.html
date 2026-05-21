@@ -845,6 +845,17 @@ function PropertyPane({ sessionId, brickData, onRefresh, onToast }) {
               ? <div className="empty-hint">No properties</div>
               : properties.map(([name, data]) => {
                   const constraints = data.constraints || [];
+                  // Collect inline leaf_property constraint fields as chips
+                  const inlineChips = [];
+                  if (data.min_count != null) inlineChips.push(`minCount: ${data.min_count}`);
+                  if (data.max_count != null) inlineChips.push(`maxCount: ${data.max_count}`);
+                  if (data.min_length != null) inlineChips.push(`minLength: ${data.min_length}`);
+                  if (data.max_length != null) inlineChips.push(`maxLength: ${data.max_length}`);
+                  if (data.min_inclusive != null) inlineChips.push(`minInclusive: ${data.min_inclusive}`);
+                  if (data.max_inclusive != null) inlineChips.push(`maxInclusive: ${data.max_inclusive}`);
+                  if (data.pattern) inlineChips.push(`pattern: ${data.pattern}`);
+                  if (data.in_values && data.in_values.length > 0) inlineChips.push(`in: [${data.in_values.join(', ')}]`);
+                  if (data.has_value) inlineChips.push(`hasValue: ${data.has_value}`);
                   return (
                     <div key={name} className={`prop-item ${selected === name ? "selected" : ""}`}
                          onClick={() => setSelected(name)}
@@ -854,10 +865,13 @@ function PropertyPane({ sessionId, brickData, onRefresh, onToast }) {
                         {(data.property_path || data.path) && <span>{data.property_path || data.path}</span>}
                         {data.datatype && <span> · {data.datatype}</span>}
                       </div>
-                      {constraints.length > 0 && (
+                      {(inlineChips.length > 0 || constraints.length > 0) && (
                         <div style={{ marginTop:3 }}>
+                          {inlineChips.map((c, i) => (
+                            <span key={`inline-${i}`} className="constraint-chip">{c}</span>
+                          ))}
                           {constraints.map((c, i) => (
-                            <span key={i} className="constraint-chip">{c.constraint_type || c.name}: {c.value}</span>
+                            <span key={`arr-${i}`} className="constraint-chip">{c.constraint_type || c.name}: {c.value}</span>
                           ))}
                         </div>
                       )}

@@ -20,9 +20,9 @@ fi
 docker run -it \
     --rm \
     -p "$PORT:$PORT" \
-    -v "$(pwd)/../ShaclForm_library:/ShaclForm_library" \
+    -v "$(pwd)/../ShaclForm-library:/ShaclForm-library" \
     --user "$(id -u):$(id -g)" \
     -e APP=brick \
     -e PORT="$PORT" \
-    -e SHARED_LIBRARIES_ROOT=/ShaclForm_library \
+    -e SHARED_LIBRARIES_ROOT=/ShaclForm-library \
     "$IMAGE"

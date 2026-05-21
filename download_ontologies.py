@@ -60,7 +60,7 @@ def main():
     """Download all default ontologies"""
     # Use external ShaclForm_library/ontologies for cache
     project_root = Path(__file__).resolve().parent
-    cache_dir = project_root.parent / "ShaclForm_library" / "ontologies" / "cache"
+    cache_dir = project_root.parent / "ShaclForm-library" / "ontologies" / "cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
     
     print(f"Cache directory: {cache_dir}")

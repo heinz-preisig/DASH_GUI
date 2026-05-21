@@ -29,7 +29,7 @@ class OntologyManager:
                 # Fallback: navigate relative to this file
                 current_dir = Path(__file__).resolve()
                 project_root = current_dir.parent.parent.parent
-                cache_path = project_root.parent / "ShaclForm_library" / "ontologies" / "cache"
+                cache_path = project_root.parent / "ShaclForm-library" / "ontologies" / "cache"
         else:
             cache_path = Path(cache_path)
         

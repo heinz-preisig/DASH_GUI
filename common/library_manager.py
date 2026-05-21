@@ -26,7 +26,7 @@ class SharedLibraryManager:
         else:
             # Local development: external ShaclForm_library at sibling of DASH_GUI project
             project_root = Path(__file__).resolve().parent.parent
-            self.base_path = (project_root.parent / "ShaclForm_library").resolve()
+            self.base_path = (project_root.parent / "ShaclForm-library").resolve()
 
         self.config_file = self.base_path / "library_registry.json"
         self.config = self._load_config()
