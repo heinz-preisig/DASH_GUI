@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>500</width>
-    <height>400</height>
+    <width>560</width>
+    <height>700</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,195 +17,300 @@
    <bool>true</bool>
   </property>
   <layout class="QVBoxLayout" name="mainLayout">
+
+   <!-- ── Name ── -->
    <item>
     <widget class="QLabel" name="nameLabel">
-     <property name="text">
-      <string>Property Name:</string>
-     </property>
+     <property name="text"><string>Property Name *</string></property>
     </widget>
    </item>
    <item>
-    <widget class="QLineEdit" name="name_edit"/>
+    <widget class="QLineEdit" name="name_edit">
+     <property name="placeholderText"><string>e.g. streetAddress</string></property>
+    </widget>
    </item>
+
+   <!-- ── Path / IRI ── -->
    <item>
     <layout class="QHBoxLayout" name="pathLayout">
      <item>
       <widget class="QLabel" name="pathLabel">
-       <property name="text">
-        <string>Property Path (IRI):</string>
-       </property>
+       <property name="text"><string>Property Path (IRI) *</string></property>
       </widget>
      </item>
      <item>
       <widget class="QLineEdit" name="path_edit">
-       <property name="placeholderText">
-        <string>Enter IRI or generate from namespace...</string>
-       </property>
+       <property name="placeholderText"><string>Enter IRI or generate…</string></property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="browse_btn">
-       <property name="text">
-        <string>Browse Ontology</string>
-       </property>
-       <property name="toolTip">
-        <string>Browse available ontologies for existing properties</string>
-       </property>
+       <property name="text"><string>Browse</string></property>
+       <property name="toolTip"><string>Browse available ontologies for existing properties</string></property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="generate_iri_btn">
-       <property name="text">
-        <string>Generate IRI</string>
-       </property>
-       <property name="toolTip">
-        <string>Generate custom IRI from property name and namespace</string>
-       </property>
+       <property name="text"><string>Generate IRI</string></property>
+       <property name="toolTip"><string>Generate custom IRI from property name and namespace</string></property>
       </widget>
      </item>
     </layout>
    </item>
+
+   <!-- ── Custom namespace ── -->
    <item>
     <widget class="QCheckBox" name="use_custom_namespace">
-     <property name="text">
-      <string>Use custom namespace for IRI generation</string>
-     </property>
+     <property name="text"><string>Use custom namespace for IRI generation</string></property>
     </widget>
    </item>
    <item>
     <layout class="QHBoxLayout" name="namespaceLayout">
      <item>
       <widget class="QLabel" name="namespaceLabel">
-       <property name="text">
-        <string>Namespace:</string>
-       </property>
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
+       <property name="text"><string>Namespace:</string></property>
+       <property name="enabled"><bool>false</bool></property>
       </widget>
      </item>
      <item>
       <widget class="QLineEdit" name="namespace_edit">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>http://example.org/shaclbuild#</string>
-       </property>
-       <property name="placeholderText">
-        <string>http://example.org/shaclbuild#</string>
-       </property>
+       <property name="enabled"><bool>false</bool></property>
+       <property name="text"><string>http://example.org/shaclbuild#</string></property>
+       <property name="placeholderText"><string>http://example.org/shaclbuild#</string></property>
       </widget>
      </item>
     </layout>
    </item>
+
+   <!-- ── Datatype ── -->
    <item>
     <widget class="QLabel" name="datatypeLabel">
-     <property name="text">
-      <string>Datatype:</string>
-     </property>
+     <property name="text"><string>Datatype:</string></property>
     </widget>
    </item>
    <item>
     <widget class="QComboBox" name="datatype_combo">
+     <item><property name="text"><string>xsd:string</string></property></item>
+     <item><property name="text"><string>xsd:integer</string></property></item>
+     <item><property name="text"><string>xsd:decimal</string></property></item>
+     <item><property name="text"><string>xsd:float</string></property></item>
+     <item><property name="text"><string>xsd:boolean</string></property></item>
+     <item><property name="text"><string>xsd:date</string></property></item>
+     <item><property name="text"><string>xsd:dateTime</string></property></item>
+     <item><property name="text"><string>xsd:anyURI</string></property></item>
+     <item><property name="text"><string>rdf:langString</string></property></item>
+     <item><property name="text"><string>rdf:HTML</string></property></item>
+    </widget>
+   </item>
+
+   <!-- ── Cardinality ── -->
+   <item>
+    <layout class="QHBoxLayout" name="cardinalityLayout">
      <item>
-      <property name="text">
-       <string>xsd:string</string>
-      </property>
+      <widget class="QLabel" name="minCountLabel">
+       <property name="text"><string>Min Count:</string></property>
+      </widget>
      </item>
      <item>
-      <property name="text">
-       <string>xsd:integer</string>
-      </property>
+      <widget class="QLineEdit" name="min_count_edit">
+       <property name="placeholderText"><string>optional</string></property>
+       <property name="maximumWidth"><number>80</number></property>
+      </widget>
      </item>
      <item>
-      <property name="text">
-       <string>xsd:float</string>
-      </property>
+      <widget class="QLabel" name="maxCountLabel">
+       <property name="text"><string>Max Count:</string></property>
+      </widget>
      </item>
      <item>
-      <property name="text">
-       <string>xsd:boolean</string>
-      </property>
+      <widget class="QLineEdit" name="max_count_edit">
+       <property name="placeholderText"><string>optional</string></property>
+       <property name="maximumWidth"><number>80</number></property>
+      </widget>
      </item>
      <item>
-      <property name="text">
-       <string>xsd:date</string>
-      </property>
+      <spacer name="cardSpacer">
+       <property name="orientation"><enum>Qt::Horizontal</enum></property>
+       <property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property>
+      </spacer>
      </item>
-     <item>
-      <property name="text">
-       <string>xsd:dateTime</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>xsd:anyURI</string>
-      </property>
-     </item>
+    </layout>
+   </item>
+
+   <!-- ── String / text constraints (visible for xsd:string, xsd:anyURI, rdf:HTML, rdf:langString) ── -->
+   <item>
+    <widget class="QGroupBox" name="stringConstraintsGroup">
+     <property name="title"><string>String Constraints</string></property>
+     <layout class="QFormLayout" name="stringFormLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="minLengthLabel">
+        <property name="text"><string>Min Length:</string></property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="min_length_edit">
+        <property name="placeholderText"><string>optional</string></property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="maxLengthLabel">
+        <property name="text"><string>Max Length:</string></property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="max_length_edit">
+        <property name="placeholderText"><string>optional</string></property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="patternLabel">
+        <property name="text"><string>Pattern (regex):</string></property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="pattern_edit">
+        <property name="placeholderText"><string>optional, e.g. ^[A-Za-z]+$</string></property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+
+   <!-- ── Language constraints (visible for rdf:langString only) ── -->
+   <item>
+    <widget class="QGroupBox" name="langConstraintsGroup">
+     <property name="title"><string>Language Constraints</string></property>
+     <layout class="QFormLayout" name="langFormLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="languageInLabel">
+        <property name="text"><string>Language In:</string></property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="language_in_edit">
+        <property name="placeholderText"><string>e.g. "en","de","fr"</string></property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="uniqueLangLabel">
+        <property name="text"><string>Unique Lang:</string></property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QCheckBox" name="unique_lang_check">
+        <property name="text"><string>one value per language tag</string></property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+
+   <!-- ── Numeric / date bounds (visible for xsd:integer, xsd:decimal, xsd:float, xsd:date, xsd:dateTime) ── -->
+   <item>
+    <widget class="QGroupBox" name="boundsConstraintsGroup">
+     <property name="title"><string>Value Bounds</string></property>
+     <layout class="QFormLayout" name="boundsFormLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="minInclusiveLabel">
+        <property name="text"><string>Min Inclusive:</string></property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="min_inclusive_edit">
+        <property name="placeholderText"><string>optional</string></property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="maxInclusiveLabel">
+        <property name="text"><string>Max Inclusive:</string></property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="max_inclusive_edit">
+        <property name="placeholderText"><string>optional</string></property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="minExclusiveLabel">
+        <property name="text"><string>Min Exclusive:</string></property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="min_exclusive_edit">
+        <property name="placeholderText"><string>optional</string></property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="maxExclusiveLabel">
+        <property name="text"><string>Max Exclusive:</string></property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLineEdit" name="max_exclusive_edit">
+        <property name="placeholderText"><string>optional</string></property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+
+   <!-- ── sh:in / sh:hasValue (always visible) ── -->
+   <item>
+    <widget class="QLabel" name="inValuesLabel">
+     <property name="text"><string>sh:in (allowed values):</string></property>
     </widget>
    </item>
    <item>
+    <widget class="QLineEdit" name="in_values_edit">
+     <property name="placeholderText"><string>comma-separated, e.g. "red","green","blue"</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="hasValueLabel">
+     <property name="text"><string>sh:hasValue (fixed value):</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLineEdit" name="has_value_edit">
+     <property name="placeholderText"><string>optional fixed value</string></property>
+    </widget>
+   </item>
+
+   <!-- ── Description ── -->
+   <item>
     <widget class="QLabel" name="descriptionLabel">
-     <property name="text">
-      <string>Description:</string>
-     </property>
+     <property name="text"><string>Description:</string></property>
     </widget>
    </item>
    <item>
     <widget class="QTextEdit" name="description_edit">
-     <property name="maximumHeight">
-      <number>80</number>
-     </property>
-     <property name="placeholderText">
-      <string>Enter property description...</string>
-     </property>
+     <property name="maximumHeight"><number>70</number></property>
+     <property name="placeholderText"><string>Enter property description…</string></property>
     </widget>
    </item>
-   <item>
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
+
+   <!-- ── Buttons ── -->
    <item>
     <layout class="QHBoxLayout" name="buttonLayout">
      <item>
       <spacer name="buttonSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
+       <property name="orientation"><enum>Qt::Horizontal</enum></property>
+       <property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property>
       </spacer>
      </item>
      <item>
       <widget class="QPushButton" name="cancelButton">
-       <property name="text">
-        <string>Cancel</string>
-       </property>
+       <property name="text"><string>Cancel</string></property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="okButton">
-       <property name="text">
-        <string>OK</string>
-       </property>
+       <property name="text"><string>OK</string></property>
       </widget>
      </item>
     </layout>
    </item>
+
   </layout>
  </widget>
  <resources/>

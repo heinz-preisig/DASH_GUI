@@ -65,6 +65,7 @@ class SHACLBrick:
     template_type: str = "custom"  # free_text, decimal_with_unit, dropdown_iri, date_field, static_label, file_upload, xone_choice, custom
     namespace: str = "ex"  # IRI prefix
     target_class: str = ""  # sh:targetClass IRI
+    display_label: str = ""  # human-readable form title (rdfs:label); falls back to name if empty
     leaf_properties: List[Dict[str, Any]] = field(default_factory=list)  # List of LeafProperty dicts
     xone_alternatives: List[List[Dict[str, Any]]] = field(default_factory=list)  # For xone_choice template type
     tags: List[str] = field(default_factory=list)

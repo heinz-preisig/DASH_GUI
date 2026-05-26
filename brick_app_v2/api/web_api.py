@@ -188,7 +188,7 @@ class BrickWebAPI:
             if not brick:
                 return jsonify({"status": "error", "message": "No brick loaded"}), 400
             data = request.get_json() or {}
-            self.backend.brick_core.update_current_brick(**{k: v for k, v in data.items() if k in ('name', 'description', 'target_class', 'property_path', 'object_type')})
+            self.backend.brick_core.update_current_brick(**{k: v for k, v in data.items() if k in ('name', 'description', 'target_class', 'property_path', 'object_type', 'display_label')})
             return jsonify({"status": "success", "data": self.backend.brick_core.current_brick.to_dict()})
         
         @self.app.route('/api/session/<session_id>/brick/save', methods=['POST'])

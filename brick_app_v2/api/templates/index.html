@@ -90,6 +90,7 @@
 
     select { appearance: auto; }
     .empty-hint { color: #aaa; font-size: 13px; padding: 20px; text-align: center; }
+    .required { color: #dc3545; margin-left: 2px; }
   </style>
 </head>
 <body>
@@ -422,9 +423,9 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
         <div className="modal" onClick={e => e.stopPropagation()}>
           <h2>Add Property</h2>
 
-          <div className="form-row"><label>Name *</label><div className="field"><input type="text" value={form.name} onChange={e => set("name", e.target.value)}/></div></div>
+          <div className="form-row"><label>Name <span className="required">*</span></label><div className="field"><input type="text" value={form.name} onChange={e => set("name", e.target.value)}/></div></div>
           <div className="form-row">
-            <label>Property Path *</label>
+            <label>Property Path <span className="required">*</span></label>
             <div className="field">
               <div className="input-with-btn">
                 <input type="text" value={form.property_path} onChange={e => set("property_path", e.target.value)}/>
@@ -673,7 +674,7 @@ function LibraryManagerModal({ libraries, onClose, onRefresh }) {
 /* ── BrickEditor panel ───────────────────────────────── */
 function BrickEditor({ sessionId, brickData, onSaved, onToast }) {
   const isNode = brickData?.object_type === "NodeShape";
-  const [form, setForm] = useState({ name:"", description:"", target_class:"", property_path:"", datatype:"xsd:string" });
+  const [form, setForm] = useState({ name:"", description:"", display_label:"", target_class:"", property_path:"", datatype:"xsd:string" });
   const [dirty, setDirty] = useState(false);
   const [showOntBrowser, setShowOntBrowser] = useState(false);
   const [ontMode, setOntMode] = useState("classes");
@@ -683,6 +684,7 @@ function BrickEditor({ sessionId, brickData, onSaved, onToast }) {
     setForm({
       name: brickData.name || "",
       description: brickData.description || "",
+      display_label: brickData.display_label || "",
       target_class: brickData.target_class || "",
       property_path: brickData.property_path || "",
       datatype: brickData.properties?.datatype || "xsd:string",
@@ -693,7 +695,7 @@ function BrickEditor({ sessionId, brickData, onSaved, onToast }) {
   const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setDirty(true); };
 
   const save = async () => {
-    const data = { name: form.name, description: form.description };
+    const data = { name: form.name, description: form.description, display_label: form.display_label };
     if (isNode) data.target_class = form.target_class;
     else { data.property_path = form.property_path; data.object_type = "PropertyShape"; }
     await api("PUT", `/api/session/${sessionId}/brick`, data);
@@ -735,8 +737,12 @@ function BrickEditor({ sessionId, brickData, onSaved, onToast }) {
           </span>
         </h2>
         <div className="form-row">
-          <label>Name</label>
+          <label>Name <span className="required">*</span></label>
           <div className="field"><input type="text" value={form.name} onChange={e => set("name", e.target.value)}/></div>
+        </div>
+        <div className="form-row">
+          <label>Display Label</label>
+          <div className="field"><input type="text" value={form.display_label} onChange={e => set("display_label", e.target.value)} placeholder={form.name || "defaults to Name if empty"}/></div>
         </div>
         <div className="form-row">
           <label>Description</label>
@@ -749,6 +755,7 @@ function BrickEditor({ sessionId, brickData, onSaved, onToast }) {
               <div className="input-with-btn">
                 <input type="text" value={form.target_class} onChange={e => set("target_class", e.target.value)}/>
                 <button className="btn btn-secondary btn-sm" onClick={() => { setOntMode("classes"); setShowOntBrowser(true); }}>Browse</button>
+                {form.target_class && <button className="btn btn-secondary btn-sm" onClick={() => { set("target_class", ""); setDirty(true); }} title="Clear target class">✕</button>}
               </div>
             </div>
           </div>

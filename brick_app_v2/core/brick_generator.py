@@ -742,7 +742,8 @@ class SHACLBrickGenerator:
         if brick.description:
             g.add((brick_uri, RDFS.comment, Literal(brick.description)))
 
-        g.add((brick_uri, RDFS.label, Literal(brick.name)))
+        display_label = getattr(brick, 'display_label', '') or brick.name
+        g.add((brick_uri, RDFS.label, Literal(display_label)))
 
         # Include referenced property bricks
         for prop_brick_id in referenced_property_bricks:

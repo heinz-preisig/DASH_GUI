@@ -503,10 +503,10 @@ class BrickEditor(QMainWindow):
                 brick_id = self.current_brick.get('brick_id')
                 result = brick_service.add_property(brick_id, property_data)
                 if result.success:
-                    # Update local brick with new property
-                    if 'properties' not in self.current_brick:
-                        self.current_brick['properties'] = {}
-                    self.current_brick['properties'][property_data['name']] = property_data
+                    # Store as leaf_property entry (modern format)
+                    if 'leaf_properties' not in self.current_brick:
+                        self.current_brick['leaf_properties'] = []
+                    self.current_brick['leaf_properties'].append(property_data)
                     self._update_property_list()
                 else:
                     QMessageBox.warning(self, "Error", result.message)
@@ -578,24 +578,18 @@ class BrickEditor(QMainWindow):
                 old_name = prop_data.get('name')
                 new_name = updated_data['name']
                 
-                # Handle both legacy properties dict and modern leaf_properties list
+                # Handle both leaf_properties list and legacy properties dict
                 if 'leaf_properties' in self.current_brick and self.current_brick['leaf_properties']:
-                    # Find and update in leaf_properties
-                    for prop in self.current_brick['leaf_properties']:
-                        if (prop.get('label') == old_name or 
-                            prop.get('path', '').split(':')[-1] == old_name):
-                            prop['label'] = new_name
-                            prop['path'] = updated_data.get('path', prop.get('path'))
+                    for i, prop in enumerate(self.current_brick['leaf_properties']):
+                        if (prop.get('label') == old_name or prop.get('name') == old_name or
+                                prop.get('path', '').split(':')[-1] == old_name):
+                            self.current_brick['leaf_properties'][i] = updated_data
                             break
                 elif 'properties' in self.current_brick:
-                    # Update in legacy properties dict
                     if old_name in self.current_brick['properties']:
-                        # Remove old key, add with new key if name changed
                         if old_name != new_name:
                             self.current_brick['properties'][new_name] = self.current_brick['properties'].pop(old_name)
-                        # Update path if provided
-                        if updated_data.get('path'):
-                            self.current_brick['properties'][new_name]['path'] = updated_data['path']
+                        self.current_brick['properties'][new_name].update(updated_data)
                 
                 self._update_property_list()
                 self.statusBar().showMessage(f"Updated property: {new_name}")
@@ -669,11 +663,32 @@ class BrickEditor(QMainWindow):
         
         # Use enhanced text formatting that works with QListWidget
         display_text = format_property_enhanced_text(prop_name, prop_data)
+
+        # Append inline constraint chips (matching web frontend behaviour)
+        if isinstance(prop_data, dict):
+            chips = []
+            if prop_data.get('min_count') is not None: chips.append(f"minCount:{prop_data['min_count']}")
+            if prop_data.get('max_count') is not None: chips.append(f"maxCount:{prop_data['max_count']}")
+            if prop_data.get('min_length') is not None: chips.append(f"minLength:{prop_data['min_length']}")
+            if prop_data.get('max_length') is not None: chips.append(f"maxLength:{prop_data['max_length']}")
+            if prop_data.get('min_inclusive') is not None: chips.append(f"minInclusive:{prop_data['min_inclusive']}")
+            if prop_data.get('max_inclusive') is not None: chips.append(f"maxInclusive:{prop_data['max_inclusive']}")
+            if prop_data.get('min_exclusive') is not None: chips.append(f"minExclusive:{prop_data['min_exclusive']}")
+            if prop_data.get('max_exclusive') is not None: chips.append(f"maxExclusive:{prop_data['max_exclusive']}")
+            if prop_data.get('pattern'): chips.append(f"pattern:{prop_data['pattern']}")
+            in_vals = prop_data.get('in_values', [])
+            if in_vals: chips.append(f"in:[{', '.join(str(v) for v in in_vals)}]")
+            if prop_data.get('has_value'): chips.append(f"hasValue:{prop_data['has_value']}")
+            if chips:
+                display_text += "\n  " + "  ".join(chips)
+
         list_item.setText(display_text)
-        
+
         # Set visual styling based on property constraints
-        if isinstance(prop_data, dict) and prop_data.get('constraints'):
-            # Properties with constraints get subtle highlighting
+        if isinstance(prop_data, dict) and (prop_data.get('constraints') or any(
+                prop_data.get(k) is not None for k in ('min_count','max_count','min_length',
+                'max_length','pattern','in_values','has_value','min_inclusive','max_inclusive',
+                'min_exclusive','max_exclusive'))):
             list_item.setBackground(QBrush(QColor(255, 248, 220)))  # Light yellow background
         
         return list_item

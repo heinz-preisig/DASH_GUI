@@ -158,97 +158,169 @@ class ConstraintEditorDialog(QDialog):
         if hasattr(self, 'patternPresetLabel'):
             self.patternPresetLabel.setVisible(is_pattern)
 
+_STRING_TYPES  = {"xsd:string", "xsd:anyURI", "rdf:HTML", "rdf:langString"}
+_LANG_TYPES    = {"rdf:langString"}
+_BOUNDS_TYPES  = {"xsd:integer", "xsd:decimal", "xsd:float", "xsd:date", "xsd:dateTime"}
+
+DEFAULT_NAMESPACE = "http://example.org/shaclbuild#"
+
+
 class PropertyEditorDialog(QDialog):
-    """Property editor dialog - programmatic UI to avoid loadUi conflicts"""
-    
+    """Property editor dialog - loads from property_editor.ui"""
+
     def __init__(self, parent=None, property_data=None, ontology_manager=None):
         super().__init__(parent)
         self.property_data = property_data or {}
         self.ontology_manager = ontology_manager
-        
-        self.setModal(True)
-        self.resize(500, 300)
-        
-        # Create layout
-        layout = QVBoxLayout(self)
-        
-        # Property Name
-        layout.addWidget(QLabel("Property Name:"))
-        self.name_edit = QLineEdit()
-        layout.addWidget(self.name_edit)
-        
-        # Property Path (IRI)
-        path_layout = QHBoxLayout()
-        path_layout.addWidget(QLabel("Property Path (IRI):"))
-        self.path_edit = QLineEdit()
-        self.path_edit.setPlaceholderText("Enter IRI or generate from namespace...")
-        path_layout.addWidget(self.path_edit)
-        
-        self.browse_btn = QPushButton("Browse Ontology")
-        self.browse_btn.setToolTip("Browse available ontologies for existing properties")
-        path_layout.addWidget(self.browse_btn)
-        
-        self.generate_iri_btn = QPushButton("Generate IRI")
-        self.generate_iri_btn.setToolTip("Generate custom IRI from property name and namespace")
-        path_layout.addWidget(self.generate_iri_btn)
-        layout.addLayout(path_layout)
-        
-        # Spacer
-        layout.addStretch()
-        
-        # Buttons
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-        
-        cancel_btn = QPushButton("Cancel")
-        cancel_btn.clicked.connect(self.reject)
-        button_layout.addWidget(cancel_btn)
-        
-        ok_btn = QPushButton("OK")
-        ok_btn.clicked.connect(self.accept)
-        button_layout.addWidget(ok_btn)
-        layout.addLayout(button_layout)
-        
-        # Set window title
+
+        ui_path = Path(__file__).parent / "ui" / "property_editor.ui"
+        loadUi(str(ui_path), self)
+
+        # Connect signals
+        self.datatype_combo.currentTextChanged.connect(self._update_group_visibility)
+        self.use_custom_namespace.toggled.connect(self._on_namespace_toggled)
+        self.browse_btn.clicked.connect(self._browse_ontology)
+        self.generate_iri_btn.clicked.connect(self._generate_iri)
+        self.okButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        # Populate fields if editing
         if property_data and property_data.get('name'):
             self.setWindowTitle(f"Edit Property: {property_data['name']}")
-            self.name_edit.setText(property_data.get('name', ''))
-            self.path_edit.setText(property_data.get('path', ''))
+            self._populate_fields(property_data)
         else:
             self.setWindowTitle("Add Property")
-        
-        # Connect buttons
-        self.browse_btn.clicked.connect(self.browse_ontology)
-        self.generate_iri_btn.clicked.connect(self.generate_iri)
-    
-    def browse_ontology(self):
-        """Open ontology browser to select property path"""
+
+        # Initial group visibility
+        self._update_group_visibility()
+
+    # ── visibility ──────────────────────────────────────────────────────────
+
+    def _update_group_visibility(self):
+        dt = self.datatype_combo.currentText()
+        self.stringConstraintsGroup.setVisible(dt in _STRING_TYPES)
+        self.langConstraintsGroup.setVisible(dt in _LANG_TYPES)
+        self.boundsConstraintsGroup.setVisible(dt in _BOUNDS_TYPES)
+        self.adjustSize()
+
+    def _on_namespace_toggled(self, checked):
+        self.namespaceLabel.setEnabled(checked)
+        self.namespace_edit.setEnabled(checked)
+
+    # ── slot helpers ─────────────────────────────────────────────────────────
+
+    def _browse_ontology(self):
         if not self.ontology_manager:
             QMessageBox.warning(self, "Error", "Ontology manager not available")
             return
-        
         browser = SimpleOntologyBrowser(self.ontology_manager, self, mode="properties")
         if browser.exec() == QDialog.DialogCode.Accepted and browser.selected_item:
-            self.path_edit.setText(browser.selected_item)
-    
-    def generate_iri(self):
-        """Generate IRI from property name"""
+            item = browser.selected_item
+            uri = item.get('uri', item) if isinstance(item, dict) else item
+            self.path_edit.setText(uri)
+            if not self.name_edit.text().strip():
+                label = item.get('name', '') if isinstance(item, dict) else ''
+                if not label:
+                    label = uri.split('#')[-1].split('/')[-1]
+                self.name_edit.setText(label)
+
+    def _generate_iri(self):
         name = self.name_edit.text().strip()
         if not name:
-            QMessageBox.warning(self, "Error", "Please enter a property name first")
+            QMessageBox.warning(self, "Warning", "Please enter a property name first")
             return
-        
-        default_namespace = "http://example.org/"
-        iri = f"{default_namespace}{name.replace(' ', '_').lower()}"
-        self.path_edit.setText(iri)
-    
+        ns = self.namespace_edit.text().strip() if self.use_custom_namespace.isChecked() else DEFAULT_NAMESPACE
+        fragment = re.sub(r'[^\w]', '_', name).strip('_')
+        self.path_edit.setText(f"{ns}{fragment}")
+
+    # ── populate / read ──────────────────────────────────────────────────────
+
+    def _populate_fields(self, data):
+        self.name_edit.setText(data.get('name', '') or data.get('label', ''))
+        self.path_edit.setText(data.get('path', '') or data.get('property_path', ''))
+
+        dt = data.get('datatype', 'xsd:string') or 'xsd:string'
+        idx = self.datatype_combo.findText(dt)
+        if idx >= 0:
+            self.datatype_combo.setCurrentIndex(idx)
+
+        def _set(widget, key, cast=str):
+            v = data.get(key)
+            if v not in (None, ''):
+                widget.setText(cast(v))
+
+        _set(self.min_count_edit,     'min_count')
+        _set(self.max_count_edit,     'max_count')
+        _set(self.min_length_edit,    'min_length')
+        _set(self.max_length_edit,    'max_length')
+        _set(self.pattern_edit,       'pattern')
+        _set(self.language_in_edit,   'language_in')
+        _set(self.min_inclusive_edit, 'min_inclusive')
+        _set(self.max_inclusive_edit, 'max_inclusive')
+        _set(self.min_exclusive_edit, 'min_exclusive')
+        _set(self.max_exclusive_edit, 'max_exclusive')
+        _set(self.has_value_edit,     'has_value')
+
+        in_vals = data.get('in_values', [])
+        if isinstance(in_vals, list):
+            self.in_values_edit.setText(', '.join(f'"{v}"' for v in in_vals))
+        elif in_vals:
+            self.in_values_edit.setText(str(in_vals))
+
+        self.unique_lang_check.setChecked(bool(data.get('unique_lang', False)))
+        self.description_edit.setPlainText(data.get('description', ''))
+
     def get_property_data(self):
-        """Get the edited property data"""
-        return {
-            'name': self.name_edit.text().strip(),
-            'path': self.path_edit.text().strip(),
-            'label': self.name_edit.text().strip(),
+        """Return a LeafProperty-compatible dict with all filled fields."""
+        name = self.name_edit.text().strip()
+        data = {
+            'name':          name,
+            'label':         name,
+            'path':          self.path_edit.text().strip(),
+            'datatype':      self.datatype_combo.currentText(),
+            'description':   self.description_edit.toPlainText().strip(),
         }
+
+        def _int(widget):
+            t = widget.text().strip()
+            return int(t) if t else None
+
+        def _float_or_str(widget):
+            t = widget.text().strip()
+            return t if t else None
+
+        data['min_count'] = _int(self.min_count_edit)
+        data['max_count'] = _int(self.max_count_edit)
+
+        if self.stringConstraintsGroup.isVisible():
+            data['min_length'] = _int(self.min_length_edit)
+            data['max_length'] = _int(self.max_length_edit)
+            p = self.pattern_edit.text().strip()
+            if p:
+                data['pattern'] = p
+
+        if self.langConstraintsGroup.isVisible():
+            li = self.language_in_edit.text().strip()
+            if li:
+                data['language_in'] = li
+            data['unique_lang'] = self.unique_lang_check.isChecked()
+
+        if self.boundsConstraintsGroup.isVisible():
+            data['min_inclusive'] = _float_or_str(self.min_inclusive_edit)
+            data['max_inclusive'] = _float_or_str(self.max_inclusive_edit)
+            data['min_exclusive'] = _float_or_str(self.min_exclusive_edit)
+            data['max_exclusive'] = _float_or_str(self.max_exclusive_edit)
+
+        in_raw = self.in_values_edit.text().strip()
+        if in_raw:
+            data['in_values'] = [v.strip().strip('"') for v in in_raw.split(',') if v.strip()]
+
+        hv = self.has_value_edit.text().strip()
+        if hv:
+            data['has_value'] = hv
+
+        # Remove None values to keep dict clean
+        return {k: v for k, v in data.items() if v is not None and v != ''}
 
 
 # Business logic methods for SimpleOntologyBrowser
