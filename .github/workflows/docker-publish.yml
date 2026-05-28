@@ -77,6 +77,7 @@ jobs:
     needs: build-and-push
     if: always()
     permissions:
+      contents: read
       actions: write
     steps:
       - name: Delete old workflow runs
