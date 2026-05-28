@@ -3,6 +3,10 @@
 
 FROM node:18-slim AS node-builder
 
+# Cache-busting arguments - forces rebuild when GitHub Actions runs
+ARG BUILD_TIMESTAMP=unknown
+ARG GIT_SHA=unknown
+
 WORKDIR /app/web
 
 # Copy web interface package files

@@ -39,3 +39,6 @@ archive/
 
 # Large data not needed for basic operation
 shared_libraries_backup_*/
+
+# Built React app - must be rebuilt fresh in Docker
+schema_app_v2/interfaces/web/static/dist/
