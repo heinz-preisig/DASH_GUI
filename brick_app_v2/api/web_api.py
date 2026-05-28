@@ -140,6 +140,50 @@ class BrickWebAPI:
             _os.makedirs(lib_path, exist_ok=True)
             return jsonify({"status": "success", "data": {"name": name}})
 
+        @self.app.route('/api/libraries/<library_name>', methods=['DELETE'])
+        def delete_library(library_name):
+            """Delete a library by archiving to ZIP (matches PyQt behavior)"""
+            ok = self.backend.brick_core.delete_library(library_name)
+            if ok:
+                return jsonify({"status": "success", "message": f"Library '{library_name}' archived as ZIP"})
+            return jsonify({"status": "error", "message": "Failed to delete library"}), 400
+
+        @self.app.route('/api/libraries/archive', methods=['GET'])
+        def list_archived_libraries():
+            """List all archived libraries"""
+            archives = self.backend.brick_core.list_archived_libraries()
+            return jsonify({"status": "success", "data": archives})
+
+        @self.app.route('/api/libraries/archive/restore', methods=['POST'])
+        def restore_library():
+            """Restore an archived library with auto-versioning for conflicts"""
+            data = request.get_json() or {}
+            archive_name = data.get('archive_name', '').strip()
+            if not archive_name:
+                return jsonify({"status": "error", "message": "archive_name is required"}), 400
+
+            success, message, restored_name = self.backend.brick_core.restore_library(archive_name)
+            if success:
+                return jsonify({"status": "success", "message": message, "data": {"restored_name": restored_name}})
+            return jsonify({"status": "error", "message": message}), 400
+
+        @self.app.route('/api/libraries/copy', methods=['POST'])
+        def copy_library():
+            """Copy a library with a new name"""
+            data = request.get_json() or {}
+            source_name = data.get('source_name', '').strip()
+            target_name = data.get('target_name', '').strip()
+
+            if not source_name:
+                return jsonify({"status": "error", "message": "source_name is required"}), 400
+            if not target_name:
+                return jsonify({"status": "error", "message": "target_name is required"}), 400
+
+            success, message = self.backend.brick_core.copy_library(source_name, target_name)
+            if success:
+                return jsonify({"status": "success", "message": message, "data": {"target_name": target_name}})
+            return jsonify({"status": "error", "message": message}), 400
+
         @self.app.route('/api/libraries/filesystem', methods=['GET'])
         def get_filesystem_libraries():
             """Get libraries from filesystem (shared_libraries)"""

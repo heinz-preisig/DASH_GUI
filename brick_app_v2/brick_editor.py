@@ -49,6 +49,18 @@ class BrickEditor(QMainWindow):
         ui_path = Path(__file__).parent / "ui" / "main_window.ui"
         loadUi(str(ui_path), self)
         
+        # Add restore library button programmatically
+        from PyQt6.QtWidgets import QPushButton
+        self.restoreLibrary = QPushButton("restore archive")
+        # Insert after deleteLibrary button in the same layout
+        layout = self.deleteLibrary.parent().layout()
+        idx = layout.indexOf(self.deleteLibrary)
+        layout.insertWidget(idx + 1, self.restoreLibrary)
+
+        # Add copy library button
+        self.copyLibrary = QPushButton("copy library")
+        layout.insertWidget(idx + 2, self.copyLibrary)
+        
         # Local state only - no global state manager
         self.ui_state = self.BROWSE
         self.current_brick = None  # Current brick being edited
@@ -79,6 +91,8 @@ class BrickEditor(QMainWindow):
         self.deleteBrick.clicked.connect(self.on_delete_brick)
         self.newLibrary.clicked.connect(self.on_new_library)
         self.deleteLibrary.clicked.connect(self.on_delete_library)
+        self.restoreLibrary.clicked.connect(self.on_restore_library)
+        self.copyLibrary.clicked.connect(self.on_copy_library)
         self.downloadOntology.clicked.connect(self.on_download_ontology)
         self.importShacl.clicked.connect(self.on_import_shacl)
         
@@ -767,65 +781,90 @@ class BrickEditor(QMainWindow):
         reply = QMessageBox.question(
             self,
             "Delete Library",
-            f"Are you sure you want to delete library '{current_library}'? This will archive the library first.",
+            f"Are you sure you want to delete library '{current_library}'?\n\nIt will be archived as a ZIP file.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No
         )
         
         if reply == QMessageBox.StandardButton.Yes:
-            try:
-                import shutil
-                from datetime import datetime
-                
-                # Get library path
-                libraries = brick_service.get_libraries()
-                if current_library not in libraries:
-                    QMessageBox.warning(self, "Error", f"Library '{current_library}' not found.")
-                    return
-                
-                # Archive before deletion
-                repository_path = brick_service.brick_core.repository_path
-                lib_path = Path(repository_path) / current_library
-                
-                if lib_path.exists():
-                    # Create archive directory
-                    archive_dir = Path(repository_path).parent / 'archive' / 'bricks'
-                    archive_dir.mkdir(parents=True, exist_ok=True)
-                    
-                    # Create timestamped archive
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    archive_name = f"{current_library}_{timestamp}"
-                    archive_path = archive_dir / archive_name
-                    
-                    # Create archive
-                    shutil.make_archive(str(archive_path), 'zip', str(lib_path.parent), lib_path.name)
-                    
-                    # Create metadata
-                    metadata = {
-                        "original_name": current_library,
-                        "original_path": str(lib_path),
-                        "type": "bricks",
-                        "archived_at": datetime.now().isoformat(),
-                        "archive_file": f"{archive_name}.zip"
-                    }
-                    
-                    metadata_file = archive_dir / f"{archive_name}_metadata.json"
-                    import json
-                    with open(metadata_file, 'w') as f:
-                        json.dump(metadata, f, indent=2)
-                
-                # Remove the directory
-                if lib_path.exists():
-                    shutil.rmtree(lib_path)
-                
-                QMessageBox.information(self, "Success", 
-                    f"Library '{current_library}' deleted and archived successfully!")
-                
-                # Reload libraries
+            result = brick_service.delete_library(current_library)
+            if result.success:
+                QMessageBox.information(self, "Success", result.message)
                 self._load_initial_data()
-                
-            except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to delete library: {e}")
+            else:
+                QMessageBox.critical(self, "Error", result.message)
+    
+    def on_restore_library(self):
+        """Handle restore library from archive"""
+        # Get archived libraries
+        archives = brick_service.list_archived_libraries()
+        if not archives:
+            QMessageBox.information(self, "Archive", "No archived libraries found.")
+            return
+        
+        # Build list for selection dialog
+        from datetime import datetime
+        items = []
+        for a in archives:
+            dt = datetime.fromisoformat(a.get('archived_at', ''))
+            display = f"{a['original_name']} (archived {dt.strftime('%Y-%m-%d %H:%M')})"
+            items.append((display, a['archive_file'].replace('.zip', '')))
+        
+        # Show selection dialog
+        from PyQt6.QtWidgets import QInputDialog
+        display_names = [i[0] for i in items]
+        selected, ok = QInputDialog.getItem(
+            self, "Restore Library", "Select archived library:",
+            display_names, 0, False
+        )
+        
+        if ok and selected:
+            # Find archive name
+            archive_name = next(i[1] for i in items if i[0] == selected)
+            
+            # Restore
+            result = brick_service.restore_library(archive_name)
+            if result.success:
+                QMessageBox.information(self, "Success", result.message)
+                self._load_initial_data()
+                # Switch to restored library if returned
+                if result.data:
+                    idx = self.libraryComboBox.findText(result.data)
+                    if idx >= 0:
+                        self.libraryComboBox.setCurrentIndex(idx)
+            else:
+                QMessageBox.critical(self, "Error", result.message)
+
+    def on_copy_library(self):
+        """Handle copy library button click"""
+        current_library = self.libraryComboBox.currentText()
+        if not current_library:
+            QMessageBox.warning(self, "Warning", "No library selected.")
+            return
+
+        # Get new library name
+        target_name, ok = QInputDialog.getText(
+            self, "Copy Library",
+            f"Enter name for the copy of '{current_library}':",
+            text=f"{current_library}_copy"
+        )
+
+        if ok and target_name:
+            target_name = target_name.strip()
+            if not target_name:
+                QMessageBox.warning(self, "Warning", "Library name cannot be empty.")
+                return
+
+            result = brick_service.copy_library(current_library, target_name)
+            if result.success:
+                QMessageBox.information(self, "Success", result.message)
+                self._load_initial_data()
+                # Switch to copied library
+                idx = self.libraryComboBox.findText(target_name)
+                if idx >= 0:
+                    self.libraryComboBox.setCurrentIndex(idx)
+            else:
+                QMessageBox.critical(self, "Error", result.message)
 
     def on_download_ontology(self):
         """Handle download ontology button click"""

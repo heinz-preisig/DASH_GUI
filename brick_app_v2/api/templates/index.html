@@ -735,10 +735,19 @@ function ConstraintManagerModal({ sessionId, propData, onClose, onRefresh, onDir
 }
 
 /* ── LibraryManagerModal ─────────────────────────────── */
-function LibraryManagerModal({ libraries, onClose, onRefresh }) {
+function LibraryManagerModal({ libraries, onClose, onRefresh, activeLib }) {
   const [newName, setNewName] = useState("");
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState(null);
+  const [archives, setArchives] = useState([]);
+  const [showArchive, setShowArchive] = useState(false);
+
+  const loadArchives = async () => {
+    const r = await api("GET", "/api/libraries/archive");
+    if (r.status === "success") setArchives(r.data || []);
+  };
+
+  useEffect(() => { if (showArchive) loadArchives(); }, [showArchive]);
 
   const createLib = async () => {
     if (!newName.trim()) return;
@@ -750,20 +759,86 @@ function LibraryManagerModal({ libraries, onClose, onRefresh }) {
     } finally { setBusy(false); }
   };
 
+  const deleteLib = async (name) => {
+    if (!confirm(`Delete library "${name}"?\n\nIt will be archived as a ZIP file.`)) return;
+    setBusy(true);
+    try {
+      const r = await api("DELETE", `/api/libraries/${encodeURIComponent(name)}`);
+      if (r.status === "success") { setToast({ msg: "Library archived", type: "success" }); onRefresh(); }
+      else setToast({ msg: r.message || "Failed", type: "error" });
+    } finally { setBusy(false); }
+  };
+
+  const restoreLib = async (archiveName) => {
+    setBusy(true);
+    try {
+      const r = await api("POST", "/api/libraries/archive/restore", { archive_name: archiveName });
+      if (r.status === "success") {
+        setToast({ msg: r.message, type: "success" });
+        onRefresh();
+        loadArchives();
+      }
+      else setToast({ msg: r.message || "Failed", type: "error" });
+    } finally { setBusy(false); }
+  };
+
+  const copyLib = async (sourceName) => {
+    const targetName = prompt(`Copy library "${sourceName}" to:`, `${sourceName}_copy`);
+    if (!targetName || targetName.trim() === sourceName) return;
+    setBusy(true);
+    try {
+      const r = await api("POST", "/api/libraries/copy", { source_name: sourceName, target_name: targetName.trim() });
+      if (r.status === "success") { setToast({ msg: r.message, type: "success" }); onRefresh(); }
+      else setToast({ msg: r.message || "Failed", type: "error" });
+    } finally { setBusy(false); }
+  };
+
   return (
     <div className="modal-overlay" onClick={e => { e.stopPropagation(); onClose(); }}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxHeight: "80vh", overflow: "auto" }}>
         <h2>Manage Libraries</h2>
-        <div style={{ marginBottom: 12 }}>
-          {libraries.map(l => (
-            <div key={l} style={{ padding:"6px 10px", background:"#f7f9fc", borderRadius:4, marginBottom:4 }}>{l}</div>
-          ))}
-        </div>
-        <div style={{ display:"flex", gap:8 }}>
-          <input type="text" placeholder="New library name…" value={newName} onChange={e => setNewName(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && createLib()}/>
-          <button className="btn btn-primary" disabled={!newName.trim() || busy} onClick={createLib}>Create</button>
-        </div>
+        
+        {!showArchive ? (
+          <>
+            <div style={{ marginBottom: 12 }}>
+              {libraries.map(l => (
+                <div key={l} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"6px 10px", background:"#f7f9fc", borderRadius:4, marginBottom:4 }}>
+                  <span>{l} {l === activeLib ? "(active)" : ""}</span>
+                  <div style={{ display:"flex", gap:6 }}>
+                    <button className="btn btn-secondary btn-sm" disabled={busy} onClick={() => copyLib(l)}>Copy</button>
+                    {l !== "default" && (
+                      <button className="btn btn-danger btn-sm" disabled={busy} onClick={() => deleteLib(l)}>Archive</button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display:"flex", gap:8, marginBottom: 12 }}>
+              <input type="text" placeholder="New library name…" value={newName} onChange={e => setNewName(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && createLib()}/>
+              <button className="btn btn-primary" disabled={!newName.trim() || busy} onClick={createLib}>Create</button>
+            </div>
+            <button className="btn btn-secondary" onClick={() => setShowArchive(true)}>View Archive</button>
+          </>
+        ) : (
+          <>
+            <h3>Archived Libraries</h3>
+            <div style={{ marginBottom: 12 }}>
+              {archives.length === 0 ? (
+                <div className="empty-hint">No archived libraries</div>
+              ) : (
+                archives.map(a => (
+                  <div key={a.archive_file} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"6px 10px", background:"#f7f9fc", borderRadius:4, marginBottom:4 }}>
+                    <span>{a.original_name} <small>({new Date(a.archived_at).toLocaleString()})</small></span>
+                    <button className="btn btn-primary btn-sm" disabled={busy} onClick={() => restoreLib(a.archive_file.replace('.zip', ''))}>Restore</button>
+                  </div>
+                ))
+              )}
+            </div>
+            <button className="btn btn-secondary" onClick={() => setShowArchive(false)}>Back to Libraries</button>
+          </>
+        )}
+        
         <div className="modal-footer">
           <button className="btn btn-secondary" onClick={onClose}>Close</button>
         </div>
@@ -1172,7 +1247,7 @@ function App() {
       <div className="status-bar">{status}</div>
 
       {toast && <Toast msg={toast.msg} type={toast.type} onDone={() => setToast(null)}/>}
-      {showLibMgr && <LibraryManagerModal libraries={libraries} onClose={() => setShowLibMgr(false)} onRefresh={loadLibraries}/>}
+      {showLibMgr && <LibraryManagerModal libraries={libraries} onClose={() => setShowLibMgr(false)} onRefresh={loadLibraries} activeLib={activeLib}/>}
       {showOntDl && <DownloadOntologyModal onClose={() => setShowOntDl(false)} onToast={showToast}/>}
     </div>
   );

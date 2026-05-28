@@ -16,7 +16,7 @@ if _dash_gui_root not in sys.path:
     sys.path.insert(0, _dash_gui_root)
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any, Optional, Union, Tuple
 from dataclasses import dataclass, field, asdict
 
 
@@ -398,8 +398,8 @@ class BrickCore:
             
             for item_name in os.listdir(self.repository_path):
                 item_path = os.path.join(self.repository_path, item_name)
-                if os.path.isdir(item_path):
-                    # Any directory in the repository path is considered a library
+                if os.path.isdir(item_path) and item_name != "_archive":
+                    # Any directory except archive is considered a library
                     libraries.append(item_name)
         except Exception as e:
             print(f"Error getting libraries: {e}")
@@ -410,6 +410,61 @@ class BrickCore:
         
         return sorted(libraries)
     
+    def delete_library(self, library_name: str) -> bool:
+        """Delete a library by archiving to ZIP and removing directory (matches PyQt behavior)"""
+        if library_name == "default":
+            return False  # Don't allow deleting the default library
+        
+        lib_path = os.path.join(self.repository_path, library_name)
+        if not os.path.exists(lib_path):
+            return False
+        
+        try:
+            import shutil
+            import json
+            import zipfile
+            from datetime import datetime
+            from pathlib import Path
+            
+            # Archive to external archive folder (outside repo)
+            repo_path = Path(self.repository_path)
+            archive_dir = repo_path.parent / 'archive' / 'bricks'
+            archive_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Create timestamped archive
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            archive_name = f"{library_name}_{timestamp}"
+            archive_path = archive_dir / archive_name
+            
+            # Create ZIP archive of the library
+            zip_file = shutil.make_archive(str(archive_path), 'zip', str(repo_path), library_name)
+            
+            # Create metadata JSON
+            metadata = {
+                "original_name": library_name,
+                "original_path": str(lib_path),
+                "type": "bricks",
+                "archived_at": datetime.now().isoformat(),
+                "archive_file": f"{archive_name}.zip"
+            }
+            
+            metadata_file = archive_dir / f"{archive_name}_metadata.json"
+            with open(metadata_file, 'w') as f:
+                json.dump(metadata, f, indent=2)
+            
+            # Remove the original directory
+            if os.path.exists(lib_path):
+                shutil.rmtree(lib_path)
+            
+            # If this was the active library, switch to default
+            if self.active_library == library_name:
+                self.active_library = "default"
+            
+            return True
+        except Exception as e:
+            print(f"DEBUG: Failed to archive library: {e}")
+            return False
+    
     def set_active_library(self, library_name: str):
         """Set the active library"""
         lib_path = os.path.join(self.repository_path, library_name)
@@ -417,3 +472,152 @@ class BrickCore:
             self.active_library = library_name
             return True
         return False
+    
+    def list_archived_libraries(self) -> List[Dict[str, Any]]:
+        """List all archived libraries with metadata"""
+        from pathlib import Path
+        import json
+        
+        archive_dir = Path(self.repository_path).parent / 'archive' / 'bricks'
+        if not archive_dir.exists():
+            return []
+        
+        archives = []
+        for metadata_file in archive_dir.glob("*_metadata.json"):
+            try:
+                with open(metadata_file, 'r') as f:
+                    data = json.load(f)
+                    archives.append(data)
+            except Exception:
+                continue
+        
+        # Sort by archived_at date (newest first)
+        archives.sort(key=lambda x: x.get('archived_at', ''), reverse=True)
+        return archives
+    
+    def restore_library(self, archive_name: str) -> Tuple[bool, str, str]:
+        """Restore an archived library with auto-versioning for conflicts
+        
+        Returns: (success, message, restored_name)
+        """
+        from pathlib import Path
+        import zipfile
+        import shutil
+        
+        archive_dir = Path(self.repository_path).parent / 'archive' / 'bricks'
+        zip_file = archive_dir / f"{archive_name}.zip"
+        metadata_file = archive_dir / f"{archive_name}_metadata.json"
+        
+        if not zip_file.exists():
+            return False, f"Archive '{archive_name}' not found", ""
+        
+        try:
+            # Read metadata to get original name
+            original_name = archive_name.rsplit('_', 1)[0]  # Remove timestamp
+            if '_' in archive_name:
+                # Try to get from metadata first
+                try:
+                    import json
+                    with open(metadata_file, 'r') as f:
+                        metadata = json.load(f)
+                        original_name = metadata.get('original_name', original_name)
+                except Exception:
+                    pass
+            
+            # Determine target name (handle conflicts with versioning)
+            target_name = original_name
+            counter = 2
+            while os.path.exists(os.path.join(self.repository_path, target_name)):
+                target_name = f"{original_name}_v{counter}"
+                counter += 1
+            
+            # Extract ZIP to repository
+            target_path = Path(self.repository_path) / target_name
+            with zipfile.ZipFile(zip_file, 'r') as zf:
+                zf.extractall(self.repository_path)
+            
+            # If extracted folder name differs from target_name, rename it
+            extracted_path = Path(self.repository_path) / original_name
+            if extracted_path.exists() and target_name != original_name:
+                extracted_path.rename(target_path)
+            
+            # Clean up archive files (move semantics)
+            try:
+                zip_file.unlink()
+                if metadata_file.exists():
+                    metadata_file.unlink()
+            except Exception as cleanup_error:
+                print(f"Warning: Failed to clean up archive files: {cleanup_error}")
+            
+            return True, f"Library restored as '{target_name}'", target_name
+            
+        except Exception as e:
+            return False, f"Failed to restore library: {e}", ""
+
+    def copy_library(self, source_name: str, target_name: str) -> Tuple[bool, str]:
+        """Copy a library with a new name
+
+        Args:
+            source_name: Name of the library to copy
+            target_name: Desired name for the new copy
+
+        Returns:
+            Tuple of (success, message)
+        """
+        import shutil
+
+        source_path = Path(self.repository_path) / source_name
+        target_path = Path(self.repository_path) / target_name
+
+        # Validate source exists
+        if not source_path.exists():
+            return False, f"Source library '{source_name}' not found"
+
+        # Validate target doesn't already exist
+        if target_path.exists():
+            return False, f"Library '{target_name}' already exists"
+
+        # Validate target name is valid
+        if not target_name.strip() or target_name.startswith("_"):
+            return False, "Invalid library name"
+
+        try:
+            # Copy entire directory tree
+            shutil.copytree(source_path, target_path)
+
+            # Update brick IDs in copied library to avoid conflicts
+            for brick_file in target_path.glob("*.json"):
+                try:
+                    with open(brick_file, 'r') as f:
+                        data = json.load(f)
+
+                    # Generate new brick ID
+                    old_id = data.get('brick_id', '')
+                    if old_id:
+                        new_id = str(uuid.uuid4())
+                        data['brick_id'] = new_id
+                        data['name'] = data.get('name', 'Unnamed') + f" (copy)"
+                        data['updated_at'] = datetime.now().isoformat()
+
+                        # Save with new filename reflecting new ID
+                        safe_name = sanitize_filename(data['name'])
+                        new_filename = f"{safe_name}_{new_id}.json"
+
+                        with open(target_path / new_filename, 'w') as f:
+                            json.dump(data, f, indent=2)
+
+                        # Remove old file
+                        brick_file.unlink()
+
+                        # Also rename TTL if exists
+                        old_ttl = brick_file.with_suffix('.ttl')
+                        if old_ttl.exists():
+                            old_ttl.unlink()
+                except Exception as e:
+                    print(f"Warning: Failed to update brick ID in {brick_file}: {e}")
+                    continue
+
+            return True, f"Library '{source_name}' copied as '{target_name}'"
+
+        except Exception as e:
+            return False, f"Failed to copy library: {e}"

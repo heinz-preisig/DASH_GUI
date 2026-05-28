@@ -54,6 +54,36 @@ class BrickService:
         except Exception as e:
             return OperationResult(success=False, message=str(e))
     
+    def delete_library(self, name: str) -> OperationResult:
+        """Delete library by archiving to ZIP"""
+        try:
+            success = self.brick_core.delete_library(name)
+            if success:
+                return OperationResult(success=True, message=f"Library '{name}' archived as ZIP")
+            return OperationResult(success=False, message="Failed to delete library")
+        except Exception as e:
+            return OperationResult(success=False, message=str(e))
+    
+    def list_archived_libraries(self) -> List[Dict[str, Any]]:
+        """List all archived libraries"""
+        return self.brick_core.list_archived_libraries()
+    
+    def restore_library(self, archive_name: str) -> OperationResult:
+        """Restore an archived library with auto-versioning"""
+        try:
+            success, message, restored_name = self.brick_core.restore_library(archive_name)
+            return OperationResult(success=success, message=message, data=restored_name)
+        except Exception as e:
+            return OperationResult(success=False, message=str(e))
+
+    def copy_library(self, source_name: str, target_name: str) -> OperationResult:
+        """Copy a library with a new name"""
+        try:
+            success, message = self.brick_core.copy_library(source_name, target_name)
+            return OperationResult(success=success, message=message, data=target_name if success else None)
+        except Exception as e:
+            return OperationResult(success=False, message=str(e))
+    
     # Brick Operations
     def get_bricks(self) -> List[Dict[str, Any]]:
         """Get all bricks as dictionaries"""
