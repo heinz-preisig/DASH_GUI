@@ -587,22 +587,104 @@ function ConstraintEditorModal({ propData, existing, onSave, onClose }) {
 }
 
 /* ── ConstraintManagerModal ──────────────────────────── */
+function extractConstraints(propData) {
+  // Extract constraints from both inline keys and constraints array
+  const constraints = [];
+  
+  // Map of flat keys to constraint types (display format without sh: prefix)
+  const keyMapping = {
+    'min_count': 'minCount',
+    'max_count': 'maxCount', 
+    'min_length': 'minLength',
+    'max_length': 'maxLength',
+    'pattern': 'pattern',
+    'datatype': 'datatype',
+    'in_values': 'in',
+    'not_in_values': 'notIn',
+    'min_inclusive': 'minInclusive',
+    'max_inclusive': 'maxInclusive',
+    'min_exclusive': 'minExclusive',
+    'max_exclusive': 'maxExclusive',
+    'has_value': 'hasValue',
+    'language_in': 'languageIn',
+    'unique_lang': 'uniqueLang'
+  };
+  
+  // Helper to normalize constraint type (remove sh: prefix)
+  const normalizeType = (t) => {
+    if (!t) return '';
+    return t.replace(/^sh:/, '');
+  };
+  
+  // Extract from flat keys
+  for (const [key, type] of Object.entries(keyMapping)) {
+    const value = propData[key];
+    if (value !== null && value !== undefined && value !== '') {
+      constraints.push({
+        constraint_type: type,
+        value: Array.isArray(value) ? value.join(',') : String(value),
+        source: 'inline'
+      });
+    }
+  }
+  
+  // Also include any array constraints
+  if (propData.constraints && Array.isArray(propData.constraints)) {
+    for (const c of propData.constraints) {
+      const ct = normalizeType(c.constraint_type || c.name);
+      // Don't duplicate if already extracted from inline
+      const alreadyHave = constraints.some(ec => ec.constraint_type === ct);
+      if (!alreadyHave && ct) {
+        constraints.push({
+          constraint_type: ct,
+          value: c.value,
+          source: 'array'
+        });
+      }
+    }
+  }
+  
+  return constraints;
+}
+
 function ConstraintManagerModal({ sessionId, propData, onClose, onRefresh }) {
   const [editing, setEditing] = useState(null);
   const [adding, setAdding] = useState(false);
-  const constraints = propData.constraints || [];
+  const [propState, setPropState] = useState(propData);
+  
+  // Re-fetch property data to get fresh constraints
+  const refreshPropData = async () => {
+    try {
+      const r = await api("GET", `/api/session/${sessionId}/brick`);
+      if (r.status === "success" && r.data) {
+        // Find the property in the fresh brick data
+        const freshProp = r.data.properties?.[propData.name] || 
+          r.data.leaf_properties?.find(p => (p.label || p.path?.split(':').pop()) === propData.name);
+        if (freshProp) {
+          setPropState({ ...propState, ...freshProp, name: propData.name });
+        }
+      }
+    } catch (e) {
+      console.error("Failed to refresh property data:", e);
+    }
+    onRefresh();
+  };
+  
+  const constraints = extractConstraints(propState);
 
   const doAdd = async (data) => {
     await api("POST", `/api/session/${sessionId}/brick/properties/${encodeURIComponent(propData.name)}/constraints`, data);
-    onRefresh(); setAdding(false);
+    await refreshPropData();
+    setAdding(false);
   };
   const doUpdate = async (idx, data) => {
     await api("PUT", `/api/session/${sessionId}/brick/properties/${encodeURIComponent(propData.name)}/constraints/${idx}`, data);
-    onRefresh(); setEditing(null);
+    await refreshPropData();
+    setEditing(null);
   };
   const doDelete = async (idx) => {
     await api("DELETE", `/api/session/${sessionId}/brick/properties/${encodeURIComponent(propData.name)}/constraints/${idx}`);
-    onRefresh();
+    await refreshPropData();
   };
 
   return (

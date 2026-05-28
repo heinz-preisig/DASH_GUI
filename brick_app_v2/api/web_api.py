@@ -321,18 +321,55 @@ class BrickWebAPI:
                     "message": "No constraint data provided"
                 }), 400
             
+            constraint_type = data.get('constraint_type', 'minLength')
+            value = data.get('value', '')
+            
             constraint_data = {
-                'constraint_type': data.get('constraint_type', 'minLength'),
-                'value': data.get('value', ''),
-                'name': data.get('constraint_type', 'minLength')
+                'constraint_type': constraint_type,
+                'value': value,
+                'name': constraint_type
             }
             
-            # Add constraint via brick_core (stored in property)
+            # Map of constraint types to flat property keys
+            flat_key_mapping = {
+                'sh:minCount': 'min_count',
+                'sh:maxCount': 'max_count',
+                'sh:minLength': 'min_length',
+                'sh:maxLength': 'max_length',
+                'sh:pattern': 'pattern',
+                'sh:minInclusive': 'min_inclusive',
+                'sh:maxInclusive': 'max_inclusive',
+                'sh:minExclusive': 'min_exclusive',
+                'sh:maxExclusive': 'max_exclusive',
+                'sh:hasValue': 'has_value',
+            }
+            
+            # Add constraint to leaf_properties (modern format)
             brick = self.backend.brick_core.current_brick
+            if brick and brick.leaf_properties:
+                # Find property by name/label/path
+                for prop in brick.leaf_properties:
+                    prop_name_match = prop.get('label') == property_name or prop.get('name') == property_name
+                    prop_path_match = prop.get('path', '').split(':')[-1] == property_name
+                    if prop_name_match or prop_path_match:
+                        # Save to flat key for chip display
+                        flat_key = flat_key_mapping.get(constraint_type)
+                        if flat_key:
+                            if constraint_type in ['sh:minCount', 'sh:maxCount', 'sh:minLength', 'sh:maxLength']:
+                                try:
+                                    prop[flat_key] = int(value)
+                                except ValueError:
+                                    prop[flat_key] = value
+                            else:
+                                prop[flat_key] = value
+                        break
+            
+            # Also try legacy properties dict for backward compatibility
             if brick and property_name in brick.properties:
                 if 'constraints' not in brick.properties[property_name]:
                     brick.properties[property_name]['constraints'] = []
                 brick.properties[property_name]['constraints'].append(constraint_data)
+            
             return jsonify({
                 "status": "success",
                 "message": "Constraint added successfully"
@@ -382,8 +419,42 @@ class BrickWebAPI:
                     "message": "Session not found"
                 }), 404
             
-            # Remove constraint via brick_core
+            # Map of constraint types to flat property keys
+            flat_key_mapping = {
+                'sh:minCount': 'min_count',
+                'sh:maxCount': 'max_count',
+                'sh:minLength': 'min_length',
+                'sh:maxLength': 'max_length',
+                'sh:pattern': 'pattern',
+                'sh:minInclusive': 'min_inclusive',
+                'sh:maxInclusive': 'max_inclusive',
+                'sh:minExclusive': 'min_exclusive',
+                'sh:maxExclusive': 'max_exclusive',
+                'sh:hasValue': 'has_value',
+            }
+            
+            # Remove constraint from leaf_properties (modern format)
             brick = self.backend.brick_core.current_brick
+            if brick and brick.leaf_properties:
+                for prop in brick.leaf_properties:
+                    prop_name_match = prop.get('label') == property_name or prop.get('name') == property_name
+                    prop_path_match = prop.get('path', '').split(':')[-1] == property_name
+                    if prop_name_match or prop_path_match:
+                        # Get constraint type from legacy array to know which flat key to remove
+                        constraints = prop.get('constraints', [])
+                        if isinstance(constraints, list) and 0 <= index < len(constraints):
+                            removed = constraints.pop(index)
+                            ct = removed.get('constraint_type', '')
+                            flat_key = flat_key_mapping.get(ct)
+                            if flat_key and flat_key in prop:
+                                del prop[flat_key]
+                        # Also try to remove from flat keys directly if constraints array doesn't exist
+                        for ct, fk in flat_key_mapping.items():
+                            if fk in prop:
+                                del prop[fk]
+                        break
+            
+            # Also try legacy properties dict for backward compatibility
             if brick and property_name in brick.properties:
                 constraints = brick.properties[property_name].get('constraints', [])
                 if 0 <= index < len(constraints):
