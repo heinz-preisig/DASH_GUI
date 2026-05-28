@@ -221,8 +221,12 @@ class BrickWebAPI:
         
         @self.app.route('/api/session/<session_id>/brick', methods=['GET'])
         def get_current_brick(session_id):
-            """Get current brick"""
-            brick = self.backend.brick_core.current_brick
+            """Get session's current brick (not global)"""
+            backend_session = self.backend.get_session(session_id)
+            if backend_session:
+                brick = backend_session.editor_backend.current_brick
+            else:
+                brick = self.backend.brick_core.current_brick  # Fallback
             return jsonify({"status": "success", "data": brick.to_dict() if brick else {}})
         
         @self.app.route('/api/session/<session_id>/brick', methods=['PUT'])
