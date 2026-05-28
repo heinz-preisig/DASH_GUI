@@ -647,10 +647,13 @@ function extractConstraints(propData) {
   return constraints;
 }
 
-function ConstraintManagerModal({ sessionId, propData, onClose, onRefresh }) {
+function ConstraintManagerModal({ sessionId, propData, onClose, onRefresh, onDirty }) {
   const [editing, setEditing] = useState(null);
   const [adding, setAdding] = useState(false);
   const [propState, setPropState] = useState(propData);
+  
+  // Sync with parent when propData changes
+  useEffect(() => { setPropState(propData); }, [propData]);
   
   // Re-fetch property data to get fresh constraints
   const refreshPropData = async () => {
@@ -661,7 +664,7 @@ function ConstraintManagerModal({ sessionId, propData, onClose, onRefresh }) {
         const freshProp = r.data.properties?.[propData.name] || 
           r.data.leaf_properties?.find(p => (p.label || p.path?.split(':').pop()) === propData.name);
         if (freshProp) {
-          setPropState({ ...propState, ...freshProp, name: propData.name });
+          setPropState(prev => ({ ...prev, ...freshProp, name: propData.name }));
         }
       }
     } catch (e) {
@@ -674,16 +677,33 @@ function ConstraintManagerModal({ sessionId, propData, onClose, onRefresh }) {
 
   const doAdd = async (data) => {
     await api("POST", `/api/session/${sessionId}/brick/properties/${encodeURIComponent(propData.name)}/constraints`, data);
+    onDirty();
     await refreshPropData();
     setAdding(false);
   };
-  const doUpdate = async (idx, data) => {
-    await api("PUT", `/api/session/${sessionId}/brick/properties/${encodeURIComponent(propData.name)}/constraints/${idx}`, data);
+  const doUpdate = async (idx, source, data) => {
+    if (source === 'inline') {
+      // For inline constraints, use the constraint type to identify which flat key to update
+      await api("POST", `/api/session/${sessionId}/brick/properties/${encodeURIComponent(propData.name)}/constraints`, data);
+    } else {
+      // For array constraints, use index-based update
+      await api("PUT", `/api/session/${sessionId}/brick/properties/${encodeURIComponent(propData.name)}/constraints/${idx}`, data);
+    }
+    onDirty();
     await refreshPropData();
     setEditing(null);
   };
-  const doDelete = async (idx) => {
-    await api("DELETE", `/api/session/${sessionId}/brick/properties/${encodeURIComponent(propData.name)}/constraints/${idx}`);
+  const doDelete = async (idx, source) => {
+    if (source === 'inline') {
+      // For inline constraints, we need to delete by constraint type
+      // Pass the constraint type as a query parameter
+      const c = constraints[idx];
+      await api("DELETE", `/api/session/${sessionId}/brick/properties/${encodeURIComponent(propData.name)}/constraints/0?constraint_type=${encodeURIComponent(c.constraint_type)}`);
+    } else {
+      // For array constraints, use index-based delete
+      await api("DELETE", `/api/session/${sessionId}/brick/properties/${encodeURIComponent(propData.name)}/constraints/${idx}`);
+    }
+    onDirty();
     await refreshPropData();
   };
 
@@ -697,8 +717,8 @@ function ConstraintManagerModal({ sessionId, propData, onClose, onRefresh }) {
             : constraints.map((c, i) => (
               <div key={i} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6, padding:"6px 10px", background:"#f7f9fc", borderRadius:4 }}>
                 <span style={{ flex:1 }}><b>{c.constraint_type || c.name}</b>: {c.value}</span>
-                <button className="btn btn-secondary btn-sm" onClick={() => setEditing({ idx: i, data: c })}>Edit</button>
-                <button className="btn btn-danger btn-sm" onClick={() => doDelete(i)}>✕</button>
+                <button className="btn btn-secondary btn-sm" onClick={() => setEditing({ idx: i, data: c, source: c.source })}>Edit</button>
+                <button className="btn btn-danger btn-sm" onClick={() => doDelete(i, c.source)}>✕</button>
               </div>
             ))
           }
@@ -709,7 +729,7 @@ function ConstraintManagerModal({ sessionId, propData, onClose, onRefresh }) {
         </div>
       </div>
       {adding && <ConstraintEditorModal propData={propData} onSave={doAdd} onClose={() => setAdding(false)}/>}
-      {editing && <ConstraintEditorModal propData={propData} existing={editing.data} onSave={d => doUpdate(editing.idx, d)} onClose={() => setEditing(null)}/>}
+      {editing && <ConstraintEditorModal propData={propData} existing={editing.data} onSave={d => doUpdate(editing.idx, editing.source, d)} onClose={() => setEditing(null)}/>}
     </>
   );
 }
@@ -754,10 +774,11 @@ function LibraryManagerModal({ libraries, onClose, onRefresh }) {
 }
 
 /* ── BrickEditor panel ───────────────────────────────── */
-function BrickEditor({ sessionId, brickData, onSaved, onToast }) {
+function BrickEditor({ sessionId, brickData, onSaved, onToast, dirtyFromProps, clearDirty }) {
   const isNode = brickData?.object_type === "NodeShape";
   const [form, setForm] = useState({ name:"", description:"", display_label:"", target_class:"", property_path:"", datatype:"xsd:string" });
   const [dirty, setDirty] = useState(false);
+  const isDirty = dirty || dirtyFromProps;
   const [showOntBrowser, setShowOntBrowser] = useState(false);
   const [ontMode, setOntMode] = useState("classes");
 
@@ -782,7 +803,7 @@ function BrickEditor({ sessionId, brickData, onSaved, onToast }) {
     else { data.property_path = form.property_path; data.object_type = "PropertyShape"; }
     await api("PUT", `/api/session/${sessionId}/brick`, data);
     const r = await api("POST", `/api/session/${sessionId}/brick/save`, {});
-    if (r.status === "success") { onToast("Brick saved", "success"); setDirty(false); onSaved(); }
+    if (r.status === "success") { onToast("Brick saved", "success"); setDirty(false); clearDirty(); onSaved(); }
     else onToast(r.message || "Save failed", "error");
   };
 
@@ -864,7 +885,7 @@ function BrickEditor({ sessionId, brickData, onSaved, onToast }) {
           </>
         )}
         <div style={{ display:"flex", justifyContent:"flex-end", gap:8, marginTop:8 }}>
-          <button className="btn btn-primary" disabled={!dirty} onClick={save}>Save Brick</button>
+          <button className="btn btn-primary" disabled={!isDirty} onClick={save}>Save Brick</button>
         </div>
       </div>
       {showOntBrowser && <OntologyBrowserModal mode={ontMode} sessionId={sessionId} onSelect={handleOntSelect} onClose={() => setShowOntBrowser(false)}/>}
@@ -873,7 +894,7 @@ function BrickEditor({ sessionId, brickData, onSaved, onToast }) {
 }
 
 /* ── PropertyPane ────────────────────────────────────── */
-function PropertyPane({ sessionId, brickData, onRefresh, onToast }) {
+function PropertyPane({ sessionId, brickData, onRefresh, onToast, onDirty }) {
   const [selected, setSelected] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [showConstraintMgr, setShowConstraintMgr] = useState(false);
@@ -906,14 +927,14 @@ function PropertyPane({ sessionId, brickData, onRefresh, onToast }) {
 
   const addProperty = async (data) => {
     const r = await api("POST", `/api/session/${sessionId}/brick/properties`, data);
-    if (r.status === "success") { onToast("Property added", "success"); onRefresh(); setShowAdd(false); }
+    if (r.status === "success") { onToast("Property added", "success"); onDirty(); onRefresh(); setShowAdd(false); }
     else { console.error("add_property failed:", r); onToast(r.message || "Failed", "error"); }
   };
 
   const deleteProperty = async () => {
     if (!selected) return;
     const r = await api("DELETE", `/api/session/${sessionId}/brick/properties/${encodeURIComponent(selected)}`);
-    if (r.status === "success") { onToast("Property removed", "success"); setSelected(null); onRefresh(); }
+    if (r.status === "success") { onToast("Property removed", "success"); onDirty(); setSelected(null); onRefresh(); }
     else onToast(r.message || "Failed", "error");
   };
 
@@ -983,6 +1004,7 @@ function PropertyPane({ sessionId, brickData, onRefresh, onToast }) {
           propData={fullPropData}
           onClose={() => setShowConstraintMgr(false)}
           onRefresh={onRefresh}
+          onDirty={onDirty}
         />
       )}
     </>
@@ -1001,6 +1023,7 @@ function App() {
   const [toast, setToast] = useState(null);
   const [showLibMgr, setShowLibMgr] = useState(false);
   const [showOntDl, setShowOntDl] = useState(false);
+  const [dirtyFromProps, setDirtyFromProps] = useState(false);
 
   const showToast = (msg, type = "success") => setToast({ msg, type });
 
@@ -1032,7 +1055,16 @@ function App() {
   const loadBricks = useCallback(async () => {
     if (!activeLib) return;
     const r = await api("GET", `/api/libraries/${encodeURIComponent(activeLib)}/bricks`);
-    if (r.status === "success") setBricks(r.data || []);
+    if (r.status === "success") {
+      // Deduplicate by brick_id
+      const seen = new Set();
+      const unique = (r.data || []).filter(b => {
+        if (seen.has(b.brick_id)) return false;
+        seen.add(b.brick_id);
+        return true;
+      });
+      setBricks(unique);
+    }
   }, [activeLib]);
 
   useEffect(() => { loadBricks(); }, [loadBricks]);
@@ -1044,6 +1076,7 @@ function App() {
     const r = await api("POST", `/api/session/${sessionId}/brick/load/${encodeURIComponent(brickId)}`, {});
     if (r.status === "success") {
       setBrickData(r.data);
+      setDirtyFromProps(false);  // Reset dirty state when loading brick
       setStatus(`Loaded: ${r.data?.name || brickId}`);
     } else {
       showToast("Failed to load brick", "error");
@@ -1130,9 +1163,9 @@ function App() {
         {/* Editor */}
         <div className="main">
           <div className="editor-pane">
-            <BrickEditor sessionId={sessionId} brickData={brickData} onSaved={loadBricks} onToast={showToast}/>
+            <BrickEditor sessionId={sessionId} brickData={brickData} onSaved={loadBricks} onToast={showToast} dirtyFromProps={dirtyFromProps} clearDirty={() => setDirtyFromProps(false)}/>
           </div>
-          <PropertyPane sessionId={sessionId} brickData={brickData} onRefresh={refreshBrick} onToast={showToast}/>
+          <PropertyPane sessionId={sessionId} brickData={brickData} onRefresh={refreshBrick} onToast={showToast} onDirty={() => setDirtyFromProps(true)}/>
         </div>
       </div>
 
