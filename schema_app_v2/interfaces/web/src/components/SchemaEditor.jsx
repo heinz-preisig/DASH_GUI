@@ -407,7 +407,12 @@ export function SchemaEditor({ sessionId, schemaData, allSchemas, brickLibraries
             onToast("Component added", "success");
             const updated = { ...schemaData, component_brick_ids: [...(schemaData.component_brick_ids || []), id] };
             onSaved(updated);
-            loadComponents();
+            // Immediately fetch and add new brick to local state
+            api("GET", `/session/${sessionId}/bricks/${encodeURIComponent(id)}`).then(r => {
+              if (r.status === "success") {
+                setComponents(prev => [...prev, r.data]);
+              }
+            });
             loadTree();
           }}
           onClose={() => setShowAddComp(false)}
