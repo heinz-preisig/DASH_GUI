@@ -20,6 +20,7 @@ export function SchemaEditor({ sessionId, schemaData, allSchemas, brickLibraries
   const [showAddComp, setShowAddComp] = useState(false);
   const [showAddRef, setShowAddRef] = useState(false);
   const [rootBrickName, setRootBrickName] = useState("");
+  const [selectedComponent, setSelectedComponent] = useState(null);
 
   useEffect(() => {
     if (!schemaData) return;
@@ -250,16 +251,17 @@ export function SchemaEditor({ sessionId, schemaData, allSchemas, brickLibraries
           {components.length === 0
             ? <div className="empty-hint">No components — add bricks above</div>
             : components.map(c => (
-              <div key={c.brick_id} style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 0", borderBottom:"1px solid #f0f0f0" }}>
+              <div key={c.brick_id} style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 0", borderBottom:"1px solid #f0f0f0", cursor:"pointer" }} onClick={() => setSelectedComponent(c)}>
                 <div style={{ flex:1 }}>
                   <div className="comp-name">{c.name || c.brick_id}</div>
                   <div className="comp-meta">
                     <span className={`brick-type-badge ${c.object_type === "NodeShape" ? "badge-node" : "badge-prop"}`}>{c.object_type || "?"}</span>
                     {c.target_class && <span style={{ marginLeft:6 }}>{c.target_class}</span>}
                     {c.property_path && <span style={{ marginLeft:6 }}>{c.property_path}</span>}
+                    {c.leaf_properties && <span style={{ marginLeft:6, color:"#666" }}>({c.leaf_properties.length} properties)</span>}
                   </div>
                 </div>
-                <button className="btn btn-danger btn-sm" onClick={() => removeComp(c.brick_id)}>✕</button>
+                <button className="btn btn-danger btn-sm" onClick={e => { e.stopPropagation(); removeComp(c.brick_id); }}>✕</button>
               </div>
             ))
           }
@@ -433,6 +435,45 @@ export function SchemaEditor({ sessionId, schemaData, allSchemas, brickLibraries
           }}
           onClose={() => setShowAddRef(false)}
         />
+      )}
+
+      {selectedComponent && (
+        <div className="modal-overlay" onClick={() => setSelectedComponent(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 600, maxHeight: "80vh", overflow: "auto" }}>
+            <h2>{selectedComponent.name || selectedComponent.brick_id}</h2>
+            <div style={{ marginBottom: 16 }}>
+              <span className={`brick-type-badge ${selectedComponent.object_type === "NodeShape" ? "badge-node" : "badge-prop"}`}>
+                {selectedComponent.object_type || "?"}
+              </span>
+              {selectedComponent.target_class && <span style={{ marginLeft: 8, color: "#666" }}>{selectedComponent.target_class}</span>}
+            </div>
+            {selectedComponent.description && (
+              <p style={{ color: "#666", fontSize: 14, marginBottom: 16 }}>{selectedComponent.description}</p>
+            )}
+            <h3 style={{ fontSize: 14, borderBottom: "1px solid #ddd", paddingBottom: 8, marginBottom: 12 }}>
+              Properties ({(selectedComponent.leaf_properties || []).length})
+            </h3>
+            {(selectedComponent.leaf_properties || []).length === 0 ? (
+              <div className="empty-hint">No properties defined</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {selectedComponent.leaf_properties.map((p, i) => (
+                  <div key={i} style={{ padding: 8, background: "#f8f9fa", borderRadius: 4, fontSize: 13 }}>
+                    <div style={{ fontWeight: 500 }}>{p.label || p.path}</div>
+                    <div style={{ color: "#666", fontSize: 12 }}>
+                      {p.path} • {p.datatype || "xsd:string"}
+                      {p.min_count !== undefined && p.min_count !== null && ` • min: ${p.min_count}`}
+                      {p.max_count !== undefined && p.max_count !== null && ` • max: ${p.max_count}`}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="modal-footer" style={{ marginTop: 16 }}>
+              <button className="btn btn-secondary" onClick={() => setSelectedComponent(null)}>Close</button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
