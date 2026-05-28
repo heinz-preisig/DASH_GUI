@@ -45,14 +45,28 @@ WORKDIR /app
 # Copy virtual environment from builder
 COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 
-# Copy React build from node-builder
+# Copy React build from node-builder (verified to exist)
 COPY --from=node-builder /app/web/static ./schema_app_v2/interfaces/web/static
+
+# Verify the React build was copied correctly
+RUN ls -la /app/schema_app_v2/interfaces/web/static/dist/ && \
+    test -f /app/schema_app_v2/interfaces/web/static/dist/index.html && \
+    echo "✓ React build verified"
 
 # Copy application code (excluding node_modules and other dev artifacts)
 COPY . .
 
 # Make entrypoint executable
 RUN chmod +x docker-entrypoint.sh
+
+# Final verification: Ensure React build is present
+RUN if [ -f /app/schema_app_v2/interfaces/web/static/dist/index.html ]; then \
+        echo "✓ React build present in final image"; \
+        ls -la /app/schema_app_v2/interfaces/web/static/dist/; \
+    else \
+        echo "✗ ERROR: React build missing!"; \
+        exit 1; \
+    fi
 
 # Expose web ports (both apps)
 EXPOSE 5000 5001

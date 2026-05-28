@@ -40,5 +40,7 @@ archive/
 # Large data not needed for basic operation
 shared_libraries_backup_*/
 
-# Built React app - must be rebuilt fresh in Docker
-schema_app_v2/interfaces/web/static/dist/
+# Web build artifacts - must be rebuilt fresh in Docker
+schema_app_v2/interfaces/web/static/
+schema_app_v2/interfaces/web/node_modules/
+schema_app_v2/interfaces/web/package-lock.json
