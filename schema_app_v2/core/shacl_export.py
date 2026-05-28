@@ -296,6 +296,18 @@ class SHACLExporter:
             lines.append("")
         return "\n".join(lines)
 
+    def _format_uri(self, uri: str) -> str:
+        """Format a URI for Turtle syntax - full URLs get wrapped in <> brackets"""
+        if not uri:
+            return uri
+        # If it's already a prefixed name (contains : but not ://), return as-is
+        if ":" in uri and "://" not in uri:
+            return uri
+        # If it's a full URL (contains ://), wrap in angle brackets
+        if "://" in uri:
+            return f"<{uri}>"
+        return uri
+
     def _generate_hierarchical_shacl(self, brick, schema: Schema, library_name: Optional[str],
                                    sequence: Optional[int], depth: int, group_id: Optional[str] = None) -> str:
         """Generate hierarchical SHACL with DASH annotations for a brick"""
@@ -304,7 +316,7 @@ class SHACLExporter:
         # All modern bricks are NodeShapes with leaf_properties
         shacl_lines.append(f"schema:{brick.name} a sh:NodeShape ;")
         if getattr(brick, 'target_class', ''):
-            shacl_lines.append(f"    sh:targetClass {brick.target_class} ;")
+            shacl_lines.append(f"    sh:targetClass {self._format_uri(brick.target_class)} ;")
         if brick.name:
             shacl_lines.append(f'    rdfs:label "{brick.name}" ;')
         if getattr(brick, 'description', ''):
@@ -326,7 +338,7 @@ class SHACLExporter:
             if not path:
                 continue
             shacl_lines.append("    sh:property [")
-            shacl_lines.append(f"        sh:path {path} ;")
+            shacl_lines.append(f"        sh:path {self._format_uri(path)} ;")
             shacl_lines.append(f'        sh:name "{label}"@en ;')
             if description:
                 shacl_lines.append(f'        sh:description "{description}"@en ;')
