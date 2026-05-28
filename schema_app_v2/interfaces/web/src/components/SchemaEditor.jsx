@@ -104,7 +104,8 @@ export function SchemaEditor({ sessionId, schemaData, allSchemas, brickLibraries
     const r = await api("DELETE", `/session/${sessionId}/schemas/${schemaData.schema_id}/components/${encodeURIComponent(brickId)}`);
     if (r.status === "success") {
       onToast("Component removed", "success");
-      loadComponents();
+      // Immediately update local state - don't rely on stale schemaData prop
+      setComponents(prev => prev.filter(c => c.brick_id !== brickId));
       loadTree();
       onSaved({ ...schemaData, component_brick_ids: (schemaData.component_brick_ids || []).filter(id => id !== brickId) });
     } else onToast(r.message || "Failed", "error");
