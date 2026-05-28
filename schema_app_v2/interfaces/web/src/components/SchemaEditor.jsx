@@ -160,6 +160,14 @@ export function SchemaEditor({ sessionId, schemaData, allSchemas, brickLibraries
     window.open(`/api/session/${sessionId}/schemas/${schemaData.schema_id}/export/shacl`, '_blank');
   };
 
+  const generateForm = () => {
+    window.open(`/api/session/${sessionId}/schemas/${schemaData.schema_id}/export/dash-form`, '_blank');
+  };
+
+  const previewForm = () => {
+    window.open(`/api/session/${sessionId}/schemas/${schemaData.schema_id}/preview/form`, '_blank');
+  };
+
   const doDelete = async () => {
     if (!window.confirm(`Delete schema "${schemaData.name}"?`)) return;
     const r = await api("DELETE", `/session/${sessionId}/schemas/${schemaData.schema_id}`);
@@ -178,6 +186,8 @@ export function SchemaEditor({ sessionId, schemaData, allSchemas, brickLibraries
           <h2 style={{ margin:0, borderBottom:"none", paddingBottom:0 }}>Schema Details</h2>
           <div style={{ display:"flex", gap:6 }}>
             <button className="btn btn-success btn-sm" onClick={exportShacl} title="Download SHACL Turtle">Export SHACL</button>
+            <button className="btn btn-primary btn-sm" onClick={generateForm} title="Download DASH HTML Form">Generate Form</button>
+            <button className="btn btn-secondary btn-sm" onClick={previewForm} title="Open form in browser to test">Preview Form</button>
             <button className="btn btn-secondary btn-sm" onClick={validate}>Validate</button>
             <button className="btn btn-danger btn-sm" onClick={doDelete}>Delete</button>
           </div>
