@@ -195,6 +195,14 @@ class BrickWebAPI:
             """Get bricks from a specific library"""
             bricks = self.backend.brick_core.get_all_bricks(library_name)
             return jsonify({"status": "success", "data": [b.to_dict() for b in bricks]})
+
+        @self.app.route('/api/libraries/<library_name>/active', methods=['POST'])
+        def set_active_library(library_name):
+            """Set the active library for subsequent brick operations"""
+            ok = self.backend.brick_core.set_active_library(library_name)
+            if ok:
+                return jsonify({"status": "success", "message": f"Active library set to '{library_name}'"})
+            return jsonify({"status": "error", "message": f"Library '{library_name}' not found"}), 404
         
         @self.app.route('/api/bricks', methods=['GET'])
         def get_all_bricks():

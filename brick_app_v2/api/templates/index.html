@@ -1120,7 +1120,10 @@ function App() {
     if (r.status === "success") {
       const libs = r.data || [];
       setLibraries(libs);
-      if (!activeLib && libs.length) setActiveLib(libs[0]);
+      if (!activeLib && libs.length) {
+        setActiveLib(libs[0]);
+        await api("POST", `/api/libraries/${encodeURIComponent(libs[0])}/active`);
+      }
     }
   }, [activeLib]);
 
@@ -1198,7 +1201,11 @@ function App() {
       </header>
 
       <div className="toolbar">
-        <select value={activeLib} onChange={e => setActiveLib(e.target.value)} style={{ width:180 }}>
+        <select value={activeLib} onChange={async e => {
+          const lib = e.target.value;
+          setActiveLib(lib);
+          await api("POST", `/api/libraries/${encodeURIComponent(lib)}/active`);
+        }} style={{ width:180 }}>
           {libraries.map(l => <option key={l} value={l}>{l}</option>)}
         </select>
         <button className="btn btn-secondary" onClick={() => setShowLibMgr(true)}>Manage Libraries</button>
