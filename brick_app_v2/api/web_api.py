@@ -217,6 +217,10 @@ class BrickWebAPI:
             data = request.get_json() or {}
             brick_type = data.get('brick_type', 'NodeShape')
             brick = self.backend.brick_core.create_brick(brick_type)
+            # Also set in session's editor_backend so GET /brick returns consistent data
+            backend_session = self.backend.get_session(session_id)
+            if backend_session:
+                backend_session.editor_backend.current_brick = brick
             return jsonify({"status": "success", "data": brick.to_dict()})
         
         @self.app.route('/api/session/<session_id>/brick', methods=['GET'])
