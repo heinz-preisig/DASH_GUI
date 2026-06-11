@@ -289,6 +289,35 @@
     </widget>
    </item>
 
+   <!-- ── Semantic Class (sh:class) ── -->
+   <item>
+    <widget class="QLabel" name="semanticClassLabel">
+     <property name="text"><string>Semantic Class (sh:class):</string></property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="semanticClassLayout">
+     <item>
+      <widget class="QLineEdit" name="sh_class_edit">
+       <property name="placeholderText"><string>e.g., foaf:Person, qudt:Mass</string></property>
+       <property name="toolTip"><string>Link to an ontology class for semantic awareness</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="browse_class_btn">
+       <property name="text"><string>Browse</string></property>
+       <property name="toolTip"><string>Browse ontology classes</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="clear_class_btn">
+       <property name="text"><string>Clear</string></property>
+       <property name="toolTip"><string>Clear semantic class</string></property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+
    <!-- ── Buttons ── -->
    <item>
     <layout class="QHBoxLayout" name="buttonLayout">

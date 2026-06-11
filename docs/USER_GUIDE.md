@@ -156,6 +156,74 @@ The web interface provides browser-based access with:
 
 ## Advanced Features
 
+### Semantic Awareness (sh:class)
+
+Link properties to ontology classes for smart form generation and validation hints.
+
+#### What it does
+
+When you set a **Semantic Class** (`sh:class`) on a property, the system:
+1. **Recognizes the ontology** (QUDT, Schema.org, FOAF, Brick, etc.)
+2. **Provides contextual help** — unit selectors, suggested properties, etc.
+3. **Exports standard SHACL** — `sh:class foaf:Person ;` in the Turtle output
+
+#### How to use it
+
+In the **Property Editor** (when adding/editing a brick property):
+
+**Field: Semantic Class (sh:class)**
+
+You can either:
+- **Type directly**: `foaf:Person`, `qudt:Mass`, `schema:PostalAddress`
+- **Click "Browse"**: Opens ontology browser to search loaded ontologies
+- **Click "Clear"**: Removes the semantic link
+
+#### What appears based on the class
+
+| Ontology | Class Example | Smart Widgets Appear |
+|----------|---------------|----------------------|
+| **QUDT** | `qudt:Mass`, `qudt:Temperature` | Unit dropdown (kg/g/lb/oz, °C/°F/K, etc.) |
+| **Schema.org** | `schema:Person`, `schema:Organization` | Suggested properties buttons (givenName, email, etc.) |
+| **FOAF** | `foaf:Person`, `foaf:Organization` | Suggested properties buttons (name, mbox, homepage) |
+| **Brick** | `brick:Temperature_Sensor` | Suggested Brick properties (measures, hasLocation) |
+
+#### Examples
+
+**Physical Quantity (QUDT)**
+```
+Property Name: Weight
+Property Path: ex:weight
+Datatype: xsd:decimal
+Semantic Class: qudt:Mass
+→ Unit selector appears: [kg ▼] [g] [lb] [oz]
+```
+
+**Person (FOAF)**
+```
+Property Name: Contact Person
+Property Path: ex:contact
+Datatype: xsd:string
+Semantic Class: foaf:Person
+→ Suggested properties: [name] [mbox] [homepage] [phone]
+  (clicking fills the property path automatically)
+```
+
+**Address (Schema.org)**
+```
+Property Name: Delivery Address
+Property Path: ex:deliveryAddress
+Datatype: xsd:string
+Semantic Class: schema:PostalAddress
+→ Suggested: [streetAddress] [addressLocality] [postalCode]
+```
+
+#### Why use this?
+
+- **Standards-compliant**: Uses existing ontologies (no custom extensions)
+- **Smart defaults**: Unit-aware quantities, context-aware suggestions
+- **Interoperable**: Other tools understand `sh:class` and `foaf:Person`
+- **Future-proof**: Adding more ontologies (Dublin Core, SIO, etc.) is easy
+
 ### Schema Validation
 Checks the component tree for structural problems:
 

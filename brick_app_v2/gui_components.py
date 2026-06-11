@@ -181,6 +181,8 @@ class PropertyEditorDialog(QDialog):
         self.use_custom_namespace.toggled.connect(self._on_namespace_toggled)
         self.browse_btn.clicked.connect(self._browse_ontology)
         self.generate_iri_btn.clicked.connect(self._generate_iri)
+        self.browse_class_btn.clicked.connect(self._browse_class)
+        self.clear_class_btn.clicked.connect(self._clear_class)
         self.okButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
 
@@ -223,6 +225,21 @@ class PropertyEditorDialog(QDialog):
                 if not label:
                     label = uri.split('#')[-1].split('/')[-1]
                 self.name_edit.setText(label)
+
+    def _browse_class(self):
+        """Browse for ontology class (sh:class)"""
+        if not self.ontology_manager:
+            QMessageBox.warning(self, "Error", "Ontology manager not available")
+            return
+        browser = SimpleOntologyBrowser(self.ontology_manager, self, mode="classes")
+        if browser.exec() == QDialog.DialogCode.Accepted and browser.selected_item:
+            item = browser.selected_item
+            uri = item.get('uri', item) if isinstance(item, dict) else item
+            self.sh_class_edit.setText(uri)
+
+    def _clear_class(self):
+        """Clear the semantic class field"""
+        self.sh_class_edit.clear()
 
     def _generate_iri(self):
         name = self.name_edit.text().strip()
@@ -269,6 +286,7 @@ class PropertyEditorDialog(QDialog):
 
         self.unique_lang_check.setChecked(bool(data.get('unique_lang', False)))
         self.description_edit.setPlainText(data.get('description', ''))
+        self.sh_class_edit.setText(data.get('sh_class', ''))
 
     def get_property_data(self):
         """Return a LeafProperty-compatible dict with all filled fields."""
@@ -279,6 +297,7 @@ class PropertyEditorDialog(QDialog):
             'path':          self.path_edit.text().strip(),
             'datatype':      self.datatype_combo.currentText(),
             'description':   self.description_edit.toPlainText().strip(),
+            'sh_class':      self.sh_class_edit.text().strip(),
         }
 
         def _int(widget):
