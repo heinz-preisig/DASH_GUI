@@ -117,11 +117,11 @@ class SHACLExporter:
                 attach_name = attach_brick.name.replace(" ", "_") if attach_brick else attach_brick_id
                 ref_shape_name = label.replace(" ", "_")
                 lines.append(f"# Reference: {label} attached to {attach_name} via {prop_path}")
-                lines.append(f"<{attach_name}Shape> sh:property [")
-                lines.append(f"    sh:path {prop_path} ;")
-                lines.append(f"    sh:node <{ref_shape_name}Shape> ;")
+                lines.append(f"schema:{attach_name} sh:property [")
+                lines.append(f"    sh:path {self._format_uri(prop_path)} ;")
+                lines.append(f"    sh:node schema:{ref_shape_name} ;")
                 lines.append(f"] .")
-                lines.append(f"# <{ref_shape_name}Shape> is defined in schema: {ref_schema_id}")
+                lines.append(f"# schema:{ref_shape_name} is defined in schema: {ref_schema_id}")
                 lines.append("")
 
         # Export property groups (sh:PropertyGroup declarations)
@@ -133,7 +133,7 @@ class SHACLExporter:
         if schema.root_brick_id and schema.groups:
             root_brick = self.brick_integration.get_brick_by_id(schema.root_brick_id, library_name)
             if root_brick:
-                root_name = f"schema:{root_brick.name}"
+                root_name = f"schema:{self._safe_name(root_brick.name)}"
                 patch_lines = [f"# Group assignments on root shape"]
                 for brick_id in schema.component_brick_ids:
                     ui = schema.get_component_ui_metadata(brick_id)
@@ -143,10 +143,10 @@ class SHACLExporter:
                     if not comp_brick:
                         continue
                     safe_group = ui.group_id.replace(' ', '_')
-                    path = f"schema:has{comp_brick.name}"
+                    path = f"schema:has{self._safe_name(comp_brick.name)}"
                     patch_lines.append(f"{root_name} sh:property [")
                     patch_lines.append(f"    sh:path {path} ;")
-                    patch_lines.append(f"    sh:node schema:{comp_brick.name} ;")
+                    patch_lines.append(f"    sh:node schema:{self._safe_name(comp_brick.name)} ;")
                     patch_lines.append(f'    sh:name "{comp_brick.name}"@en ;')
                     patch_lines.append(f"    sh:group schema:{safe_group} ;")
                     patch_lines.append(f"    sh:order {ui.sequence} ;")
@@ -296,6 +296,10 @@ class SHACLExporter:
             lines.append("")
         return "\n".join(lines)
 
+    def _safe_name(self, name: str) -> str:
+        """Sanitize a name for use in Turtle prefixed names (replace spaces with underscores)"""
+        return name.replace(" ", "_") if name else name
+
     def _format_uri(self, uri: str) -> str:
         """Format a URI for Turtle syntax - full URLs get wrapped in <> brackets"""
         if not uri:
@@ -314,7 +318,7 @@ class SHACLExporter:
         shacl_lines = []
 
         # All modern bricks are NodeShapes with leaf_properties
-        shacl_lines.append(f"schema:{brick.name} a sh:NodeShape ;")
+        shacl_lines.append(f"schema:{self._safe_name(brick.name)} a sh:NodeShape ;")
         if getattr(brick, 'target_class', ''):
             shacl_lines.append(f"    sh:targetClass {self._format_uri(brick.target_class)} ;")
         if brick.name:
@@ -370,12 +374,12 @@ class SHACLExporter:
             child_ui = schema.get_component_ui_metadata(child_id)
             edge = schema.get_edge_to(child_id) if hasattr(schema, 'get_edge_to') else None
             path = (edge.path_iri if edge and edge.path_iri
-                    else f"schema:has{child_brick.name.capitalize()}")
+                    else f"schema:has{self._safe_name(child_brick.name).capitalize()}")
             label = child_ui.label if child_ui and child_ui.label else child_brick.name
             order = child_ui.sequence if child_ui else 0
             shacl_lines.append("    sh:property [")
             shacl_lines.append(f"        sh:path {path} ;")
-            shacl_lines.append(f"        sh:node schema:{child_brick.name} ;")
+            shacl_lines.append(f"        sh:node schema:{self._safe_name(child_brick.name)} ;")
             shacl_lines.append(f'        sh:name "{label}"@en ;')
             if child_ui and child_ui.help_text:
                 shacl_lines.append(f'        sh:description "{child_ui.help_text}"@en ;')
