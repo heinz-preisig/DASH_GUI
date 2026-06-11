@@ -364,6 +364,7 @@ class SHACLExporter:
             in_values = lp.get('in_values', [])
             min_incl = lp.get('min_inclusive', None)
             max_incl = lp.get('max_inclusive', None)
+            sh_class = lp.get('sh_class', '')
             if not path:
                 continue
             shacl_lines.append("    sh:property [")
@@ -383,6 +384,8 @@ class SHACLExporter:
                 shacl_lines.append(f"        sh:minInclusive {min_incl} ;")
             if max_incl is not None:
                 shacl_lines.append(f"        sh:maxInclusive {max_incl} ;")
+            if sh_class:
+                shacl_lines.append(f"        sh:class {self._format_uri(sh_class)} ;")
             shacl_lines.append(f"        sh:order {order} ;")
             if group_id:
                 shacl_lines.append(f"        sh:group schema:{group_id.replace(' ', '_')} ;")

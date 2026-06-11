@@ -1,26 +1,43 @@
 # Session Status
-Last updated: 2026-05-20
+Last updated: 2026-06-11
 
-## What Was Done This Session
+## What Was Done This Session (2026-06-11)
 
-### Fixes Applied
-- `common` module import path fixed in all 4 files that needed it:
-  - `brick_app_v2/core/brick_core_simple.py`
-  - `brick_app_v2/core/multi_tenant_backend.py`
-  - `brick_app_v2/core/brick_backend.py`
-  - `brick_app_v2/api/web_api.py`
-  - Each now adds `DASH_GUI/` root to `sys.path` via `Path(__file__)` — no longer fragile
-- `brick_app_v2/pyproject.toml` — `packages.find` now includes `business*`, `api*`, `ui*`
-- `brick_app_v2/core/ontology_manager.py.backup` moved to `brick_app_v2/archive/`
-- Empty dirs removed: `interfaces/`, `gui/`, `schema/core/`, `schema/gui/`
-- `ontology_manager._parse_rdf_file` — malformed `schema.rdf` now silenced (was printing error on every startup)
-- `progress.txt` added to `.gitignore`
-- All docs updated — no more references to `run_tasks.py` (removed) or `start-schema-app.sh` (renamed):
-  - `README.md`
-  - `docs/QUICK_START.md`
+### Semantic Awareness Feature (3 Phases Complete)
+
+**Phase 1: sh:class Foundation**
+- Added `sh_class` field to `LeafProperty` dataclass in `brick_core_simple.py`
+- Added semantic class input to PropertyEditorModal (web UI)
+- Added ontology class browser to PropertyEditorModal
+- Updated SHACL export to include `sh:class` predicate
+
+**Phase 2: Enrichment Engine Backend**
+- Created `brick_app_v2/core/enrichment_engine.py` with:
+  - `EnrichmentEngine` class for ontology-aware enrichment
+  - QUDT unit lookup (Mass → kg/g/lb/oz, Temperature → K/°C/°F, etc.)
+  - Schema.org property suggestions (Person → givenName/familyName/email)
+  - FOAF property suggestions (Person → name/mbox/homepage)
+  - Brick schema suggestions (Temperature_Sensor → measures/hasLocation)
+- Added `GET /api/enrichment?class_iri=...` endpoint to Flask API
+
+**Phase 3: Frontend Enrichment Widgets**
+- Added React state for enrichment data and loading state
+- Added `useEffect` hook to auto-fetch enrichment when sh_class changes
+- Added QUDT unit dropdown widget (appears when class is a quantity kind)
+- Added suggested properties widget (appears for Schema.org/FOAF/Brick classes)
+- Clicking a suggested property auto-fills the property path
+
+### Bug Fixes (Schema Preview)
+- Fixed library path to use `ShaclForm-library` (hyphen) consistently across:
+  - `common/library_manager.py`
+  - `Dockerfile`
+  - `docker-compose.yml`
+  - `docs/ARCHITECTURE.md`
   - `docs/USER_GUIDE.md`
-  - `docs/README_V2_STATUS.md`
-  - `docs/TASK_MANAGER.md` — deprecation notice added at top
+- Fixed Turtle generation bugs in `shacl_export.py`:
+  - Schema references now use prefixed names instead of angle brackets
+  - Brick names with spaces are sanitized (spaces → underscores)
+  - Prefix collector now scans edge-referenced bricks (fixes missing foaf: prefix)
 
 ## Completed (2026-05-20)
 
@@ -58,6 +75,80 @@ uv run python run_schema_app_web.py   # → http://localhost:5000
 uv run python -m pytest test_smoke.py -v
 ```
 
+## Testing Semantic Awareness (Pending)
+
+To test the new semantic awareness feature:
+
+```bash
+cd /home/heinz/1_Gits/ShaclForms/DASH_GUI
+uv run python run_brick_app_web.py
+# Open http://localhost:5001
+```
+
+### Test Cases:
+
+1. **QUDT Units**
+   - Create brick → Add Property
+   - Set Semantic Class to `qudt:Mass` (or browse QUDT ontology)
+   - **Expected**: Unit dropdown appears with [kg, g, lb, oz]
+   - Select a unit, save property
+
+2. **Schema.org Suggestions**
+   - Set Semantic Class to `schema:Person`
+   - **Expected**: Suggested properties appear: [givenName, familyName, email, ...]
+   - Click a suggestion → property path auto-fills
+
+3. **FOAF Suggestions**
+   - Set Semantic Class to `foaf:Person`
+   - **Expected**: Suggested properties: [name, mbox, homepage, depiction, ...]
+
+4. **SHACL Export**
+   - Save brick with semantic class
+   - Export to TTL
+   - **Expected**: `sh:class foaf:Person ;` appears in property block
+
+### API Test:
+```bash
+curl "http://localhost:5001/api/enrichment?class_iri=qudt:Mass"
+```
+
+## Files Modified Today
+
+| File | Change |
+|------|--------|
+| `brick_app_v2/core/brick_core_simple.py` | Added `sh_class` to `LeafProperty` |
+| `brick_app_v2/core/enrichment_engine.py` | **NEW** - EnrichmentEngine class |
+| `brick_app_v2/api/web_api.py` | Added `/api/enrichment` endpoint |
+| `brick_app_v2/api/templates/index.html` | Added enrichment widgets |
+| `schema_app_v2/core/shacl_export.py` | Export `sh:class` predicate |
+| `common/library_manager.py` | Fixed library path (hyphen) |
+| `Dockerfile` | Fixed library path |
+| `docker-compose.yml` | Fixed library path |
+| `docs/ARCHITECTURE.md` | Updated library path references |
+| `docs/USER_GUIDE.md` | Updated library path references |
+
+## Quick Start for Tomorrow
+
+```bash
+cd /home/heinz/1_Gits/ShaclForms/DASH_GUI
+uv run python run_brick_app_web.py
+# Test at http://localhost:5001
+```
+
+**What's Ready:**
+- All 3 phases of semantic awareness implemented
+- Backend enrichment API working
+- Frontend widgets added (unit dropdown, suggested properties)
+- Test cases documented above
+
+**If Something Breaks:**
+- Clear Python cache:
+  ```bash
+  find . -name "*.pyc" -delete && find . -name "__pycache__" -type d -exec rm -rf {} +
+  ```
+- Clear browser cache and hard refresh (Ctrl+F5)
+
 ## Known Issues
 - `common/` module is outside both sub-packages — fine for local/Docker use, breaks `pip install`
 - `extend_schema` not exposed in web API (authoring-only feature)
+- Semantic awareness not yet implemented in Qt GUI (web only)

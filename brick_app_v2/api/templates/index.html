@@ -361,6 +361,7 @@ function DownloadOntologyModal({ onClose, onToast }) {
 function PropertyEditorModal({ sessionId, onSave, onClose }) {
   const EMPTY_FORM = {
     name: "", property_path: "", datatype: "xsd:string", description: "",
+    sh_class: "",
     min_count: "", max_count: "",
     min_length: "", max_length: "", pattern: "",
     min_inclusive: "", max_inclusive: "", min_exclusive: "", max_exclusive: "",
@@ -369,7 +370,38 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
   };
   const [form, setForm] = useState(EMPTY_FORM);
   const [showOntBrowser, setShowOntBrowser] = useState(false);
+  const [showClassBrowser, setShowClassBrowser] = useState(false);
+  const [enrichment, setEnrichment] = useState(null);
+  const [enrichmentLoading, setEnrichmentLoading] = useState(false);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  // Fetch enrichment when sh_class changes
+  React.useEffect(() => {
+    if (!form.sh_class) {
+      setEnrichment(null);
+      return;
+    }
+    
+    const fetchEnrichment = async () => {
+      setEnrichmentLoading(true);
+      try {
+        const resp = await fetch(`/api/enrichment?class_iri=${encodeURIComponent(form.sh_class)}`);
+        const data = await resp.json();
+        if (data.status === "success") {
+          setEnrichment(data.data);
+        } else {
+          setEnrichment(null);
+        }
+      } catch (e) {
+        console.error("Enrichment fetch failed:", e);
+        setEnrichment(null);
+      } finally {
+        setEnrichmentLoading(false);
+      }
+    };
+    
+    fetchEnrichment();
+  }, [form.sh_class]);
 
   const dt = form.datatype;
   const isString  = dt === "xsd:string" || dt === "xsd:anyURI" || dt === "rdf:HTML";
@@ -394,6 +426,11 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
       if (last) set("name", last);
     }
     setShowOntBrowser(false);
+  };
+
+  const handleClassSelect = item => {
+    set("sh_class", item.uri);
+    setShowClassBrowser(false);
   };
 
   const save = () => {
@@ -466,6 +503,65 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
           <div className="form-row"><label>sh:hasValue</label><div className="field"><input type="text" value={form.has_value} onChange={e => set("has_value", e.target.value)} placeholder="optional fixed value"/></div></div>
 
           <div className="form-row"><label>Description</label><div className="field"><textarea value={form.description} onChange={e => set("description", e.target.value)}/></div></div>
+
+          <div className="form-row">
+            <label>Semantic Class (sh:class)</label>
+            <div className="field">
+              <div className="input-with-btn">
+                <input type="text" value={form.sh_class} onChange={e => set("sh_class", e.target.value)} placeholder="e.g., foaf:Person, qudt:Mass"/>
+                <button className="btn btn-secondary btn-sm" onClick={() => setShowClassBrowser(true)} title="Browse ontology classes">Browse</button>
+                {form.sh_class && <button className="btn btn-secondary btn-sm" onClick={() => set("sh_class", "")} title="Clear">Clear</button>}
+              </div>
+              {form.sh_class && <small style={{color: "#666", marginTop: "4px", display: "block"}}>Linked to: {form.sh_class}</small>}
+              
+              {/* Enrichment widgets */}
+              {enrichmentLoading && <small style={{color: "#999", marginTop: "4px", display: "block"}}>Loading enrichment...</small>}
+              
+              {/* QUDT Unit Selector */}
+              {enrichment && enrichment.source_ontology === "qudt" && enrichment.enrichments.has_units && (
+                <div style={{marginTop: "12px", padding: "8px", background: "#f5f5f5", borderRadius: "4px"}}>
+                  <label style={{fontSize: "12px", fontWeight: "bold", display: "block", marginBottom: "4px"}}>
+                    {enrichment.enrichments.quantity_kind} — Select Unit:
+                  </label>
+                  <select 
+                    value={form.unit || ""} 
+                    onChange={e => set("unit", e.target.value)}
+                    style={{width: "100%", padding: "4px", fontSize: "13px"}}
+                  >
+                    <option value="">(default)</option>
+                    {enrichment.enrichments.applicable_units.map(u => (
+                      <option key={u} value={u}>
+                        {enrichment.enrichments.unit_labels[u]} ({u})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              
+              {/* Suggested Properties */}
+              {enrichment && enrichment.enrichments.has_suggestions && (
+                <div style={{marginTop: "12px", padding: "8px", background: "#f0f8ff", borderRadius: "4px"}}>
+                  <label style={{fontSize: "12px", fontWeight: "bold", display: "block", marginBottom: "4px"}}>
+                    Suggested properties for {enrichment.enrichments.class_name || enrichment.label}:
+                  </label>
+                  <div style={{display: "flex", flexWrap: "wrap", gap: "4px"}}>
+                    {enrichment.enrichments.suggested_properties.slice(0, 8).map(prop => (
+                      <button
+                        key={prop}
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => set("property_path", enrichment.enrichments.property_prefix + prop)}
+                        title={`Use ${prop} as property path`}
+                        style={{fontSize: "11px", padding: "2px 6px"}}
+                      >
+                        {prop}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="modal-footer">
             <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
             <button className="btn btn-primary" disabled={!form.name || !form.property_path} onClick={save}>Add Property</button>
@@ -473,6 +569,7 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
         </div>
       </div>
       {showOntBrowser && <OntologyBrowserModal mode="properties" sessionId={sessionId} onSelect={handleOntSelect} onClose={() => setShowOntBrowser(false)}/>}
+      {showClassBrowser && <OntologyBrowserModal mode="classes" sessionId={sessionId} onSelect={handleClassSelect} onClose={() => setShowClassBrowser(false)}/>}
     </>
   );
 }

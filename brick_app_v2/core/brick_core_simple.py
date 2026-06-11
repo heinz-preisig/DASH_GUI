@@ -39,6 +39,7 @@ class LeafProperty:
     label: str = ""  # rdfs:label
     datatype: Optional[str] = None  # xsd:string, xsd:decimal, etc.
     node_kind: Optional[str] = None  # sh:IRI for dropdowns
+    sh_class: Optional[str] = None  # sh:class - semantic class IRI for ontology linking
     in_values: List[str] = field(default_factory=list)  # sh:in (IRIs or literals)
     has_value: Optional[str] = None  # sh:hasValue for static labels
     min_count: int = 1

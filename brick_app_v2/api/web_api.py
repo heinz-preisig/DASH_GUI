@@ -728,6 +728,59 @@ class BrickWebAPI:
                     "message": "Ontology not found"
                 }), 404
         
+        # Semantic enrichment endpoint
+        @self.app.route('/api/enrichment', methods=['GET'])
+        def get_enrichment():
+            """
+            Get semantic enrichment for a class IRI.
+            
+            Query params:
+              class_iri: Class IRI or prefixed name (e.g., "qudt:Mass", "foaf:Person")
+              
+            Returns enrichment context including:
+              - label, description
+              - applicable units (for QUDT)
+              - suggested properties (for Schema.org, FOAF, Brick)
+            """
+            from flask import request
+            class_iri = request.args.get('class_iri', '')
+            
+            if not class_iri:
+                return jsonify({
+                    "status": "error",
+                    "message": "Missing class_iri parameter"
+                }), 400
+            
+            try:
+                from core.enrichment_engine import get_enrichment_engine
+                
+                # Use first available session's ontology manager, or create standalone
+                ontology_manager = None
+                for sess in self.backend.session_manager.sessions.values():
+                    if hasattr(sess, 'editor_backend') and hasattr(sess.editor_backend, 'ontology_manager'):
+                        ontology_manager = sess.editor_backend.ontology_manager
+                        break
+                
+                engine = get_enrichment_engine(ontology_manager)
+                context = engine.enrich(class_iri)
+                
+                if context:
+                    return jsonify({
+                        "status": "success",
+                        "data": engine.to_dict(context)
+                    })
+                else:
+                    return jsonify({
+                        "status": "error",
+                        "message": f"Could not enrich class: {class_iri}"
+                    }), 404
+                    
+            except Exception as e:
+                return jsonify({
+                    "status": "error",
+                    "message": f"Enrichment failed: {str(e)}"
+                }), 500
+        
         # Event history
         @self.app.route('/api/session/<session_id>/events', methods=['GET'])
         def get_session_events(session_id):
