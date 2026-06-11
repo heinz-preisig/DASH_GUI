@@ -171,14 +171,13 @@ class SHACLExporter:
             f"@prefix schema: <http://example.org/schema/{schema.schema_id}/> .",
         ]
 
-        # Collect prefixes from all bricks: target_class + leaf_property paths
+        # Collect prefixes from all bricks: target_class + leaf_property paths + edges
         seen_prefixes = set()
         reserved = {"sh", "dash", "xsd", "rdf", "rdfs", "schema"}
         all_brick_ids = ([schema.root_brick_id] if schema.root_brick_id else []) + schema.component_brick_ids
-        for brick_id in all_brick_ids:
-            brick = self.brick_integration.get_brick_by_id(brick_id, library_name)
-            if not brick:
-                continue
+        
+        def collect_prefixes_from_brick(brick, schema_obj):
+            """Extract prefixes from a brick's properties and edges"""
             candidates = []
             if getattr(brick, 'target_class', '') and ":" in brick.target_class:
                 candidates.append(brick.target_class.split(":")[0])
@@ -186,10 +185,36 @@ class SHACLExporter:
                 path = lp.get('path', '')
                 if path and ":" in path:
                     candidates.append(path.split(":")[0])
-            for prefix in candidates:
+            # Check edge paths for this brick as parent
+            if schema_obj and hasattr(schema_obj, 'edges'):
+                for edge in schema_obj.edges:
+                    if edge.parent_brick_id == brick.brick_id and edge.path_iri and ":" in edge.path_iri:
+                        candidates.append(edge.path_iri.split(":")[0])
+            return candidates
+        
+        # Track all bricks we've scanned (including edge children)
+        scanned_brick_ids = set(all_brick_ids)
+        
+        for brick_id in list(all_brick_ids):  # Use list() to avoid mutation during iteration
+            brick = self.brick_integration.get_brick_by_id(brick_id, library_name)
+            if not brick:
+                continue
+            for prefix in collect_prefixes_from_brick(brick, schema):
                 if prefix and prefix not in seen_prefixes and prefix not in reserved:
                     prefixes.append(f"@prefix {prefix}: <http://example.org/{prefix}/#> .")
                     seen_prefixes.add(prefix)
+            
+            # Also scan child bricks from edges (may not be in component list)
+            if schema and hasattr(schema, 'edges'):
+                for edge in schema.edges:
+                    if edge.parent_brick_id == brick_id:
+                        child_brick = self.brick_integration.get_brick_by_id(edge.child_brick_id, library_name)
+                        if child_brick and edge.child_brick_id not in scanned_brick_ids:
+                            scanned_brick_ids.add(edge.child_brick_id)
+                            for prefix in collect_prefixes_from_brick(child_brick, schema):
+                                if prefix and prefix not in seen_prefixes and prefix not in reserved:
+                                    prefixes.append(f"@prefix {prefix}: <http://example.org/{prefix}/#> .")
+                                    seen_prefixes.add(prefix)
 
         return prefixes
     
