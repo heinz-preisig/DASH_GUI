@@ -15,7 +15,7 @@ run_schema_app_qt.py   →  schema_app_v2/  (assemble bricks into schemas, expor
 ```
 
 Both apps also expose a Flask REST API (`run_brick_app_web.py` / `run_schema_app_web.py`) and
-share brick/schema data via an external library directory (`ShaclForm_library/` sibling to `DASH_GUI/`).
+share brick/schema data via an external library directory (`ShaclForm-library/` sibling to `DASH_GUI/`).
 
 ### Form Rendering
 
@@ -212,14 +212,14 @@ core/multi_tenant_backend.py             session isolation for web API
 ### Shared
 
 ```
-common/library_manager.py      SharedLibraryManager — resolves ShaclForm_library/ path
+common/library_manager.py      SharedLibraryManager — resolves ShaclForm-library/ path
 ontologies/cache/              pre-loaded ontology JSON caches
 ```
 
 ### External Data
 
 ```
-../ShaclForm_library/          sibling directory (outside the code repo)
+../ShaclForm-library/          sibling directory (outside the code repo)
   default/bricks/              brick JSON + TTL files
   default/schemas/             schema JSON files
 ```

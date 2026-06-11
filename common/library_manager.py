@@ -24,7 +24,8 @@ class SharedLibraryManager:
         if docker_data_path and os.path.exists(docker_data_path):
             self.base_path = Path(docker_data_path).resolve()
         else:
-            # Local development: external ShaclForm_library at sibling of DASH_GUI project
+            # Local development: external ShaclForm-library at sibling of DASH_GUI project
+            # Uses hyphen to match GitHub repository name
             project_root = Path(__file__).resolve().parent.parent
             self.base_path = (project_root.parent / "ShaclForm-library").resolve()
 

@@ -10,9 +10,11 @@ services:
       - FLASK_ENV=production
       - APP=schema          # or APP=brick for brick app
       - PORT=5000
+      - SHARED_LIBRARIES_ROOT=/ShaclForm-library
     volumes:
       # Persist user data (schemas, bricks they create)
-      - ./ShaclForm-library:/app/data
+      # ShaclForm-library is sibling directory to DASH_GUI
+      - ../ShaclForm-library:/ShaclForm-library
     restart: unless-stopped
 
   # Brick App - http://localhost:5001
@@ -25,6 +27,7 @@ services:
   #     - FLASK_ENV=production
   #     - APP=brick
   #     - PORT=5001
+  #     - SHARED_LIBRARIES_ROOT=/ShaclForm-library
   #   volumes:
-  #     - ./shared_libraries:/app/data
+  #     - ../ShaclForm-library:/ShaclForm-library
   #   restart: unless-stopped

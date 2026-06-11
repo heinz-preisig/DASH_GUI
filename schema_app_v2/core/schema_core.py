@@ -5,7 +5,12 @@ Simple schema composition and management following brick_app_v2 architecture
 
 import json
 import os
+import sys
 import uuid
+from pathlib import Path as _Path
+_dash_gui_root = str(_Path(__file__).parent.parent.parent)
+if _dash_gui_root not in sys.path:
+    sys.path.insert(0, _dash_gui_root)
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Union

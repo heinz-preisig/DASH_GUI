@@ -151,7 +151,7 @@ The web interface provides browser-based access with:
 
 #### Add Custom Bricks
 1. Create brick files in JSON format
-2. Place in `ShaclForm_library/default/bricks/`
+2. Place in `ShaclForm-library/default/bricks/`
 3. Bricks appear automatically in the interface
 
 ## Advanced Features

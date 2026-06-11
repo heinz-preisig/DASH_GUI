@@ -76,7 +76,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/')" || exit 1
 
 # Default data path — mounted outside the /app code tree
-ENV SHARED_LIBRARIES_ROOT=/ShaclForm_library
+ENV SHARED_LIBRARIES_ROOT=/ShaclForm-library
 
 # Use entrypoint script for flexible app selection
 ENTRYPOINT ["./docker-entrypoint.sh"]

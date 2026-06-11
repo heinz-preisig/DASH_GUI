@@ -3,6 +3,12 @@ Brick Integration Module
 Interface between schema_app_v2 and brick_app_v2
 """
 
+import sys
+from pathlib import Path as _Path
+_dash_gui_root = str(_Path(__file__).parent.parent.parent)
+if _dash_gui_root not in sys.path:
+    sys.path.insert(0, _dash_gui_root)
+
 from typing import List, Optional, Dict, Any
 
 try:
