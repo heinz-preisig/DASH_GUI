@@ -1,66 +1,90 @@
 # Session Status
-Last updated: 2026-06-11
+Last updated: 2026-06-12
 
-## What Was Done This Session (2026-06-11)
+## What Was Done (2026-06-12)
 
-### Semantic Awareness Feature (3 Phases Complete)
+### Directory Rename
+- `brick_app_v2/` → `brick_app/`, `schema_app_v2/` → `schema_app/`
+- All imports, `pyproject.toml` names and `uv` workspace members updated
+- `uv sync` confirmed clean after rename
 
-**Phase 1: sh:class Foundation (Web + Qt)**
-- Added `sh_class` field to `LeafProperty` dataclass in `brick_core_simple.py`
-- **Web UI**: Added semantic class input to PropertyEditorModal with ontology browser
-- **Qt GUI**: Added sh:class field to `property_editor.ui` with browse/clear buttons
-- Updated `PropertyEditorDialog` in `gui_components.py` to handle sh_class
-- Updated SHACL export to include `sh:class` predicate
+### Test Infrastructure
+- Archived old script-style tests from `schema_app/` to `schema_app/archive/`
+- Created `tests/test_schema_app.py` — proper pytest covering Schema CRUD,
+  sequences, grouping, nesting, serialisation, SHACL export
+- `pyproject.toml` `testpaths = ["tests"]` — all 60 tests passing
 
-**Phase 2: Enrichment Engine Backend**
-- Created `brick_app/core/enrichment_engine.py` with:
-  - `EnrichmentEngine` class for ontology-aware enrichment
-  - QUDT unit lookup (Mass → kg/g/lb/oz, Temperature → K/°C/°F, etc.)
-  - Schema.org property suggestions (Person → givenName/familyName/email)
-  - FOAF property suggestions (Person → name/mbox/homepage)
-  - Brick schema suggestions (Temperature_Sensor → measures/hasLocation)
-- Added `GET /api/enrichment?class_iri=...` endpoint to Flask API
+### EnrichmentEngine — moved to `common/`
+- `common/enrichment_engine.py` + `common/widget_rules.ttl` are now the
+  **single source of truth** (previously only in `brick_app/core/`)
+- `brick_app/core/enrichment_engine.py` is a thin re-export from `common`
+- Both `brick_app` and `schema_app` import from `common`
 
-**Phase 3: Frontend Enrichment Widgets**
-- Added React state for enrichment data and loading state
-- Added `useEffect` hook to auto-fetch enrichment when sh_class changes
-- Added QUDT unit dropdown widget (appears when class is a quantity kind)
-- Added suggested properties widget (appears for Schema.org/FOAF/Brick classes)
-- Clicking a suggested property auto-fills the property path
+### Enrichment Engine layers — all verified
+| Layer | Trigger | Widget type |
+|-------|---------|-------------|
+| 0 | `sh:datatype` (e.g. `xsd:boolean`) | `boolean_toggle`, `date_picker`, `decimal_input`, etc. |
+| 1 | ProMo dimensional signature | `unit_dropdown` |
+| 2 | QUDT/ontology predicate query | `unit_dropdown` |
+| 3 | IRI namespace prefix | `property_suggestions` |
 
-### Bug Fixes (Schema Preview)
-- Fixed library path to use `ShaclForm-library` (hyphen) consistently across:
-  - `common/library_manager.py`
-  - `Dockerfile`
-  - `docker-compose.yml`
-  - `docs/ARCHITECTURE.md`
-  - `docs/USER_GUIDE.md`
-- Fixed Turtle generation bugs in `shacl_export.py`:
-  - Schema references now use prefixed names instead of angle brackets
-  - Brick names with spaces are sanitized (spaces → underscores)
-  - Prefix collector now scans edge-referenced bricks (fixes missing foaf: prefix)
+### Enrichment wired into SHACL exporter (the core goal)
+- `schema_app/core/shacl_export.py` `_get_dash_editor()` / `_get_dash_viewer()`
+  now call `EnrichmentEngine` instead of using a hardcoded datatype map
+- Resolution order: `sh:class` (Layers 1–3) → `sh:datatype` (Layer 0) → fallback
+- Exported Turtle now contains **semantically-correct** `dash:editor` /
+  `dash:viewer` annotations — these drive the Darmstadt `shacl-form`
+  end-user widget rendering
 
-## Completed (2026-05-20)
+### Bug fixes
+- `GET /api/session/<id>/ontologies` was returning HTTP 500 because the
+  response dict contained a live `rdflib.Graph` (not JSON-serialisable).
+  Fixed by stripping the `"graph"` key before `jsonify`.
+- Web frontend: added Layer 0 datatype `useEffect` — green widget hint badge
+  now appears below the datatype dropdown in Add Property dialog
+- Qt frontend: `_run_datatype_enrichment()` wired to
+  `datatype_combo.currentTextChanged` — same green hint label in Qt dialog
 
-1. ✅ Docker smoke test — schema:200, brick:200
-2. ✅ Fix `docs/TROUBLESHOOTING.md` — stale references replaced
-3. ✅ Smoke test script — `test_smoke.py`, 11/11 passing
-4. ✅ "Import SHACL" UI button — brick app Qt GUI
-5. ✅ Docker Hub publish — via GitHub CI
-6. ✅ Schema App Qt — `open_ui_metadata_editor` wired to `UIMetadataPanelDialog`
-7. ✅ Schema App Qt — `create_daisy_chain` removed (out of scope for this tool)
-8. ✅ Schema App Qt — `validate_schema` implemented (tree structure check)
-9. ✅ Schema App Qt — `add_schema_reference` implemented (sh:node cross-schema ref)
-10. ✅ Schema App Qt — `extend_schema` implemented (inheritance-based schema copy)
-11. ✅ Schema App Qt — `generate_web_form` now opens browser preview automatically
-12. ✅ `UiLoader.load_dialog()` method added
-13. ✅ Absolute imports → relative imports in `schema_gui.py`
-14. ✅ Tree items now store `brick_id` as UserRole data
+### Verified end-to-end (both Web and Qt)
+| Test | Web | Qt |
+|------|-----|----|
+| Ontology browser loads | ✅ | ✅ |
+| `xsd:boolean` → `boolean_toggle` hint | ✅ | ✅ |
+| `xsd:decimal` → `decimal_input` hint | ✅ | ✅ |
+| `qudt:Mass` → unit dropdown (58 units) | ✅ | ✅ |
+| `foaf:Person` → property suggestions | ✅ | ✅ |
+| Exported SHACL has correct `dash:editor` | ✅ | n/a |
+
+---
+
+## What Was Done (2026-06-11)
+
+### Semantic Awareness Feature (3 Phases)
+
+**Phase 1 — sh:class Foundation**
+- Added `sh_class` to `LeafProperty` dataclass
+- Web UI + Qt GUI: sh:class field with ontology browser
+
+**Phase 2 — EnrichmentEngine Backend**
+- `EnrichmentEngine` with layered resolution (dimensional, predicate, namespace)
+- QUDT unit lookup, Schema.org / FOAF / Brick property suggestions
+- `GET /api/enrichment?class_iri=...` and `GET /api/enrichment/datatype?datatype=...`
+
+**Phase 3 — Frontend Enrichment Widgets**
+- Web: React `useEffect` hooks, unit dropdown, suggested properties chips
+- Qt: `_run_enrichment()`, `_show_unit_dropdown()`, `_show_property_suggestions()`
+
+### Earlier work (2026-05-20 and prior)
+- Docker smoke tests, Import SHACL UI, Schema App Qt features (validate, extend,
+  add_schema_reference, generate_web_form), constraint editor, property editor
+  parity between Qt and web
+
+---
 
 ## How to Launch
 
 ```bash
-# Desktop
+# Desktop Qt
 uv run python run_brick_app_qt.py
 uv run python run_schema_app_qt.py
 
@@ -68,90 +92,53 @@ uv run python run_schema_app_qt.py
 uv run python run_brick_app_web.py    # → http://localhost:5001
 uv run python run_schema_app_web.py   # → http://localhost:5000
 
-# Docker
-./dev-start-schema-docker.sh          # → http://localhost:5000
-./dev-start-brick-docker.sh           # → http://localhost:5001
-
 # Tests
-uv run python -m pytest test_smoke.py -v
+uv run python -m pytest tests/ -v     # 60 tests, all passing
 ```
 
-## Testing Semantic Awareness (Pending)
-
-To test the new semantic awareness feature:
+## Quick API Tests (with server running on :5001)
 
 ```bash
-cd /home/heinz/1_Gits/ShaclForms/DASH_GUI
-uv run python run_brick_app_web.py
-# Open http://localhost:5001
+# Layer 0 — datatype
+curl "http://localhost:5001/api/enrichment/datatype?datatype=xsd:boolean"
+
+# Layer 2 — QUDT predicate
+curl "http://localhost:5001/api/enrichment?class_iri=http://qudt.org/vocab/quantitykind/Mass"
+
+# Layer 3 — namespace
+curl "http://localhost:5001/api/enrichment?class_iri=foaf:Person"
+
+# Ontology browser
+curl "http://localhost:5001/api/session/<session_id>/ontologies"
 ```
 
-### Test Cases:
+## Key Files
 
-1. **QUDT Units**
-   - Create brick → Add Property
-   - Set Semantic Class to `qudt:Mass` (or browse QUDT ontology)
-   - **Expected**: Unit dropdown appears with [kg, g, lb, oz]
-   - Select a unit, save property
+| File | Role |
+|------|------|
+| `common/enrichment_engine.py` | EnrichmentEngine — single source of truth |
+| `common/widget_rules.ttl` | Declarative widget rules (datatype, sig, predicate, namespace) |
+| `brick_app/core/enrichment_engine.py` | Re-export from common |
+| `brick_app/api/web_api.py` | Flask REST API incl. `/api/enrichment` endpoints |
+| `brick_app/api/templates/index.html` | Web frontend (React/JSX inline) |
+| `brick_app/gui_components.py` | Qt PropertyEditorDialog with enrichment wiring |
+| `schema_app/core/shacl_export.py` | SHACL/Turtle exporter — uses EnrichmentEngine for dash:editor/viewer |
 
-2. **Schema.org Suggestions**
-   - Set Semantic Class to `schema:Person`
-   - **Expected**: Suggested properties appear: [givenName, familyName, email, ...]
-   - Click a suggestion → property path auto-fills
+## Pending / Next Steps
 
-3. **FOAF Suggestions**
-   - Set Semantic Class to `foaf:Person`
-   - **Expected**: Suggested properties: [name, mbox, homepage, depiction, ...]
+- **`skos_selector` widget** — stubs in `widget_rules.ttl`, needs a SKOS vocabulary loaded
+- **`entity_lookup` widget** — stubs in `widget_rules.ttl`, needs named-entity class hierarchy
+- **`unit_dropdown` in exported SHACL** — currently maps to `dash:DecimalFieldEditor`;
+  may need a custom DASH extension for a real unit-aware widget
+- `extend_schema` not exposed in web API
+- `common/` outside sub-packages — fine for local/Docker, breaks standalone `pip install`
 
-4. **SHACL Export**
-   - Save brick with semantic class
-   - Export to TTL
-   - **Expected**: `sh:class foaf:Person ;` appears in property block
-
-### API Test:
-```bash
-curl "http://localhost:5001/api/enrichment?class_iri=qudt:Mass"
-```
-
-## Files Modified Today
-
-| File | Change |
-|------|--------|
-| `brick_app/core/brick_core_simple.py` | Added `sh_class` to `LeafProperty` |
-| `brick_app/core/enrichment_engine.py` | **NEW** - EnrichmentEngine class |
-| `brick_app/api/web_api.py` | Added `/api/enrichment` endpoint |
-| `brick_app/api/templates/index.html` | Added enrichment widgets (web) |
-| `brick_app/ui/property_editor.ui` | Added sh:class field (Qt) |
-| `brick_app/gui_components.py` | Added sh_class handling (Qt) |
-| `schema_app/core/shacl_export.py` | Export `sh:class` predicate |
-| `common/library_manager.py` | Fixed library path (hyphen) |
-| `Dockerfile` | Fixed library path |
-| `docker-compose.yml` | Fixed library path |
-| `docs/ARCHITECTURE.md` | Updated library path references |
-| `docs/USER_GUIDE.md` | Updated library path references |
-
-## Quick Start for Tomorrow
+## Troubleshooting
 
 ```bash
-cd /home/heinz/1_Gits/ShaclForms/DASH_GUI
-uv run python run_brick_app_web.py
-# Test at http://localhost:5001
+# Clear Python cache
+find . -name "*.pyc" -delete && find . -name "__pycache__" -type d -exec rm -rf {} +
+
+# Hard-refresh browser after template changes
+Ctrl+Shift+R
 ```
-
-**What's Ready:**
-- All 3 phases of semantic awareness implemented
-- Backend enrichment API working
-- Frontend widgets added (unit dropdown, suggested properties)
-- Test cases documented above
-
-**If Something Breaks:**
-- Clear Python cache:
-  ```bash
-  find . -name "*.pyc" -delete && find . -name "__pycache__" -type d -exec rm -rf {} +
-  ```
-- Clear browser cache and hard refresh (Ctrl+F5)
-
-## Known Issues
-- `common/` module is outside both sub-packages — fine for local/Docker use, breaks `pip install`
-- `extend_schema` not exposed in web API (authoring-only feature)
-- **Qt GUI**: Basic sh:class field added, but enrichment widgets (unit dropdown, suggestions) not yet implemented (web has full enrichment)
