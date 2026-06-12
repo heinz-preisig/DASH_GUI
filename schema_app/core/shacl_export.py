@@ -7,6 +7,7 @@ import os
 from typing import List, Any, Optional
 from .schema_core import Schema
 from .brick_integration import BrickIntegration
+from common.enrichment_engine import EnrichmentEngine
 
 
 class SHACLExporter:
@@ -14,6 +15,7 @@ class SHACLExporter:
     
     def __init__(self, brick_integration: BrickIntegration):
         self.brick_integration = brick_integration
+        self._enrichment = EnrichmentEngine(ontology_manager=None)
 
     # ── High-level convenience ─────────────────────────────────────────────
 
@@ -276,35 +278,51 @@ class SHACLExporter:
                 schema, child_id, library_name, lines, exported_bricks, depth + 1
             )
     
-    def _get_dash_editor(self, datatype: str) -> str:
-        """Map xsd datatype to dash:editor IRI"""
-        mapping = {
-            "xsd:string": "dash:TextFieldEditor",
-            "xsd:integer": "dash:IntegerFieldEditor",
-            "xsd:decimal": "dash:DecimalFieldEditor",
-            "xsd:boolean": "dash:BooleanSelectEditor",
-            "xsd:date": "dash:DatePickerEditor",
-            "xsd:dateTime": "dash:DateTimePickerEditor",
-            "xsd:anyURI": "dash:URIEditor",
-            "rdf:HTML": "dash:TextAreaEditor",
-            "rdf:langString": "dash:TextAreaEditor",
-        }
-        return mapping.get(datatype, "dash:TextFieldEditor")
+    # ── widget → DASH IRI maps (fallback when enrichment returns generic widget) ─
+    _WIDGET_TO_EDITOR = {
+        "text":             "dash:TextFieldEditor",
+        "integer_input":    "dash:IntegerFieldEditor",
+        "decimal_input":    "dash:DecimalFieldEditor",
+        "boolean_toggle":   "dash:BooleanSelectEditor",
+        "date_picker":      "dash:DatePickerEditor",
+        "datetime_picker":  "dash:DateTimePickerEditor",
+        "uri_input":        "dash:URIEditor",
+        "textarea":         "dash:TextAreaEditor",
+        "language_text":    "dash:TextAreaEditor",
+        "unit_dropdown":    "dash:DecimalFieldEditor",
+        "property_suggestions": "dash:TextFieldEditor",
+    }
+    _WIDGET_TO_VIEWER = {
+        "text":             "dash:LabelViewer",
+        "integer_input":    "dash:LabelViewer",
+        "decimal_input":    "dash:LabelViewer",
+        "boolean_toggle":   "dash:BooleanViewer",
+        "date_picker":      "dash:LabelViewer",
+        "datetime_picker":  "dash:LabelViewer",
+        "uri_input":        "dash:URIViewer",
+        "textarea":         "dash:HTMLViewer",
+        "language_text":    "dash:LabelViewer",
+        "unit_dropdown":    "dash:LabelViewer",
+        "property_suggestions": "dash:LabelViewer",
+    }
 
-    def _get_dash_viewer(self, datatype: str) -> str:
-        """Map xsd datatype to dash:viewer IRI"""
-        mapping = {
-            "xsd:string": "dash:LabelViewer",
-            "xsd:integer": "dash:LabelViewer",
-            "xsd:decimal": "dash:LabelViewer",
-            "xsd:boolean": "dash:BooleanViewer",
-            "xsd:date": "dash:LabelViewer",
-            "xsd:dateTime": "dash:LabelViewer",
-            "xsd:anyURI": "dash:URIViewer",
-            "rdf:HTML": "dash:HTMLViewer",
-            "rdf:langString": "dash:LabelViewer",
-        }
-        return mapping.get(datatype, "dash:LabelViewer")
+    def _get_dash_editor(self, datatype: str, sh_class: str = "") -> str:
+        """Resolve dash:editor via EnrichmentEngine (Layer 0 + 2/3), fall back to datatype map."""
+        if sh_class:
+            ctx = self._enrichment.enrich(sh_class)
+            if ctx.widget != "text":
+                return self._WIDGET_TO_EDITOR.get(ctx.widget, "dash:TextFieldEditor")
+        ctx = self._enrichment.enrich_datatype(datatype)
+        return self._WIDGET_TO_EDITOR.get(ctx.widget, "dash:TextFieldEditor")
+
+    def _get_dash_viewer(self, datatype: str, sh_class: str = "") -> str:
+        """Resolve dash:viewer via EnrichmentEngine (Layer 0 + 2/3), fall back to datatype map."""
+        if sh_class:
+            ctx = self._enrichment.enrich(sh_class)
+            if ctx.widget != "text":
+                return self._WIDGET_TO_VIEWER.get(ctx.widget, "dash:LabelViewer")
+        ctx = self._enrichment.enrich_datatype(datatype)
+        return self._WIDGET_TO_VIEWER.get(ctx.widget, "dash:LabelViewer")
 
     def generate_property_groups(self, schema: Schema) -> str:
         """Generate sh:PropertyGroup declarations for schema groups"""
@@ -389,8 +407,8 @@ class SHACLExporter:
             shacl_lines.append(f"        sh:order {order} ;")
             if group_id:
                 shacl_lines.append(f"        sh:group schema:{group_id.replace(' ', '_')} ;")
-            shacl_lines.append(f"        dash:editor {self._get_dash_editor(datatype)} ;")
-            shacl_lines.append(f"        dash:viewer {self._get_dash_viewer(datatype)} ;")
+            shacl_lines.append(f"        dash:editor {self._get_dash_editor(datatype, sh_class)} ;")
+            shacl_lines.append(f"        dash:viewer {self._get_dash_viewer(datatype, sh_class)} ;")
             shacl_lines.append("    ] ;")
 
         # Emit sh:property for nested child NodeShape bricks (schema-level nesting)
