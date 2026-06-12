@@ -674,10 +674,13 @@ class BrickWebAPI:
                 }), 404
             
             ontologies = backend_session.editor_backend.ontology_manager.ontologies
-            
+            safe = {
+                name: {k: v for k, v in data.items() if k != "graph"}
+                for name, data in ontologies.items()
+            }
             return jsonify({
                 "status": "success",
-                "data": ontologies
+                "data": safe
             })
         
         @self.app.route('/api/session/<session_id>/ontologies/<ontology_name>/classes', methods=['GET'])
