@@ -4,9 +4,10 @@ import json
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QDialog, QMessageBox, QListWidgetItem,
-    QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton
+    QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
+    QComboBox, QGroupBox, QWidget
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.uic import loadUi
 
 # Add brick_app_v2 directory to Python path
@@ -186,6 +187,13 @@ class PropertyEditorDialog(QDialog):
         self.okButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
 
+        # Enrichment area — injected dynamically below sh_class field
+        self._enrichment_widget = None
+        self._enrichment_timer = QTimer(self)
+        self._enrichment_timer.setSingleShot(True)
+        self._enrichment_timer.timeout.connect(self._run_enrichment)
+        self.sh_class_edit.textChanged.connect(self._on_sh_class_changed)
+
         # Populate fields if editing
         if property_data and property_data.get('name'):
             self.setWindowTitle(f"Edit Property: {property_data['name']}")
@@ -193,8 +201,9 @@ class PropertyEditorDialog(QDialog):
         else:
             self.setWindowTitle("Add Property")
 
-        # Initial group visibility
+        # Initial group visibility + enrichment
         self._update_group_visibility()
+        self._run_enrichment()
 
     # ── visibility ──────────────────────────────────────────────────────────
 
@@ -240,6 +249,84 @@ class PropertyEditorDialog(QDialog):
     def _clear_class(self):
         """Clear the semantic class field"""
         self.sh_class_edit.clear()
+
+    def _on_sh_class_changed(self, text):
+        """Debounce: wait 400 ms after typing stops before querying enrichment"""
+        self._enrichment_timer.start(400)
+
+    def _run_enrichment(self):
+        """Query EnrichmentEngine and update the dynamic enrichment widget."""
+        self._clear_enrichment_widget()
+        class_iri = self.sh_class_edit.text().strip()
+        if not class_iri:
+            return
+        try:
+            from core.enrichment_engine import EnrichmentEngine
+            engine = EnrichmentEngine(self.ontology_manager)
+            ctx = engine.enrich(class_iri)
+            if ctx.widget == "unit_dropdown" and ctx.enrichments.get("has_units"):
+                self._show_unit_dropdown(ctx)
+            elif ctx.widget == "property_suggestions" and ctx.enrichments.get("has_suggestions"):
+                self._show_property_suggestions(ctx)
+        except Exception as e:
+            print(f"Enrichment error: {e}")
+
+    def _clear_enrichment_widget(self):
+        if self._enrichment_widget is not None:
+            self._enrichment_widget.setParent(None)
+            self._enrichment_widget.deleteLater()
+            self._enrichment_widget = None
+
+    def _find_sh_class_container(self):
+        """Return the parent layout to insert enrichment widget after sh_class row."""
+        return self.sh_class_edit.parentWidget().layout() if self.sh_class_edit.parentWidget() else None
+
+    def _show_unit_dropdown(self, ctx):
+        """Add a unit selector QGroupBox below the sh_class field."""
+        units = ctx.enrichments.get("applicable_units", [])
+        unit_labels = ctx.enrichments.get("unit_labels", {})
+        si_unit = ctx.enrichments.get("si_unit", "")
+        qty_kind = ctx.enrichments.get("quantity_kind", "") or ctx.label
+
+        group = QGroupBox(f"{qty_kind} — Unit  (via {ctx.resolution})")
+        layout = QHBoxLayout(group)
+        combo = QComboBox()
+        combo.addItem(f"(SI default: {unit_labels.get(si_unit, si_unit)})", "")
+        for u in units:
+            lbl = unit_labels.get(u, u.split("/")[-1])
+            combo.addItem(f"{lbl}  —  {u}", u)
+        combo.currentIndexChanged.connect(
+            lambda _: self.setProperty("selected_unit", combo.currentData())
+        )
+        layout.addWidget(combo)
+        self._enrichment_widget = group
+        # Insert into dialog's main layout
+        main_layout = self.layout()
+        if main_layout:
+            idx = main_layout.count() - 1  # before OK/Cancel row
+            main_layout.insertWidget(idx, group)
+        self.adjustSize()
+
+    def _show_property_suggestions(self, ctx):
+        """Add property suggestion buttons below the sh_class field."""
+        props = ctx.enrichments.get("suggested_properties", [])
+        if not props:
+            return
+        group = QGroupBox(f"Suggested properties for {ctx.label}  (via {ctx.resolution})")
+        layout = QHBoxLayout(group)
+        layout.setSpacing(4)
+        for prop in props[:8]:
+            btn = QPushButton(prop)
+            btn.setToolTip(f"Set property path to: {prop}")
+            btn.clicked.connect(lambda checked, p=prop: self.path_edit.setText(p))
+            layout.addWidget(btn)
+        layout.addStretch()
+        self._enrichment_widget = group
+        main_layout = self.layout()
+        if main_layout:
+            idx = main_layout.count() - 1
+            main_layout.insertWidget(idx, group)
+        self.adjustSize()
 
     def _generate_iri(self):
         name = self.name_edit.text().strip()

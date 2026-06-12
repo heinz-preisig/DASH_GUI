@@ -517,39 +517,41 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
               {/* Enrichment widgets */}
               {enrichmentLoading && <small style={{color: "#999", marginTop: "4px", display: "block"}}>Loading enrichment...</small>}
               
-              {/* QUDT Unit Selector */}
-              {enrichment && enrichment.source_ontology === "qudt" && enrichment.enrichments.has_units && (
+              {/* Unit Selector — fires for any unit_dropdown widget (ProMo, QUDT, etc.) */}
+              {enrichment && enrichment.widget === "unit_dropdown" && enrichment.enrichments.has_units && (
                 <div style={{marginTop: "12px", padding: "8px", background: "#f5f5f5", borderRadius: "4px"}}>
                   <label style={{fontSize: "12px", fontWeight: "bold", display: "block", marginBottom: "4px"}}>
-                    {enrichment.enrichments.quantity_kind} — Select Unit:
+                    {enrichment.enrichments.quantity_kind || enrichment.label} — Select Unit:
+                    <span style={{fontWeight: "normal", color: "#888", marginLeft: "6px", fontSize: "11px"}}>via {enrichment.resolution}</span>
                   </label>
                   <select 
-                    value={form.unit || ""} 
+                    value={form.unit || enrichment.enrichments.si_unit || ""} 
                     onChange={e => set("unit", e.target.value)}
                     style={{width: "100%", padding: "4px", fontSize: "13px"}}
                   >
-                    <option value="">(default)</option>
+                    <option value="">(default SI: {enrichment.enrichments.unit_labels && enrichment.enrichments.unit_labels[enrichment.enrichments.si_unit] || enrichment.enrichments.si_unit})</option>
                     {enrichment.enrichments.applicable_units.map(u => (
                       <option key={u} value={u}>
-                        {enrichment.enrichments.unit_labels[u]} ({u})
+                        {enrichment.enrichments.unit_labels && enrichment.enrichments.unit_labels[u] ? enrichment.enrichments.unit_labels[u] : u.split("/").pop()} — {u}
                       </option>
                     ))}
                   </select>
                 </div>
               )}
               
-              {/* Suggested Properties */}
-              {enrichment && enrichment.enrichments.has_suggestions && (
+              {/* Suggested Properties — fires for property_suggestions widget */}
+              {enrichment && enrichment.widget === "property_suggestions" && enrichment.enrichments.has_suggestions && (
                 <div style={{marginTop: "12px", padding: "8px", background: "#f0f8ff", borderRadius: "4px"}}>
                   <label style={{fontSize: "12px", fontWeight: "bold", display: "block", marginBottom: "4px"}}>
-                    Suggested properties for {enrichment.enrichments.class_name || enrichment.label}:
+                    Suggested properties for {enrichment.label}:
+                    <span style={{fontWeight: "normal", color: "#888", marginLeft: "6px", fontSize: "11px"}}>via {enrichment.resolution}</span>
                   </label>
                   <div style={{display: "flex", flexWrap: "wrap", gap: "4px"}}>
                     {enrichment.enrichments.suggested_properties.slice(0, 8).map(prop => (
                       <button
                         key={prop}
                         className="btn btn-secondary btn-sm"
-                        onClick={() => set("property_path", enrichment.enrichments.property_prefix + prop)}
+                        onClick={() => set("property_path", prop)}
                         title={`Use ${prop} as property path`}
                         style={{fontSize: "11px", padding: "2px 6px"}}
                       >

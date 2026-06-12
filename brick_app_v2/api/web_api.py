@@ -763,17 +763,10 @@ class BrickWebAPI:
                 
                 engine = get_enrichment_engine(ontology_manager)
                 context = engine.enrich(class_iri)
-                
-                if context:
-                    return jsonify({
-                        "status": "success",
-                        "data": engine.to_dict(context)
-                    })
-                else:
-                    return jsonify({
-                        "status": "error",
-                        "message": f"Could not enrich class: {class_iri}"
-                    }), 404
+                return jsonify({
+                    "status": "success",
+                    "data": engine.to_dict(context)
+                })
                     
             except Exception as e:
                 return jsonify({
@@ -781,6 +774,26 @@ class BrickWebAPI:
                     "message": f"Enrichment failed: {str(e)}"
                 }), 500
         
+        # Datatype enrichment endpoint (Layer 0)
+        @self.app.route('/api/enrichment/datatype', methods=['GET'])
+        def get_datatype_enrichment():
+            """
+            Resolve widget type from sh:datatype alone — no ontology needed.
+            Query params:
+              datatype: datatype IRI or prefixed name (e.g., "xsd:date", "xsd:boolean")
+            """
+            from flask import request
+            datatype = request.args.get('datatype', '')
+            if not datatype:
+                return jsonify({"status": "error", "message": "Missing datatype parameter"}), 400
+            try:
+                from core.enrichment_engine import get_enrichment_engine
+                engine = get_enrichment_engine()
+                context = engine.enrich_datatype(datatype)
+                return jsonify({"status": "success", "data": engine.to_dict(context)})
+            except Exception as e:
+                return jsonify({"status": "error", "message": f"Enrichment failed: {str(e)}"}), 500
+
         # Event history
         @self.app.route('/api/session/<session_id>/events', methods=['GET'])
         def get_session_events(session_id):

@@ -1,0 +1,281 @@
+@prefix dashgui: <http://example.org/dashgui#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Widget Rules for Semantic-Aware GUI Generation
+#
+# Each dashgui:WidgetRule defines:
+#   dashgui:widget        — widget type identifier (string, used by the engine)
+#   dashgui:label         — human-readable name
+#   dashgui:description   — explanation
+#
+# Trigger mechanisms (checked in order):
+#   dashgui:dimensionalSignature  — ProMo-style SI exponent tuple (primary)
+#   dashgui:triggerPredicate      — presence of this predicate on the class (fallback 1)
+#   dashgui:triggerNamespace      — IRI namespace prefix match (fallback 2)
+#   dashgui:triggerSubClassOf     — rdfs:subClassOf chain includes this class (fallback 3)
+#
+# Fallback:  plain text input  (no rule matches)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+# ── Dimensional signature rules (ProMo / SI-based) ───────────────────────────
+# Signature format: "M L T Θ I N J"  (integer exponents, space-separated)
+# Corresponds to:   mass, length, time, temperature, current, amount, luminosity
+
+dashgui:TemperatureRule a dashgui:WidgetRule ;
+    dashgui:widget "unit_dropdown" ;
+    dashgui:label "Temperature" ;
+    dashgui:dimensionalSignature "0 0 0 1 0 0 0" ;
+    dashgui:siUnit <http://qudt.org/vocab/unit/K> ;
+    dashgui:alternativeUnits (
+        <http://qudt.org/vocab/unit/K>
+        <http://qudt.org/vocab/unit/DEG_C>
+        <http://qudt.org/vocab/unit/DEG_F>
+    ) .
+
+dashgui:PressureRule a dashgui:WidgetRule ;
+    dashgui:widget "unit_dropdown" ;
+    dashgui:label "Pressure" ;
+    dashgui:dimensionalSignature "1 -1 -2 0 0 0 0" ;
+    dashgui:siUnit <http://qudt.org/vocab/unit/PA> ;
+    dashgui:alternativeUnits (
+        <http://qudt.org/vocab/unit/PA>
+        <http://qudt.org/vocab/unit/KiloPA>
+        <http://qudt.org/vocab/unit/MegaPA>
+        <http://qudt.org/vocab/unit/BAR>
+        <http://qudt.org/vocab/unit/PSI>
+        <http://qudt.org/vocab/unit/ATM>
+    ) .
+
+dashgui:EnergyRule a dashgui:WidgetRule ;
+    dashgui:widget "unit_dropdown" ;
+    dashgui:label "Energy" ;
+    dashgui:dimensionalSignature "1 2 -2 0 0 0 0" ;
+    dashgui:siUnit <http://qudt.org/vocab/unit/J> ;
+    dashgui:alternativeUnits (
+        <http://qudt.org/vocab/unit/J>
+        <http://qudt.org/vocab/unit/KiloJ>
+        <http://qudt.org/vocab/unit/MegaJ>
+        <http://qudt.org/vocab/unit/W-HR>
+        <http://qudt.org/vocab/unit/KiloW-HR>
+        <http://qudt.org/vocab/unit/CAL>
+        <http://qudt.org/vocab/unit/KiloCAL>
+    ) .
+
+dashgui:MassRule a dashgui:WidgetRule ;
+    dashgui:widget "unit_dropdown" ;
+    dashgui:label "Mass" ;
+    dashgui:dimensionalSignature "1 0 0 0 0 0 0" ;
+    dashgui:siUnit <http://qudt.org/vocab/unit/KiloGM> ;
+    dashgui:alternativeUnits (
+        <http://qudt.org/vocab/unit/KiloGM>
+        <http://qudt.org/vocab/unit/GM>
+        <http://qudt.org/vocab/unit/MilliGM>
+        <http://qudt.org/vocab/unit/TON_Metric>
+        <http://qudt.org/vocab/unit/LB>
+        <http://qudt.org/vocab/unit/OZ>
+    ) .
+
+dashgui:LengthRule a dashgui:WidgetRule ;
+    dashgui:widget "unit_dropdown" ;
+    dashgui:label "Length" ;
+    dashgui:dimensionalSignature "0 1 0 0 0 0 0" ;
+    dashgui:siUnit <http://qudt.org/vocab/unit/M> ;
+    dashgui:alternativeUnits (
+        <http://qudt.org/vocab/unit/M>
+        <http://qudt.org/vocab/unit/CentiM>
+        <http://qudt.org/vocab/unit/MilliM>
+        <http://qudt.org/vocab/unit/KiloM>
+        <http://qudt.org/vocab/unit/IN>
+        <http://qudt.org/vocab/unit/FT>
+        <http://qudt.org/vocab/unit/MI>
+    ) .
+
+dashgui:TimeRule a dashgui:WidgetRule ;
+    dashgui:widget "unit_dropdown" ;
+    dashgui:label "Time" ;
+    dashgui:dimensionalSignature "0 0 1 0 0 0 0" ;
+    dashgui:siUnit <http://qudt.org/vocab/unit/SEC> ;
+    dashgui:alternativeUnits (
+        <http://qudt.org/vocab/unit/SEC>
+        <http://qudt.org/vocab/unit/MIN>
+        <http://qudt.org/vocab/unit/HR>
+        <http://qudt.org/vocab/unit/DAY>
+    ) .
+
+dashgui:AmountRule a dashgui:WidgetRule ;
+    dashgui:widget "unit_dropdown" ;
+    dashgui:label "Amount of Substance" ;
+    dashgui:dimensionalSignature "0 0 0 0 0 1 0" ;
+    dashgui:siUnit <http://qudt.org/vocab/unit/MOL> ;
+    dashgui:alternativeUnits (
+        <http://qudt.org/vocab/unit/MOL>
+        <http://qudt.org/vocab/unit/MilliMOL>
+        <http://qudt.org/vocab/unit/MicroMOL>
+        <http://qudt.org/vocab/unit/KiloMOL>
+    ) .
+
+dashgui:PowerRule a dashgui:WidgetRule ;
+    dashgui:widget "unit_dropdown" ;
+    dashgui:label "Power" ;
+    dashgui:dimensionalSignature "1 2 -3 0 0 0 0" ;
+    dashgui:siUnit <http://qudt.org/vocab/unit/W> ;
+    dashgui:alternativeUnits (
+        <http://qudt.org/vocab/unit/W>
+        <http://qudt.org/vocab/unit/KiloW>
+        <http://qudt.org/vocab/unit/MegaW>
+        <http://qudt.org/vocab/unit/HP>
+    ) .
+
+dashgui:VolumeRule a dashgui:WidgetRule ;
+    dashgui:widget "unit_dropdown" ;
+    dashgui:label "Volume" ;
+    dashgui:dimensionalSignature "0 3 0 0 0 0 0" ;
+    dashgui:siUnit <http://qudt.org/vocab/unit/M3> ;
+    dashgui:alternativeUnits (
+        <http://qudt.org/vocab/unit/M3>
+        <http://qudt.org/vocab/unit/L>
+        <http://qudt.org/vocab/unit/MilliL>
+        <http://qudt.org/vocab/unit/GAL>
+        <http://qudt.org/vocab/unit/FT3>
+    ) .
+
+dashgui:AreaRule a dashgui:WidgetRule ;
+    dashgui:widget "unit_dropdown" ;
+    dashgui:label "Area" ;
+    dashgui:dimensionalSignature "0 2 0 0 0 0 0" ;
+    dashgui:siUnit <http://qudt.org/vocab/unit/M2> ;
+    dashgui:alternativeUnits (
+        <http://qudt.org/vocab/unit/M2>
+        <http://qudt.org/vocab/unit/CentiM2>
+        <http://qudt.org/vocab/unit/FT2>
+        <http://qudt.org/vocab/unit/IN2>
+    ) .
+
+dashgui:VelocityRule a dashgui:WidgetRule ;
+    dashgui:widget "unit_dropdown" ;
+    dashgui:label "Velocity" ;
+    dashgui:dimensionalSignature "0 1 -1 0 0 0 0" ;
+    dashgui:siUnit <http://qudt.org/vocab/unit/M-PER-SEC> ;
+    dashgui:alternativeUnits (
+        <http://qudt.org/vocab/unit/M-PER-SEC>
+        <http://qudt.org/vocab/unit/KiloM-PER-HR>
+        <http://qudt.org/vocab/unit/MI-PER-HR>
+        <http://qudt.org/vocab/unit/FT-PER-SEC>
+    ) .
+
+dashgui:DimensionlessRule a dashgui:WidgetRule ;
+    dashgui:widget "unit_dropdown" ;
+    dashgui:label "Dimensionless" ;
+    dashgui:dimensionalSignature "0 0 0 0 0 0 0" ;
+    dashgui:siUnit <http://qudt.org/vocab/unit/UNITLESS> ;
+    dashgui:alternativeUnits (
+        <http://qudt.org/vocab/unit/UNITLESS>
+    ) .
+
+
+# ── Datatype-based rules (Layer 0: sh:datatype → widget, no graph needed) ─────
+
+dashgui:DatePickerRule a dashgui:WidgetRule ;
+    dashgui:widget "date_picker" ;
+    dashgui:label "Date" ;
+    dashgui:triggerDatatype xsd:date .
+
+dashgui:DateTimePickerRule a dashgui:WidgetRule ;
+    dashgui:widget "date_picker" ;
+    dashgui:label "Date + Time" ;
+    dashgui:triggerDatatype xsd:dateTime .
+
+dashgui:BooleanToggleRule a dashgui:WidgetRule ;
+    dashgui:widget "boolean_toggle" ;
+    dashgui:label "Boolean" ;
+    dashgui:triggerDatatype xsd:boolean .
+
+dashgui:LangStringRule a dashgui:WidgetRule ;
+    dashgui:widget "language_text" ;
+    dashgui:label "Language-tagged text" ;
+    dashgui:triggerDatatype rdf:langString .
+
+dashgui:UriInputRule a dashgui:WidgetRule ;
+    dashgui:widget "uri_input" ;
+    dashgui:label "URI / URL" ;
+    dashgui:triggerDatatype xsd:anyURI .
+
+dashgui:IntegerInputRule a dashgui:WidgetRule ;
+    dashgui:widget "integer_input" ;
+    dashgui:label "Integer" ;
+    dashgui:triggerDatatype xsd:integer .
+
+dashgui:DecimalInputRule a dashgui:WidgetRule ;
+    dashgui:widget "decimal_input" ;
+    dashgui:label "Decimal number" ;
+    dashgui:triggerDatatype xsd:decimal .
+
+dashgui:FloatInputRule a dashgui:WidgetRule ;
+    dashgui:widget "decimal_input" ;
+    dashgui:label "Float" ;
+    dashgui:triggerDatatype xsd:float .
+
+dashgui:StringInputRule a dashgui:WidgetRule ;
+    dashgui:widget "text" ;
+    dashgui:label "Text" ;
+    dashgui:triggerDatatype xsd:string .
+
+
+# ── PLANNED: SKOS selector (trigger: skos:inScheme or skos:member) ────────────
+# dashgui:SkosSelectorRule a dashgui:WidgetRule ;
+#     dashgui:widget "skos_selector" ;
+#     dashgui:label "SKOS Concept" ;
+#     dashgui:triggerPredicate skos:inScheme .
+#
+# dashgui:SkosCollectionRule a dashgui:WidgetRule ;
+#     dashgui:widget "skos_selector" ;
+#     dashgui:label "SKOS Collection" ;
+#     dashgui:triggerPredicate skos:member .
+
+
+# ── PLANNED: Entity lookup (trigger: sh:class is a named-entity class) ────────
+# dashgui:EntityLookupRule a dashgui:WidgetRule ;
+#     dashgui:widget "entity_lookup" ;
+#     dashgui:label "Entity" ;
+#     dashgui:triggerSubClassOf <some:NamedEntityClass> .
+
+
+# ── Predicate-based rules (fallback 1: query cached ontology graphs) ──────────
+
+dashgui:QudtApplicableUnitRule a dashgui:WidgetRule ;
+    dashgui:widget "unit_dropdown" ;
+    dashgui:label "QUDT Quantity" ;
+    dashgui:triggerPredicate <http://qudt.org/schema/qudt/applicableUnit> .
+
+dashgui:QudtQuantityKindRule a dashgui:WidgetRule ;
+    dashgui:widget "unit_dropdown" ;
+    dashgui:label "QUDT Quantity Kind" ;
+    dashgui:triggerPredicate <http://qudt.org/schema/qudt/hasQuantityKind> .
+
+dashgui:SkosConceptSchemeRule a dashgui:WidgetRule ;
+    dashgui:widget "skos_selector" ;
+    dashgui:label "SKOS Concept" ;
+    dashgui:triggerPredicate <http://www.w3.org/2004/02/skos/core#inScheme> .
+
+dashgui:SkosMemberRule a dashgui:WidgetRule ;
+    dashgui:widget "skos_selector" ;
+    dashgui:label "SKOS Collection" ;
+    dashgui:triggerPredicate <http://www.w3.org/2004/02/skos/core#member> .
+
+
+# ── Namespace-based rules (fallback 2: IRI prefix match) ─────────────────────
+
+dashgui:FoafPersonRule a dashgui:WidgetRule ;
+    dashgui:widget "property_suggestions" ;
+    dashgui:label "FOAF Agent" ;
+    dashgui:triggerNamespace "http://xmlns.com/foaf/0.1/" ;
+    dashgui:triggerSubClassOf <http://xmlns.com/foaf/0.1/Agent> .
+
+dashgui:SchemaOrgRule a dashgui:WidgetRule ;
+    dashgui:widget "property_suggestions" ;
+    dashgui:label "Schema.org Class" ;
+    dashgui:triggerNamespace "https://schema.org/" .

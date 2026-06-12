@@ -156,13 +156,14 @@ class OntologyManager:
                 'range': range_val
             }
         
-        # Store ontology data
+        # Store ontology data (keep live graph for enrichment queries)
         self.ontologies[ontology_name] = {
             'name': ontology_name,
             'uri': "",
             'prefix': ontology_name.lower(),
             'classes': classes,
-            'properties': properties
+            'properties': properties,
+            'graph': graph,
         }
         
         print(f"Loaded {ontology_name}: {len(classes)} classes, {len(properties)} properties")
