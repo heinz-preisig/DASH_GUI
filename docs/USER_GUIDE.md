@@ -295,7 +295,7 @@ Advanced library operations:
 **Solution**:
 1. Check brick repository path
 2. Verify brick files are valid JSON
-3. Run `uv run python -c "from brick_app_v2.core.brick_core_simple import BrickCore; print('OK')"` to diagnose
+3. Run `uv run python -c "from brick_app.core.brick_core_simple import BrickCore; print('OK')"` to diagnose
 4. Restart application
 
 #### Interface Errors
@@ -328,7 +328,7 @@ Advanced library operations:
 - **Troubleshooting**: `docs/TROUBLESHOOTING.md`
 
 #### Support
-- **Environment Check**: `uv sync` then `uv run python -c "import brick_app_v2; print('OK')"`
+- **Environment Check**: `uv sync` then `uv run python -c "import brick_app; print('OK')"`
 - **Logs**: Check terminal output when launching
 
 ---

@@ -14,8 +14,8 @@ dependencies = [
 
 [tool.uv.workspace]
 members = [
-    "brick_app_v2",
-    "schema_app_v2",
+    "brick_app",
+    "schema_app",
 ]
 
 [tool.pytest.ini_options]

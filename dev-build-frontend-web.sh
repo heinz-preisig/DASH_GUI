@@ -5,7 +5,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WEB_DIR="$SCRIPT_DIR/schema_app_v2/interfaces/web"
+WEB_DIR="$SCRIPT_DIR/schema_app/interfaces/web"
 
 echo "=== Schema App Web UI Build Script ==="
 echo ""

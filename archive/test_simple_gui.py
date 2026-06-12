@@ -8,11 +8,11 @@ import sys
 import os
 from PyQt6.QtWidgets import QApplication
 
-# Add schema_app_v2 to path
-sys.path.insert(0, os.path.abspath('schema_app_v2'))
+# Add schema_app to path
+sys.path.insert(0, os.path.abspath('schema_app'))
 
 try:
-    from schema_app_v2.interfaces.qt.schema_gui import SchemaGUI
+    from schema_app.interfaces.qt.schema_gui import SchemaGUI
     print('✅ SchemaGUI import successful')
     
     app = QApplication(sys.argv)

@@ -14,24 +14,24 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 # ── Brick App ─────────────────────────────────────────────────────────────────
 
 def test_brick_core_simple_imports():
-    from brick_app_v2.core.brick_core_simple import SHACLBrick, BrickCore
+    from brick_app.core.brick_core_simple import SHACLBrick, BrickCore
     assert SHACLBrick is not None
     assert BrickCore is not None
 
 
 def test_brick_core_instantiates():
-    from brick_app_v2.core.brick_core_simple import BrickCore
+    from brick_app.core.brick_core_simple import BrickCore
     core = BrickCore()
     assert core is not None
 
 
 def test_ontology_manager_imports():
-    from brick_app_v2.core.ontology_manager import OntologyManager
+    from brick_app.core.ontology_manager import OntologyManager
     assert OntologyManager is not None
 
 
 def test_ontology_manager_instantiates():
-    from brick_app_v2.core.ontology_manager import OntologyManager
+    from brick_app.core.ontology_manager import OntologyManager
     mgr = OntologyManager()
     assert mgr is not None
 
@@ -39,28 +39,28 @@ def test_ontology_manager_instantiates():
 # ── Schema App ────────────────────────────────────────────────────────────────
 
 def test_schema_core_imports():
-    from schema_app_v2.core.schema_core import SchemaCore
+    from schema_app.core.schema_core import SchemaCore
     assert SchemaCore is not None
 
 
 def test_schema_core_instantiates():
-    from schema_app_v2.core.schema_core import SchemaCore
+    from schema_app.core.schema_core import SchemaCore
     core = SchemaCore()
     assert core is not None
 
 
 def test_brick_integration_imports():
-    from schema_app_v2.core.brick_integration import BrickIntegration
+    from schema_app.core.brick_integration import BrickIntegration
     assert BrickIntegration is not None
 
 
 def test_shacl_export_imports():
-    from schema_app_v2.core.shacl_export import SHACLExporter
+    from schema_app.core.shacl_export import SHACLExporter
     assert SHACLExporter is not None
 
 
 def test_multi_tenant_backend_instantiates():
-    from schema_app_v2.core.multi_tenant_backend import MultiTenantBackend
+    from schema_app.core.multi_tenant_backend import MultiTenantBackend
     backend = MultiTenantBackend()
     assert backend is not None
 
@@ -68,7 +68,7 @@ def test_multi_tenant_backend_instantiates():
 # ── Enrichment Engine ─────────────────────────────────────────────────────────
 
 def test_widget_rules_loads():
-    from brick_app_v2.core.enrichment_engine import WidgetRules
+    from brick_app.core.enrichment_engine import WidgetRules
     r = WidgetRules()
     assert len(r.rules_by_datatype) >= 8,   f"Expected ≥8 datatype rules, got {len(r.rules_by_datatype)}"
     assert len(r.rules_by_signature) >= 10, f"Expected ≥10 signature rules, got {len(r.rules_by_signature)}"
@@ -77,42 +77,42 @@ def test_widget_rules_loads():
 
 
 def test_layer0_datatype_boolean():
-    from brick_app_v2.core.enrichment_engine import EnrichmentEngine
+    from brick_app.core.enrichment_engine import EnrichmentEngine
     ctx = EnrichmentEngine().enrich_datatype("xsd:boolean")
     assert ctx.widget == "boolean_toggle"
     assert ctx.resolution == "datatype"
 
 
 def test_layer0_datatype_date():
-    from brick_app_v2.core.enrichment_engine import EnrichmentEngine
+    from brick_app.core.enrichment_engine import EnrichmentEngine
     ctx = EnrichmentEngine().enrich_datatype("xsd:date")
     assert ctx.widget == "date_picker"
     assert ctx.resolution == "datatype"
 
 
 def test_layer0_datatype_uri():
-    from brick_app_v2.core.enrichment_engine import EnrichmentEngine
+    from brick_app.core.enrichment_engine import EnrichmentEngine
     ctx = EnrichmentEngine().enrich_datatype("xsd:anyURI")
     assert ctx.widget == "uri_input"
     assert ctx.resolution == "datatype"
 
 
 def test_layer0_datatype_langstring():
-    from brick_app_v2.core.enrichment_engine import EnrichmentEngine
+    from brick_app.core.enrichment_engine import EnrichmentEngine
     ctx = EnrichmentEngine().enrich_datatype("rdf:langString")
     assert ctx.widget == "language_text"
     assert ctx.resolution == "datatype"
 
 
 def test_layer0_datatype_unknown_falls_back():
-    from brick_app_v2.core.enrichment_engine import EnrichmentEngine
+    from brick_app.core.enrichment_engine import EnrichmentEngine
     ctx = EnrichmentEngine().enrich_datatype("xsd:hexBinary")
     assert ctx.widget == "text"
     assert ctx.resolution == "none"
 
 
 def test_layer1_temperature_signature():
-    from brick_app_v2.core.enrichment_engine import WidgetRules
+    from brick_app.core.enrichment_engine import WidgetRules
     r = WidgetRules()
     rule = r.rules_by_signature.get((0, 0, 0, 1, 0, 0, 0))
     assert rule is not None, "No rule for temperature signature (0,0,0,1,0,0,0)"
@@ -123,7 +123,7 @@ def test_layer1_temperature_signature():
 
 
 def test_layer1_pressure_signature():
-    from brick_app_v2.core.enrichment_engine import WidgetRules
+    from brick_app.core.enrichment_engine import WidgetRules
     r = WidgetRules()
     rule = r.rules_by_signature.get((1, -1, -2, 0, 0, 0, 0))
     assert rule is not None, "No rule for pressure signature (1,-1,-2,0,0,0,0)"
@@ -132,7 +132,7 @@ def test_layer1_pressure_signature():
 
 
 def test_layer1_energy_signature():
-    from brick_app_v2.core.enrichment_engine import WidgetRules
+    from brick_app.core.enrichment_engine import WidgetRules
     r = WidgetRules()
     rule = r.rules_by_signature.get((1, 2, -2, 0, 0, 0, 0))
     assert rule is not None, "No rule for energy signature (1,2,-2,0,0,0,0)"
@@ -140,15 +140,15 @@ def test_layer1_energy_signature():
 
 
 def test_layer2_qudt_predicate_in_rules():
-    from brick_app_v2.core.enrichment_engine import WidgetRules
+    from brick_app.core.enrichment_engine import WidgetRules
     r = WidgetRules()
     assert "http://qudt.org/schema/qudt/applicableUnit" in r.rules_by_predicate, \
         "qudt:applicableUnit not registered as a trigger predicate"
 
 
 def test_layer2_qudt_live_graph():
-    from brick_app_v2.core.enrichment_engine import EnrichmentEngine
-    from brick_app_v2.core.ontology_manager import OntologyManager
+    from brick_app.core.enrichment_engine import EnrichmentEngine
+    from brick_app.core.ontology_manager import OntologyManager
     mgr = OntologyManager()
     if "qudt-quantity-type" not in mgr.ontologies:
         import pytest; pytest.skip("qudt-quantity-type not in cache")
@@ -161,21 +161,21 @@ def test_layer2_qudt_live_graph():
 
 
 def test_layer3_foaf_namespace():
-    from brick_app_v2.core.enrichment_engine import EnrichmentEngine
+    from brick_app.core.enrichment_engine import EnrichmentEngine
     ctx = EnrichmentEngine().enrich("foaf:Person")
     assert ctx.widget == "property_suggestions"
     assert ctx.resolution == "namespace"
 
 
 def test_layer3_schema_namespace():
-    from brick_app_v2.core.enrichment_engine import EnrichmentEngine
+    from brick_app.core.enrichment_engine import EnrichmentEngine
     ctx = EnrichmentEngine().enrich("https://schema.org/PostalAddress")
     assert ctx.widget == "property_suggestions"
     assert ctx.resolution == "namespace"
 
 
 def test_fallback_unknown_iri():
-    from brick_app_v2.core.enrichment_engine import EnrichmentEngine
+    from brick_app.core.enrichment_engine import EnrichmentEngine
     ctx = EnrichmentEngine().enrich("http://example.org/totally/unknown/Thing")
     assert ctx.widget == "text"
     assert ctx.resolution == "none"
@@ -183,7 +183,7 @@ def test_fallback_unknown_iri():
 
 def test_to_dict_serialisable():
     import json
-    from brick_app_v2.core.enrichment_engine import EnrichmentEngine
+    from brick_app.core.enrichment_engine import EnrichmentEngine
     engine = EnrichmentEngine()
     ctx = engine.enrich_datatype("xsd:boolean")
     d = engine.to_dict(ctx)
@@ -193,7 +193,7 @@ def test_to_dict_serialisable():
 
 
 def test_ontology_manager_stores_graph():
-    from brick_app_v2.core.ontology_manager import OntologyManager
+    from brick_app.core.ontology_manager import OntologyManager
     mgr = OntologyManager()
     for name, data in mgr.ontologies.items():
         assert "graph" in data, f"Ontology '{name}' missing live graph"

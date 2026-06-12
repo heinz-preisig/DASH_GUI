@@ -14,15 +14,15 @@
 ```bash
 # PyQt6 Desktop Interface (Primary)
 source .venv/bin/activate
-python3 run_schema_app_v2.py
+python3 run_schema_app.py
 
 # Flask Web Interface (Future)
 source .venv/bin/activate
-python3 -m schema_app_v2.interfaces.web.flask_app
+python3 -m schema_app.interfaces.web.flask_app
 
 # DASH Interactive Web Interface
 source .venv/bin/activate
-python3 -m schema_app_v2.interfaces.web.dash_app
+python3 -m schema_app.interfaces.web.dash_app
 ```
 
 ### 📊 Service Management
@@ -42,7 +42,7 @@ netstat -tlnp | grep :5000  # Flask default
 ```bash
 # Run tests
 source .venv/bin/activate
-python3 -m pytest schema_app_v2/tests/
+python3 -m pytest schema_app/tests/
 
 # Check dependencies
 source .venv/bin/activate
@@ -65,8 +65,8 @@ pip install -r pyproject.toml
 - [x] Schema Repository - Ready
 
 ### 🔄 Running Tasks
-- [ ] PyQt6 GUI - Launch with `python3 run_schema_app_v2.py`
-- [ ] DASH Web - Launch with `python3 -m schema_app_v2.interfaces.web.dash_app`
+- [ ] PyQt6 GUI - Launch with `python3 run_schema_app.py`
+- [ ] DASH Web - Launch with `python3 -m schema_app.interfaces.web.dash_app`
 
 ### 📋 Maintenance Tasks
 - [ ] Clean cache files
@@ -81,16 +81,16 @@ pip install -r pyproject.toml
 source .venv/bin/activate
 
 # Main launcher
-python3 run_schema_app_v2.py
+python3 run_schema_app.py
 
 # Web interfaces
-python3 -m schema_app_v2.interfaces.web.flask_app
-python3 -m schema_app_v2.interfaces.web.dash_app
+python3 -m schema_app.interfaces.web.flask_app
+python3 -m schema_app.interfaces.web.dash_app
 
 # Check status
 python3 -c "
-from schema_app_v2.core.brick_integration import BrickIntegration
-from schema_app_v2.core.schema_core import SchemaCore
+from schema_app.core.brick_integration import BrickIntegration
+from schema_app.core.schema_core import SchemaCore
 bi = BrickIntegration('brick_repositories')
 sc = SchemaCore('schema_repositories')
 print(f'Bricks: {len(bi.get_available_bricks())}')
@@ -188,7 +188,7 @@ python3 run_tasks.py setup
 
 # Manually activate
 source .venv/bin/activate
-python3 run_schema_app_v2.py
+python3 run_schema_app.py
 \`\`\`
 
 #### Port Already in Use

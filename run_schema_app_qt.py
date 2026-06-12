@@ -19,7 +19,7 @@ print('Ready to create schemas with bricks and flows')
 app = QApplication(sys.argv)
 
 # Import and create the GUI
-from schema_app_v2.interfaces.qt.schema_gui import SchemaGUI
+from schema_app.interfaces.qt.schema_gui import SchemaGUI
 window = SchemaGUI()
 window.show()
 

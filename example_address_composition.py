@@ -18,7 +18,7 @@ Generated SHACL:
 import uuid
 import json
 from pathlib import Path
-from brick_app_v2.core.brick_core_simple import BrickCore, SHACLBrick, LeafProperty
+from brick_app.core.brick_core_simple import BrickCore, SHACLBrick, LeafProperty
 
 def create_us_address_brick(core: BrickCore) -> SHACLBrick:
     """Create a US Address brick with US-specific fields"""
@@ -210,7 +210,7 @@ def create_person_brick_with_address_choices(
 
 def show_generated_shacl_turtle(core: BrickCore, brick: SHACLBrick):
     """Generate and display SHACL Turtle for the brick"""
-    from brick_app_v2.core.brick_generator import SHACLBrickGenerator, BrickLibrary
+    from brick_app.core.brick_generator import SHACLBrickGenerator, BrickLibrary
     
     # Create a temporary library with all bricks for export
     temp_lib = BrickLibrary("temp", "Temporary", "System")

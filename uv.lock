@@ -12,9 +12,9 @@ resolution-markers = [
 
 [manifest]
 members = [
-    "brick-app-v2",
+    "brick-app",
     "dash-gui",
-    "schema-app-v2",
+    "schema-app",
 ]
 
 [[package]]
@@ -54,9 +54,9 @@ wheels = [
 ]
 
 [[package]]
-name = "brick-app-v2"
+name = "brick-app"
 version = "2.0.0"
-source = { editable = "brick_app_v2" }
+source = { editable = "brick_app" }
 dependencies = [
     { name = "flask" },
     { name = "flask-cors" },
@@ -724,9 +724,9 @@ wheels = [
 ]
 
 [[package]]
-name = "schema-app-v2"
+name = "schema-app"
 version = "2.0.0"
-source = { editable = "schema_app_v2" }
+source = { editable = "schema_app" }
 dependencies = [
     { name = "flask" },
     { name = "flask-cors" },

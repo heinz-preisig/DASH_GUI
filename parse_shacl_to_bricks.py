@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CLI wrapper around brick_app_v2.core.shacl_importer.SHACLImporter.
+CLI wrapper around brick_app.core.shacl_importer.SHACLImporter.
 
 Usage
 -----
@@ -32,7 +32,7 @@ _here = Path(__file__).resolve().parent
 if str(_here) not in sys.path:
     sys.path.insert(0, str(_here))
 
-from brick_app_v2.core.shacl_importer import SHACLImporter
+from brick_app.core.shacl_importer import SHACLImporter
 
 
 def main():

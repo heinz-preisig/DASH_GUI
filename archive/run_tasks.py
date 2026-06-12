@@ -56,8 +56,8 @@ def check_status():
     
     # Check dependencies
     try:
-        from schema_app_v2.core.brick_integration import BrickIntegration
-        from schema_app_v2.core.schema_core import SchemaCore
+        from schema_app.core.brick_integration import BrickIntegration
+        from schema_app.core.schema_core import SchemaCore
         bi = BrickIntegration()  # Uses shared libraries by default
         sc = SchemaCore()  # Uses shared libraries by default
         bricks = bi.get_available_bricks()
@@ -83,13 +83,13 @@ def launch_interface(interface_type: str):
     activate_cmd = activate_venv()
     
     if interface_type == "qt" or interface_type == "pyqt6":
-        command = f"{activate_cmd} && python3 run_schema_app_v2.py"
+        command = f"{activate_cmd} && python3 run_schema_app.py"
         description = "PyQt6 Desktop Interface"
     elif interface_type == "flask":
-        command = f"{activate_cmd} && python3 -m schema_app_v2.interfaces.web.flask_app"
+        command = f"{activate_cmd} && python3 -m schema_app.interfaces.web.flask_app"
         description = "Flask Web Interface"
     elif interface_type == "dash":
-        command = f"{activate_cmd} && python3 -m schema_app_v2.interfaces.web.dash_app"
+        command = f"{activate_cmd} && python3 -m schema_app.interfaces.web.dash_app"
         description = "DASH Interactive Web Interface"
     else:
         print(f"❌ Unknown interface: {interface_type}")
@@ -120,8 +120,8 @@ def run_tests():
     """Run v2 tests"""
     activate_cmd = activate_venv()
     command = f"{activate_cmd} && python3 -c "
-    from schema_app_v2.core.brick_integration import BrickIntegration
-    from schema_app_v2.core.schema_core import SchemaCore
+    from schema_app.core.brick_integration import BrickIntegration
+    from schema_app.core.schema_core import SchemaCore
     bi = BrickIntegration()  # Uses shared libraries by default
     sc = SchemaCore()  # Uses shared libraries by default
     print(f'Bricks: {len(bi.get_available_bricks())}')

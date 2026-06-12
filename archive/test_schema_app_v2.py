@@ -7,15 +7,15 @@ Validates all functionality and provides user-friendly feedback
 import sys
 import os
 
-# Add schema_app_v2 to path
-sys.path.insert(0, os.path.abspath('schema_app_v2'))
+# Add schema_app to path
+sys.path.insert(0, os.path.abspath('schema_app'))
 
 def test_core_functionality():
     """Test core schema functionality"""
     print("🧪 Testing Core Functionality...")
     
     try:
-        from schema_app_v2.core.schema_core import SchemaCore
+        from schema_app.core.schema_core import SchemaCore
         schema_core = SchemaCore('test_schemas')
         schema = schema_core.create_schema('Test Schema', 'A test schema for validation')
         print(f"✅ Schema creation: {schema.name}")
@@ -37,7 +37,7 @@ def test_helper_functionality():
     print("\n🧪 Testing Helper Functionality...")
     
     try:
-        from schema_app_v2.core.schema_helper import SchemaHelper
+        from schema_app.core.schema_helper import SchemaHelper
         helper = SchemaHelper()
         
         # Test templates
@@ -64,8 +64,8 @@ def test_brick_integration():
     print("\n🧪 Testing Brick Integration...")
     
     try:
-        from schema_app_v2.core.brick_integration import BrickIntegration
-        brick_integration = BrickIntegration('../brick_app_v2/brick_repositories_v2')
+        from schema_app.core.brick_integration import BrickIntegration
+        brick_integration = BrickIntegration('../brick_app/brick_repositories_v2')
         
         # Test library access
         libraries = brick_integration.get_brick_libraries()
@@ -86,16 +86,16 @@ def test_shacl_export():
     print("\n🧪 Testing SHACL Export...")
     
     try:
-        from schema_app_v2.core.shacl_export import SHACLExporter
-        from schema_app_v2.core.schema_core import SchemaCore
-        from schema_app_v2.core.brick_integration import BrickIntegration
+        from schema_app.core.shacl_export import SHACLExporter
+        from schema_app.core.schema_core import SchemaCore
+        from schema_app.core.brick_integration import BrickIntegration
         
         # Create test schema
         schema_core = SchemaCore('test_schemas')
         schema = schema_core.create_schema('Export Test', 'Test schema for export')
         
         # Test export
-        brick_integration = BrickIntegration('../brick_app_v2/brick_repositories_v2')
+        brick_integration = BrickIntegration('../brick_app/brick_repositories_v2')
         exporter = SHACLExporter(brick_integration)
         
         shacl_content = exporter.export_schema(schema)
@@ -116,7 +116,7 @@ def test_flow_engine():
     print("\n🧪 Testing Flow Engine...")
     
     try:
-        from schema_app_v2.core.flow_engine import FlowEngine, FlowType
+        from schema_app.core.flow_engine import FlowEngine, FlowType
         flow_engine = FlowEngine()
         
         # Create test flow
@@ -163,9 +163,9 @@ def main():
     if passed == total:
         print("🎉 ALL TESTS PASSED! Schema App v2 is ready for use!")
         print("\n📋 To run the GUI:")
-        print("   python3 run_schema_app_v2.py")
+        print("   python3 run_schema_app.py")
         print("\n🌐 To run the web interface:")
-        print("   python3 run_schema_app_v2.py --web")
+        print("   python3 run_schema_app.py --web")
         print("\n💡 For help getting started:")
         print("   Use Help → Help Guide in the GUI")
         print("   Check the Templates tab for common use cases")

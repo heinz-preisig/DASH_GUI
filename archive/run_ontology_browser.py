@@ -7,8 +7,8 @@ Independent app for browsing ontologies and testing ontology functionality
 import sys
 from pathlib import Path
 
-# Add brick_app_v2 to path for imports
-sys.path.insert(0, str(Path(__file__).parent / 'brick_app_v2'))
+# Add brick_app to path for imports
+sys.path.insert(0, str(Path(__file__).parent / 'brick_app'))
 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QPushButton, QTextEdit
 from PyQt6.QtCore import Qt

@@ -13,7 +13,7 @@ Last updated: 2026-06-11
 - Updated SHACL export to include `sh:class` predicate
 
 **Phase 2: Enrichment Engine Backend**
-- Created `brick_app_v2/core/enrichment_engine.py` with:
+- Created `brick_app/core/enrichment_engine.py` with:
   - `EnrichmentEngine` class for ontology-aware enrichment
   - QUDT unit lookup (Mass → kg/g/lb/oz, Temperature → K/°C/°F, etc.)
   - Schema.org property suggestions (Person → givenName/familyName/email)
@@ -117,13 +117,13 @@ curl "http://localhost:5001/api/enrichment?class_iri=qudt:Mass"
 
 | File | Change |
 |------|--------|
-| `brick_app_v2/core/brick_core_simple.py` | Added `sh_class` to `LeafProperty` |
-| `brick_app_v2/core/enrichment_engine.py` | **NEW** - EnrichmentEngine class |
-| `brick_app_v2/api/web_api.py` | Added `/api/enrichment` endpoint |
-| `brick_app_v2/api/templates/index.html` | Added enrichment widgets (web) |
-| `brick_app_v2/ui/property_editor.ui` | Added sh:class field (Qt) |
-| `brick_app_v2/gui_components.py` | Added sh_class handling (Qt) |
-| `schema_app_v2/core/shacl_export.py` | Export `sh:class` predicate |
+| `brick_app/core/brick_core_simple.py` | Added `sh_class` to `LeafProperty` |
+| `brick_app/core/enrichment_engine.py` | **NEW** - EnrichmentEngine class |
+| `brick_app/api/web_api.py` | Added `/api/enrichment` endpoint |
+| `brick_app/api/templates/index.html` | Added enrichment widgets (web) |
+| `brick_app/ui/property_editor.ui` | Added sh:class field (Qt) |
+| `brick_app/gui_components.py` | Added sh_class handling (Qt) |
+| `schema_app/core/shacl_export.py` | Export `sh:class` predicate |
 | `common/library_manager.py` | Fixed library path (hyphen) |
 | `Dockerfile` | Fixed library path |
 | `docker-compose.yml` | Fixed library path |

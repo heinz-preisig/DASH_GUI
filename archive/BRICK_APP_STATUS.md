@@ -100,7 +100,7 @@ Extracted from `refactored_gui.py`:
 ✅ `/api/bricks` returns all bricks across libraries  
 ✅ `/api/libraries/<name>/bricks` returns bricks for specific library  
 ✅ Constraint endpoints respond correctly  
-✅ Package imports work (`import brick_app_v2`)  
+✅ Package imports work (`import brick_app`)  
 ✅ PyQt GUI launches (tested before web work)
 
 ---
@@ -131,7 +131,7 @@ curl http://localhost:5000/api/bricks
 curl http://localhost:5000/api/libraries/brick_core/bricks
 
 # Start PyQt GUI
-python brick_app_v2/refactored_gui.py
+python brick_app/refactored_gui.py
 ```
 
 ---

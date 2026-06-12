@@ -149,7 +149,7 @@ for file in ['brick1.json', 'brick2.json']:
 
 # Check brick format
 python3 -c "
-from schema_app_v2.core.brick_integration import BrickIntegration
+from schema_app.core.brick_integration import BrickIntegration
 bi = BrickIntegration('shared_libraries')
 try:
     bricks = bi.get_available_bricks()
@@ -212,7 +212,7 @@ for file in os.listdir(brick_dir):
 ```bash
 # Check schema validation
 python3 -c "
-from schema_app_v2.core.schema_core import SchemaCore
+from schema_app.core.schema_core import SchemaCore
 sc = SchemaCore()
 
 # Test validation
@@ -244,9 +244,9 @@ chmod 755 schema_repositories/default/schemas/
 ```bash
 # Test export functionality
 python3 -c "
-from schema_app_v2.core.shacl_export import SHACLExporter
-from schema_app_v2.core.schema_core import SchemaCore
-from schema_app_v2.core.brick_integration import BrickIntegration
+from schema_app.core.shacl_export import SHACLExporter
+from schema_app.core.schema_core import SchemaCore
+from schema_app.core.brick_integration import BrickIntegration
 
 # Create test schema
 sc = SchemaCore()
@@ -279,7 +279,7 @@ except Exception as e:
 ```bash
 # Check brick target classes
 python3 -c "
-from schema_app_v2.core.brick_integration import BrickIntegration
+from schema_app.core.brick_integration import BrickIntegration
 bi = BrickIntegration('shared_libraries')
 bricks = bi.get_node_shape_bricks()
 for brick in bricks:

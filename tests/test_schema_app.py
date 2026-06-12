@@ -1,6 +1,6 @@
 """
-Schema app tests — converted from schema_app_v2/test_ui_metadata.py and
-schema_app_v2/test_shacl_export.py (previously broken script-style files).
+Schema app tests — converted from schema_app/test_ui_metadata.py and
+schema_app/test_shacl_export.py (previously broken script-style files).
 
 Covers:
   - Schema / UIMetadata instantiation
@@ -10,7 +10,7 @@ Covers:
   - SHACL export (skipped if no schemas exist in the library)
 """
 import pytest
-from schema_app_v2.core.schema_core import Schema, UIMetadata, SchemaCore
+from schema_app.core.schema_core import Schema, UIMetadata, SchemaCore
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -136,15 +136,15 @@ def test_schema_round_trip(sample_schema):
 # ── SHACL export ──────────────────────────────────────────────────────────────
 
 def test_shacl_exporter_instantiates():
-    from schema_app_v2.core.shacl_export import SHACLExporter
-    from schema_app_v2.core.brick_integration import BrickIntegration
+    from schema_app.core.shacl_export import SHACLExporter
+    from schema_app.core.brick_integration import BrickIntegration
     exporter = SHACLExporter(BrickIntegration())
     assert exporter is not None
 
 
 def test_shacl_export_produces_output():
-    from schema_app_v2.core.shacl_export import SHACLExporter
-    from schema_app_v2.core.brick_integration import BrickIntegration
+    from schema_app.core.shacl_export import SHACLExporter
+    from schema_app.core.brick_integration import BrickIntegration
     core = SchemaCore()
     schemas = core.get_all_schemas()
     if not schemas:

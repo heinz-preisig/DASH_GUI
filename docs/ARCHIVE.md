@@ -8,19 +8,19 @@ This directory contains legacy and experimental components that are not part of 
 Architecture changed from global state to local state. These components were archived:
 
 #### State Management (Replaced by Local State)
-- `brick_app_v2/state/` - Global `app_state_manager` module
+- `brick_app/state/` - Global `app_state_manager` module
   - `app_state.py` - Centralized state management (now local in GUI classes)
 
 #### Business Logic (Replaced by brick_service.py)
-- `brick_app_v2/business/brick_operations.py` - Old business logic with global state dependencies
+- `brick_app/business/brick_operations.py` - Old business logic with global state dependencies
 
 #### UI Abstractions (Removed)
-- `brick_app_v2/ui/ui_abstraction.py` - Unused UI abstraction layer
-- `brick_app_v2/ui/constraint_manager.py` - Constraint manager (depends on old state)
-- `brick_app_v2/ui/__init__.py` - Import file for removed modules
+- `brick_app/ui/ui_abstraction.py` - Unused UI abstraction layer
+- `brick_app/ui/constraint_manager.py` - Constraint manager (depends on old state)
+- `brick_app/ui/__init__.py` - Import file for removed modules
 
 #### GUI Files (Renamed)
-- `brick_app_v2/refactored_gui.py` → `brick_editor.py` (renamed after refactoring complete)
+- `brick_app/refactored_gui.py` → `brick_editor.py` (renamed after refactoring complete)
 
 ### Legacy Applications
 - `shacl_brick_app/` - Original SHACL brick generator application
@@ -31,11 +31,11 @@ Architecture changed from global state to local state. These components were arc
 - `launch_brick_generator.py` - Original brick generator launcher
 - `run_brick_app.py` - Legacy brick app launcher
 - `run_schema_app.py` - Legacy schema app launcher
-- `run_schema_app_v2_final.py` - Previous version of v2 launcher
+- `run_schema_app_final.py` - Previous version of v2 launcher
 
 ### Test Files
 - `test_imports.py` - Import testing utilities
-- `test_schema_app_v2.py` - Schema app v2 tests
+- `test_schema_app.py` - Schema app v2 tests
 - `test_simple_gui.py` - Simple GUI tests
 - `test_schemas/` - Test schema files
 
@@ -62,11 +62,11 @@ Note: All repositories remaining in the root directory (`brick_repositories/`, `
 ## Current Active Implementation
 
 The main implementation now focuses on:
-- `brick_app_v2/` - Core brick management system
-- `schema_app_v2/` - Schema construction system
+- `brick_app/` - Core brick management system
+- `schema_app/` - Schema construction system
 - `brick_repositories/` - Active brick repository
 - `schema_repositories/` - Schema repository
-- `run_schema_app_v2.py` - Main launcher
+- `run_schema_app.py` - Main launcher
 
 ## Restoration
 

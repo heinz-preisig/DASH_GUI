@@ -6,5 +6,5 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 export PYTHONPATH="$SCRIPT_DIR${PYTHONPATH:+:$PYTHONPATH}"
-cd "$SCRIPT_DIR/brick_app_v2"
+cd "$SCRIPT_DIR/brick_app"
 exec uv run python main.py --gui "$@"

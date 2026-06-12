@@ -9,8 +9,8 @@ import os
 import subprocess
 from pathlib import Path
 
-# Change to brick_app_v2 directory for proper path resolution
-brick_app_dir = Path(__file__).parent / 'brick_app_v2'
+# Change to brick_app directory for proper path resolution
+brick_app_dir = Path(__file__).parent / 'brick_app'
 os.chdir(brick_app_dir)
 
 print('🧪 Testing Refactored Architecture...')

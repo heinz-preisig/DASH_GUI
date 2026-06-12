@@ -10,8 +10,8 @@ The system builds hierarchical SHACL schemas that drive DASH browser-based data-
 It has two independent Qt applications that share a common data layer:
 
 ```
-run_brick_app_qt.py    →  brick_app_v2/   (create & edit SHACL bricks)
-run_schema_app_qt.py   →  schema_app_v2/  (assemble bricks into schemas, export TTL + HTML)
+run_brick_app_qt.py    →  brick_app/   (create & edit SHACL bricks)
+run_schema_app_qt.py   →  schema_app/  (assemble bricks into schemas, export TTL + HTML)
 ```
 
 Both apps also expose a Flask REST API (`run_brick_app_web.py` / `run_schema_app_web.py`) and
@@ -28,7 +28,7 @@ the Darmstadt component renders the interactive form in the browser.
 
 ## Core Data Model
 
-### 1. `SHACLBrick`  *(brick_app_v2/core/brick_core_simple.py)*
+### 1. `SHACLBrick`  *(brick_app/core/brick_core_simple.py)*
 
 A brick is **always** a `sh:NodeShape` with `sh:targetClass`.
 It contains a flat list of leaf `sh:property` entries — **no nesting inside a brick**.
@@ -46,7 +46,7 @@ class SHACLBrick:
     xone_alternatives: List[List[Dict]]  # only for xone_choice
 ```
 
-### 2. `LeafProperty`  *(brick_app_v2/core/brick_core_simple.py)*
+### 2. `LeafProperty`  *(brick_app/core/brick_core_simple.py)*
 
 One `sh:property [...]` entry inside a `NodeShape`.
 
@@ -67,7 +67,7 @@ class LeafProperty:
     single_line:   Optional[bool] # dash:singleLine
 ```
 
-### 3. `BrickTemplateType`  *(brick_app_v2/core/brick_core_simple.py)*
+### 3. `BrickTemplateType`  *(brick_app/core/brick_core_simple.py)*
 
 Each template type maps to a specific SHACL leaf pattern and drives
 a specialised editor form in the GUI.
@@ -87,7 +87,7 @@ a specialised editor form in the GUI.
 
 ## TTL Serialisation
 
-### Brick standalone TTL  *(brick_app_v2/core/brick_ttl_serialiser.py)*
+### Brick standalone TTL  *(brick_app/core/brick_ttl_serialiser.py)*
 
 Written alongside `.json` on every save.
 
@@ -109,7 +109,7 @@ ex:TurbineShape a sh:NodeShape ;
     ] .
 ```
 
-### Schema hierarchical TTL  *(schema_app_v2/core/shacl_export.py)*
+### Schema hierarchical TTL  *(schema_app/core/shacl_export.py)*
 
 `SHACLExporter.export_schema()` does a **BFS edge-walk** over `Schema.edges`.
 Parents always precede children in the output.
@@ -139,7 +139,7 @@ ex:AddressShape a sh:NodeShape ;
 
 ## Schema Data Model
 
-### 4. `SchemaEdge`  *(schema_app_v2/core/schema_core.py)*
+### 4. `SchemaEdge`  *(schema_app/core/schema_core.py)*
 
 Explicit directed edge in the schema tree: **parent brick → child brick**.
 Carries the SHACL `path_iri` used in the `sh:property [sh:path … ; sh:node …]` block,
@@ -159,7 +159,7 @@ class SchemaEdge:
     sequence:        int = 0        # sh:order
 ```
 
-### 5. `Schema`  *(schema_app_v2/core/schema_core.py)*
+### 5. `Schema`  *(schema_app/core/schema_core.py)*
 
 Holds all bricks referenced in a schema and the tree of `SchemaEdge` objects.
 `UIMetadata` is retained for per-component display metadata (label, help text,
@@ -181,7 +181,7 @@ schema.get_hierarchical_tree()            # nested dict for UI tree widget
 
 ## Application Layers
 
-### Brick App (`brick_app_v2/`)
+### Brick App (`brick_app/`)
 
 ```
 main.py                        entry point (--gui / --web)
@@ -196,7 +196,7 @@ core/ontology_manager.py       loads cached ontology JSON files
 ui/                            UIManager, formatters, constraint_manager
 ```
 
-### Schema App (`schema_app_v2/`)
+### Schema App (`schema_app/`)
 
 ```
 interfaces/qt/schema_gui.py              SchemaGUI — Qt main window (no mixins)

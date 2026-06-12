@@ -21,8 +21,8 @@ print('Starting Schema App v2 Web Interface...')
 print(f'  URL : http://{args.host}:{args.port}')
 print(f'  Debug: {args.debug}')
 
-from schema_app_v2.interfaces.web.flask_app import SchemaWebAPI
-from schema_app_v2.core.multi_tenant_backend import MultiTenantBackend
+from schema_app.interfaces.web.flask_app import SchemaWebAPI
+from schema_app.core.multi_tenant_backend import MultiTenantBackend
 
 backend = MultiTenantBackend()
 web_api = SchemaWebAPI(backend, host=args.host, port=args.port)

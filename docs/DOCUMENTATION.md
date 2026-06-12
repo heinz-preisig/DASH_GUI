@@ -34,7 +34,7 @@ python --version
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Install project in development mode
-cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
+cd /home/heinz/1_Gits/DASH_GUI/brick_app
 uv sync
 
 # Run application
@@ -44,7 +44,7 @@ uv run python main.py --web --port 5001
 
 **Using pip with pyproject.toml:**
 ```bash
-cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
+cd /home/heinz/1_Gits/DASH_GUI/brick_app
 pip install -e .
 
 # Run application
@@ -69,7 +69,7 @@ pip install pytest black flake8
 Create a `.env` file for configuration:
 ```bash
 # Create .env file
-cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
+cd /home/heinz/1_Gits/DASH_GUI/brick_app
 cat > .env << EOF
 # Brick App v2 Environment Configuration
 
@@ -82,7 +82,7 @@ WEB_PORT=5001
 WEB_DEBUG=false
 
 # Development Settings
-PYTHONPATH=/home/heinz/1_Gits/DASH_GUI/brick_app_v2
+PYTHONPATH=/home/heinz/1_Gits/DASH_GUI/brick_app
 LOG_LEVEL=INFO
 EOF
 ```
@@ -109,14 +109,14 @@ python run_brick_app_web.py --port 5002 # Launch on custom port
 
 #### Option 2: Direct with uv
 ```bash
-cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
+cd /home/heinz/1_Gits/DASH_GUI/brick_app
 uv run main.py --gui
 uv run main.py --web --port 5001
 ```
 
 #### Option 3: Direct with Python
 ```bash
-cd /home/heinz/1_Gits/DASH_GUI/brick_app_v2
+cd /home/heinz/1_Gits/DASH_GUI/brick_app
 python main.py --gui
 python main.py --web --port 5001
 ```
@@ -138,11 +138,11 @@ python main.py --web --port 5001
 python run_brick_app_qt.py
 
 # Option 2: Direct with uv
-cd brick_app_v2
+cd brick_app
 uv run main.py --gui
 
 # Option 3: Direct with Python
-cd brick_app_v2
+cd brick_app
 python main.py --gui
 ```
 
@@ -170,11 +170,11 @@ python run_brick_app_web.py
 python run_brick_app_web.py --port 5002
 
 # Option 2: Direct with uv
-cd brick_app_v2
+cd brick_app
 uv run main.py --web --port 5001
 
 # Option 3: Direct with Python
-cd brick_app_v2
+cd brick_app
 python main.py --web --port 5001
 ```
 
@@ -297,7 +297,7 @@ Template bricks (full NodeShapes) in any library can be copied to your target li
 ### Creating Bricks
 
 #### PyQt GUI
-1. **Launch**: `python run_brick_app_qt.py` or `cd brick_app_v2 && uv run main.py --gui`
+1. **Launch**: `python run_brick_app_qt.py` or `cd brick_app && uv run main.py --gui`
 2. **Library**: Select or create library in the **Brick Library** panel
 3. **New Node**: Click `new node` to create a fresh NodeShape brick
 4. **Details**: Enter name, description, target class (use Browse button to pick from ontologies)
@@ -333,7 +333,7 @@ Template bricks (full NodeShapes) in any library can be copied to your target li
 4. Preset is saved to the active library's `_presets.json`
 
 #### Web Interface
-1. **Launch**: `python run_brick_app_web.py` or `cd brick_app_v2 && uv run main.py --web --port 5001`
+1. **Launch**: `python run_brick_app_web.py` or `cd brick_app && uv run main.py --web --port 5001`
 2. **Access**: Open `http://localhost:5001`
 3. **Select**: Choose brick from sidebar
 4. **Edit**: Modify details in main panel
@@ -472,7 +472,7 @@ python main.py --web --debug
 ### Project Structure
 
 ```
-brick_app_v2/
+brick_app/
 ├── main.py                    # Application entry point
 ├── refactored_gui.py          # Qt GUI frontend (main window logic)
 ├── gui_components.py          # Dialog components: LeafPropertyEditorDialog,
@@ -532,7 +532,7 @@ shared_libraries/bricks/       # Brick storage root
 
 #### Run Tests
 ```bash
-# From brick_app_v2 directory
+# From brick_app directory
 python -m pytest tests/
 ```
 
@@ -556,7 +556,7 @@ export PYTHONPATH=/home/heinz/1_Gits/DASH_GUI:$PYTHONPATH
 ```bash
 # Port 5000 or 5001 already in use? Use different port:
 python run_brick_app_web.py --port 5002
-# Or: cd brick_app_v2 && uv run main.py --web --port 5002
+# Or: cd brick_app && uv run main.py --web --port 5002
 ```
 
 #### Library Not Found

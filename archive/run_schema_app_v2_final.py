@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import QApplication
 os.chdir('/home/heinz/1_Gits/DASH_GUI')
 
 # Import directly from the correct location
-from schema_app_v2.interfaces.qt.schema_gui import SchemaGUI
+from schema_app.interfaces.qt.schema_gui import SchemaGUI
 
 if __name__ == "__main__":
     print('🚀 Starting Schema App v2 GUI...')

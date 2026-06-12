@@ -6,8 +6,8 @@
 ## Architecture Overview
 
 ### Core Components
-- **brick_app_v2/**: Core brick management system (local state)
-- **schema_app_v2/**: Schema construction and management system (local state)
+- **brick_app/**: Core brick management system (local state)
+- **schema_app/**: Schema construction and management system (local state)
 - **brick_repositories/**: Active brick repository (7 bricks available)
 - **schema_repositories/**: Schema storage repository
 - **ontologies/**: Ontology cache for brick system
@@ -32,7 +32,7 @@ Both Qt applications have been refactored from **global state** to **local state
 - **Better for testing**: Can create multiple independent instances
 
 #### File Renames
-- `brick_app_v2/refactored_gui.py` → `brick_app_v2/brick_editor.py`
+- `brick_app/refactored_gui.py` → `brick_app/brick_editor.py`
 
 #### New Features
 - **Property editing**: Double-click any property to edit name/path
@@ -41,9 +41,9 @@ Both Qt applications have been refactored from **global state** to **local state
 ### Interface Options
 
 #### ✅ PyQt6 Interface (Working)
-- **Location**: `schema_app_v2/interfaces/qt/`
+- **Location**: `schema_app/interfaces/qt/`
 - **Main File**: `schema_gui.py`
-- **Launcher**: `run_schema_app_v2.py`
+- **Launcher**: `run_schema_app.py`
 - **Status**: Fully functional, ready for testing
 - **Features**:
   - Schema creation, editing, saving
@@ -53,7 +53,7 @@ Both Qt applications have been refactored from **global state** to **local state
   - Library management
 
 #### ✅ Flask Web Interface (Working)
-- **Location**: `schema_app_v2/interfaces/web/`
+- **Location**: `schema_app/interfaces/web/`
 - **Main File**: `flask_app.py`
 - **Frontend**: React + Vite modular architecture
 - **Build Script**: `dev-build-frontend-web.sh`
@@ -67,16 +67,16 @@ Both Qt applications have been refactored from **global state** to **local state
 - **Launch**: `uv run python run_schema_app_web.py --port 5003`
 
 #### 📊 DASH Web Interface (Interactive)
-- **Location**: `schema_app_v2/interfaces/web/dash_app.py`
+- **Location**: `schema_app/interfaces/web/dash_app.py`
 - **Status**: Code available, requires Dash/Plotly/Pandas dependencies
 - **Features**: Interactive web interface from SHACL/bricks
 - **Ready for**: Installation with `pip install dash plotly pandas`
-- **Launch**: `python3 -m schema_app_v2.interfaces.web.dash_app`
+- **Launch**: `python3 -m schema_app.interfaces.web.dash_app`
 
 ## Testing Readiness
 
 ### ✅ Ready for Testing
-1. **PyQt6 GUI**: Launches successfully with `python3 run_schema_app_v2.py`
+1. **PyQt6 GUI**: Launches successfully with `python3 run_schema_app.py`
 2. **Brick Integration**: Loads 7 bricks from repository
 3. **Schema Operations**: Create, save, load, export schemas
 4. **Repository Management**: Clean, focused structure
@@ -97,8 +97,8 @@ Both Qt applications have been refactored from **global state** to **local state
 
 ```
 DASH_GUI/
-├── brick_app_v2/              # Core brick system
-├── schema_app_v2/             # Schema construction system
+├── brick_app/              # Core brick system
+├── schema_app/             # Schema construction system
 │   ├── interfaces/
 │   │   ├── qt/              # PyQt6 interface (working)
 │   │   └── web/             # Web interfaces
@@ -108,7 +108,7 @@ DASH_GUI/
 ├── brick_repositories/          # Active brick library
 ├── schema_repositories/        # Schema storage
 ├── ontologies/               # Ontology cache
-├── run_schema_app_v2.py     # Main launcher
+├── run_schema_app.py     # Main launcher
 └── archive/                  # Legacy components
 ```
 

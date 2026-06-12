@@ -21,8 +21,8 @@ print('Starting Brick App v2 Web Interface...')
 print(f'  URL : http://{args.host}:{args.port}')
 print(f'  Debug: {args.debug}')
 
-from brick_app_v2.api.web_api import BrickWebAPI
-from brick_app_v2.core.multi_tenant_backend import MultiTenantBackend
+from brick_app.api.web_api import BrickWebAPI
+from brick_app.core.multi_tenant_backend import MultiTenantBackend
 
 backend = MultiTenantBackend()
 web_api = BrickWebAPI(backend, host=args.host, port=args.port)

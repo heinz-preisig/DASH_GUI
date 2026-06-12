@@ -34,7 +34,7 @@ uv run python run_brick_app_web.py --port 5001
 ./dev-build-frontend-web.sh
 
 # Or manually:
-cd schema_app_v2/interfaces/web
+cd schema_app/interfaces/web
 npm install
 npm run build
 
@@ -81,8 +81,8 @@ uv run python run_schema_app_web.py     # Schema app → http://localhost:5000
 ## 🏗️ Architecture
 
 ### Core Components
-- **brick_app_v2/**: Core brick management system
-- **schema_app_v2/**: Schema construction and management
+- **brick_app/**: Core brick management system
+- **schema_app/**: Schema construction and management
 - **common/**: Shared library management
 - **docs/**: Complete documentation suite
 
@@ -182,8 +182,8 @@ DASH_GUI/
 │   ├── TROUBLESHOOTING.md    # Common issues & solutions
 │   ├── README_V2_STATUS.md  # System status & architecture
 │   └── TASK_MANAGER.md       # Task management guide
-├── brick_app_v2/              # Core brick management system
-├── schema_app_v2/             # Schema construction system
+├── brick_app/              # Core brick management system
+├── schema_app/             # Schema construction system
 ├── shared_libraries/          # Brick & schema libraries (bundled DigiPass)
 ├── Dockerfile                       # Docker build (web-only)
 ├── docker-compose.yml               # Docker Compose config
@@ -218,7 +218,7 @@ cat docs/ROADMAP.md
 ### System Commands
 ```bash
 # Check imports and environment
-uv run python -c "from brick_app_v2.core.brick_core_simple import BrickCore; print('OK')"
+uv run python -c "from brick_app.core.brick_core_simple import BrickCore; print('OK')"
 ```
 
 ---

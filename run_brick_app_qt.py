@@ -13,8 +13,8 @@ from pathlib import Path
 parent_dir = Path(__file__).parent
 sys.path.insert(0, str(parent_dir))
 
-# Change to brick_app_v2 directory for proper path resolution
-brick_app_dir = parent_dir / 'brick_app_v2'
+# Change to brick_app directory for proper path resolution
+brick_app_dir = parent_dir / 'brick_app'
 os.chdir(brick_app_dir)
 
 print('Starting Brick App v2 - Local State Architecture')

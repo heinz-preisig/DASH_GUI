@@ -33,7 +33,7 @@ Six DPP-specific presets added:
 
 | File | Purpose |
 |---|---|
-| `toy-dpp-schema-001.json` | Schema loadable by `schema_app_v2` (library: `toy_dpp`) |
+| `toy-dpp-schema-001.json` | Schema loadable by `schema_app` (library: `toy_dpp`) |
 | `toy-dpp-schema-001.ttl` | SHACL + DASH Turtle — the authoritative output artefact |
 
 The TTL contains:
@@ -55,7 +55,7 @@ The TTL contains:
 ## Pending work
 
 ### 1. Fix `dash_integration.py`
-`schema_app_v2/core/dash_integration.py` still uses the old `object_type` /
+`schema_app/core/dash_integration.py` still uses the old `object_type` /
 `properties`-dict model. It will not correctly render a DASH HTML form from
 these bricks. Needs updating to use `leaf_properties` list and `template_type`
 instead of `brick.object_type`, `brick.properties`, `brick.constraints`.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Shared Library Manager
-Unified library management for brick_app_v2 and schema_app_v2
+Unified library management for brick_app and schema_app
 
 The actual library data lives EXTERNAL to the project at:
   <project_root>/../ShaclForm_library/
