@@ -179,6 +179,7 @@ class PropertyEditorDialog(QDialog):
 
         # Connect signals
         self.datatype_combo.currentTextChanged.connect(self._update_group_visibility)
+        self.datatype_combo.currentTextChanged.connect(self._run_datatype_enrichment)
         self.use_custom_namespace.toggled.connect(self._on_namespace_toggled)
         self.browse_btn.clicked.connect(self._browse_ontology)
         self.generate_iri_btn.clicked.connect(self._generate_iri)
@@ -189,6 +190,7 @@ class PropertyEditorDialog(QDialog):
 
         # Enrichment area — injected dynamically below sh_class field
         self._enrichment_widget = None
+        self._datatype_hint_label = None
         self._enrichment_timer = QTimer(self)
         self._enrichment_timer.setSingleShot(True)
         self._enrichment_timer.timeout.connect(self._run_enrichment)
@@ -204,6 +206,7 @@ class PropertyEditorDialog(QDialog):
         # Initial group visibility + enrichment
         self._update_group_visibility()
         self._run_enrichment()
+        self._run_datatype_enrichment(self.datatype_combo.currentText())
 
     # ── visibility ──────────────────────────────────────────────────────────
 
@@ -270,6 +273,32 @@ class PropertyEditorDialog(QDialog):
                 self._show_property_suggestions(ctx)
         except Exception as e:
             print(f"Enrichment error: {e}")
+
+    def _run_datatype_enrichment(self, datatype=None):
+        """Show Layer 0 widget hint for the selected datatype."""
+        if self._datatype_hint_label is not None:
+            self._datatype_hint_label.setParent(None)
+            self._datatype_hint_label.deleteLater()
+            self._datatype_hint_label = None
+        dt = datatype or self.datatype_combo.currentText()
+        if not dt:
+            return
+        try:
+            from core.enrichment_engine import EnrichmentEngine
+            ctx = EnrichmentEngine(self.ontology_manager).enrich_datatype(dt)
+            if ctx and ctx.widget and ctx.widget != "text":
+                from PyQt6.QtWidgets import QLabel
+                lbl = QLabel(f"⚙ Widget: <b>{ctx.widget}</b> (from datatype)")
+                lbl.setStyleSheet("color: #2a6a2a; background: #eef6ee; padding: 3px 6px; border-radius: 3px; font-size: 11px;")
+                lbl.setTextFormat(Qt.TextFormat.RichText)
+                container = self.datatype_combo.parentWidget().layout()
+                if container:
+                    idx = container.indexOf(self.datatype_combo)
+                    container.insertWidget(idx + 1, lbl)
+                self._datatype_hint_label = lbl
+                self.adjustSize()
+        except Exception as e:
+            print(f"Datatype enrichment error: {e}")
 
     def _clear_enrichment_widget(self):
         if self._enrichment_widget is not None:
