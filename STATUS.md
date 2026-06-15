@@ -1,27 +1,59 @@
 # Session Status
 Last updated: 2026-06-15
 
-## What Was Done (2026-06-15)
+## What Was Done (2026-06-15, afternoon)
+
+### Ontology Browser — Generic Label-Driven Entity Extraction
+- Replaced hardcoded type-based class extraction (`owl:Class`, `qudt:QuantityKind`, etc.)
+  with a **general label-driven approach**: any `URIRef` subject carrying `rdfs:label` or
+  `skos:prefLabel` is indexed as a browsable entity. Covers OWL, QUDT, SKOS, BRICK, and
+  any future vocabulary without special-casing.
+- Result: `qudt_quantitykind` now shows **1217 entities**, `qudt-units` 2906, etc.
+
+### Ontology Browser — "All Ontologies" Default
+- Added `_all` virtual ontology to API: merges classes (or properties) across all loaded
+  ontologies in a single response.
+- Browser now **opens pre-selected on "— All ontologies —"** so all items load immediately
+  on open. User can still narrow to a single ontology via the dropdown.
+- Eliminates the need to know which sub-ontology (e.g. `qudt-datatype` vs `qudt-units`)
+  contains the predicate you want.
+
+### SHACL Exporter — Generic Prefix Resolution
+- Replaced the hardcoded `@prefix` block with a fully **ontology-graph-driven** approach:
+  1. Build a prefix→namespace map by harvesting namespace bindings from every loaded
+     ontology graph (`g.namespaces()` across all ontologies in `OntologyManager`).
+  2. Generate Turtle body first, then scan it for used `prefix:localname` tokens.
+  3. Emit only the `@prefix` declarations actually needed.
+- Only 4 built-ins not found in any ontology graph are declared explicitly: `sh:`, `dash:`,
+  `ex:`, `schema:`.
+- Fixes `Undefined prefix "ex:"` error on schema reference edges.
+- Any new ontology loaded automatically makes its prefixes available — no code changes needed.
+
+### Add Property UX Improvements
+- **Double labels** on the two most confusing fields:
+  - "Field Identifier" with `sh:path` in small grey monospace below
+  - "Concept Type" with `sh:class` in small grey monospace below
+  - "Allowed Values" with `sh:in`, "Fixed Value" with `sh:hasValue`
+- **`?` help tooltips** on every field with plain-English one-sentence explanations.
+- **Auto-set datatype from `sh:class`**: when Concept Type is set and enrichment resolves
+  to `unit_dropdown`, datatype auto-sets to `xsd:decimal`; `boolean_toggle` → `xsd:boolean`;
+  `date_picker` → `xsd:date`; etc. Generic rule, no vocabulary special-casing.
+- **Auto-set datatype from `rdfs:range`**: when a property is selected from the browser,
+  its `rdfs:range` (if declared) auto-fills the datatype field.
 
 ### Semantic Unit Dropdown — End-to-End Working
-- **`SHACLExporter` now loads `OntologyManager`** at construction time (auto-discovers
-  QUDT/FOAF/etc. from the shared library cache). Uses `get_enrichment_engine()` singleton
-  so ontologies are only loaded once.
-- **`sh:in` list emitted for quantity-kind properties**: when a `leaf_property` has
-  `sh_class` that resolves to `unit_dropdown` (e.g. `qudt:Mass`, `qudt:Temperature`,
-  `qudt:Pressure` etc.), the exporter now emits the full QUDT `sh:in (unit:KiloGM
-  unit:GM ...)` list — shacl-form renders this as a native dropdown.
-- **`dash:editor dash:InstancesSelectEditor`** is now emitted for unit fields (was
-  incorrectly `dash:DecimalFieldEditor`).
-- **`unit:`, `qudt:`, `quantitykind:` prefixes** always included in exported Turtle.
-- **Priority**: `unit_iris` from semantic enrichment overrides manual `sh:in` / `in_values`
-  on the brick when `sh_class` is a physical quantity kind.
+- **`SHACLExporter` now loads `OntologyManager`** at construction time. Uses
+  `get_enrichment_engine()` singleton so ontologies are only loaded once.
+- **`sh:in` list emitted for quantity-kind properties**: `qudt:Mass`, `qudt:Temperature`,
+  etc. resolve to `unit_dropdown` and emit the full QUDT unit list as `sh:in`.
+- **`dash:editor dash:InstancesSelectEditor`** emitted for unit fields.
 - All 60 tests still pass.
 
-### Next step
-- Create a Mass brick in the brick app (add a property with `sh:class = qudt:Mass`,
-  datatype `xsd:decimal`), assemble a schema, export → open the form HTML in browser
-  to verify the unit dropdown renders.
+### Next Steps
+- End-to-end test: create Mass brick → assemble schema → export → verify unit dropdown
+  renders in the browser form.
+- Fix: deleted component not removed from component list in schema app UI (bug identified,
+  fix pending — `removeComp` calls `loadComponents()` but UI state may be stale).
 
 ---
 
