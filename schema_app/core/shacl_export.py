@@ -84,10 +84,6 @@ class SHACLExporter:
         """Export a complete schema to SHACL Turtle format"""
         lines = []
         
-        # Add prefixes
-        lines.extend(self._generate_prefixes(schema, library_name))
-        lines.append("")
-        
         # Export all shapes using _generate_hierarchical_shacl (consistent schema: prefix)
         exported_bricks = set()
 
@@ -167,68 +163,53 @@ class SHACLExporter:
         # Add schema metadata
         lines.extend(self._generate_schema_metadata(schema))
 
-        return "\n".join(lines)
+        # Build body first, then prepend only the prefixes actually used
+        body = "\n".join(lines)
+        prefix_lines = self._generate_prefixes_for_body(body, schema)
+        return "\n".join(prefix_lines) + "\n\n" + body
     
+    def _build_prefix_map(self, schema: Schema) -> dict:
+        """Build a prefix->namespace map from loaded ontology graphs + built-ins."""
+        import re
+        # Built-ins not present in any ontology graph
+        prefix_map = {
+            "sh":    "http://www.w3.org/ns/shacl#",
+            "dash":  "http://datashapes.org/dash#",
+            "ex":    "http://example.org/ex/#",
+            "schema": f"http://example.org/schema/{schema.schema_id}/",
+        }
+        # Harvest every prefix binding from every loaded ontology graph
+        om = getattr(self._enrichment, 'ontology_manager', None)
+        if om:
+            for ont_data in om.ontologies.values():
+                g = ont_data.get('graph')
+                if g is None:
+                    continue
+                for pfx, ns in g.namespaces():
+                    pfx = str(pfx)
+                    if pfx and pfx not in prefix_map:
+                        prefix_map[pfx] = str(ns)
+        return prefix_map
+
+    def _generate_prefixes_for_body(self, body: str, schema: Schema) -> List[str]:
+        """Scan the Turtle body, collect used prefixes, return @prefix declarations."""
+        import re
+        prefix_map = self._build_prefix_map(schema)
+        # Strip angle-bracket URIs and string literals so we don't match http:// etc.
+        stripped = re.sub(r'<[^>]*>', ' ', body)       # remove <URI>
+        stripped = re.sub(r'"[^"]*"', ' ', stripped)   # remove "strings"
+        stripped = re.sub(r'#[^\n]*', ' ', stripped)   # remove # comments
+        used = set(re.findall(r'\b([A-Za-z_][\w-]*):[A-Za-z_]', stripped))
+        lines = []
+        for pfx in sorted(used):
+            if pfx in prefix_map:
+                lines.append(f"@prefix {pfx}: <{prefix_map[pfx]}> .")
+            # unknown prefixes: skip — they came from full URIs wrapped in <> already
+        return lines
+
     def _generate_prefixes(self, schema: Schema, library_name: Optional[str] = None) -> List[str]:
-        """Generate prefix declarations"""
-        prefixes = [
-            "@prefix sh: <http://www.w3.org/ns/shacl#> .",
-            "@prefix dash: <http://datashapes.org/dash#> .",
-            "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .",
-            "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .",
-            "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
-            "@prefix qudt: <http://qudt.org/schema/qudt/> .",
-            "@prefix quantitykind: <http://qudt.org/vocab/quantitykind/> .",
-            "@prefix unit: <http://qudt.org/vocab/unit/> .",
-            f"@prefix schema: <http://example.org/schema/{schema.schema_id}/> .",
-        ]
-
-        # Collect prefixes from all bricks: target_class + leaf_property paths + edges
-        seen_prefixes = set()
-        reserved = {"sh", "dash", "xsd", "rdf", "rdfs", "schema", "qudt", "quantitykind", "unit"}
-        all_brick_ids = ([schema.root_brick_id] if schema.root_brick_id else []) + schema.component_brick_ids
-        
-        def collect_prefixes_from_brick(brick, schema_obj):
-            """Extract prefixes from a brick's properties and edges"""
-            candidates = []
-            if getattr(brick, 'target_class', '') and ":" in brick.target_class:
-                candidates.append(brick.target_class.split(":")[0])
-            for lp in (getattr(brick, 'leaf_properties', []) or []):
-                path = lp.get('path', '')
-                if path and ":" in path:
-                    candidates.append(path.split(":")[0])
-            # Check edge paths for this brick as parent
-            if schema_obj and hasattr(schema_obj, 'edges'):
-                for edge in schema_obj.edges:
-                    if edge.parent_brick_id == brick.brick_id and edge.path_iri and ":" in edge.path_iri:
-                        candidates.append(edge.path_iri.split(":")[0])
-            return candidates
-        
-        # Track all bricks we've scanned (including edge children)
-        scanned_brick_ids = set(all_brick_ids)
-        
-        for brick_id in list(all_brick_ids):  # Use list() to avoid mutation during iteration
-            brick = self.brick_integration.get_brick_by_id(brick_id, library_name)
-            if not brick:
-                continue
-            for prefix in collect_prefixes_from_brick(brick, schema):
-                if prefix and prefix not in seen_prefixes and prefix not in reserved:
-                    prefixes.append(f"@prefix {prefix}: <http://example.org/{prefix}/#> .")
-                    seen_prefixes.add(prefix)
-            
-            # Also scan child bricks from edges (may not be in component list)
-            if schema and hasattr(schema, 'edges'):
-                for edge in schema.edges:
-                    if edge.parent_brick_id == brick_id:
-                        child_brick = self.brick_integration.get_brick_by_id(edge.child_brick_id, library_name)
-                        if child_brick and edge.child_brick_id not in scanned_brick_ids:
-                            scanned_brick_ids.add(edge.child_brick_id)
-                            for prefix in collect_prefixes_from_brick(child_brick, schema):
-                                if prefix and prefix not in seen_prefixes and prefix not in reserved:
-                                    prefixes.append(f"@prefix {prefix}: <http://example.org/{prefix}/#> .")
-                                    seen_prefixes.add(prefix)
-
-        return prefixes
+        """Stub kept for compatibility — real work done in _generate_prefixes_for_body."""
+        return []
     
     def _generate_schema_metadata(self, schema: Schema) -> List[str]:
         """Generate schema metadata as comments"""
