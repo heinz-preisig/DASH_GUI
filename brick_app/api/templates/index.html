@@ -47,7 +47,11 @@
 
     /* Forms */
     .form-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
-    .form-row label { width: 130px; min-width: 130px; font-size: 12px; color: #555; padding-top: 7px; }
+    .form-row label { width: 150px; min-width: 150px; font-size: 12px; color: #555; padding-top: 7px; }
+    .form-row label .rdf-term { display: block; font-size: 10px; color: #999; font-family: monospace; margin-top: 1px; }
+    /* Tooltip */
+    .help-tip { display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: #b0bec5; color: #fff; font-size: 10px; font-weight: bold; text-align: center; line-height: 14px; cursor: help; margin-left: 4px; position: relative; vertical-align: middle; }
+    .help-tip:hover::after { content: attr(data-tip); position: absolute; left: 20px; top: -4px; background: #333; color: #fff; padding: 6px 9px; border-radius: 5px; font-size: 11px; white-space: pre-wrap; max-width: 260px; z-index: 9999; line-height: 1.5; font-weight: normal; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
     .form-row .field { flex: 1; }
     input[type=text], select, textarea { width: 100%; padding: 6px 9px; border: 1px solid #cdd5de; border-radius: 4px; font-size: 13px; font-family: inherit; background: #fff; }
     input[type=text]:focus, select:focus, textarea:focus { outline: none; border-color: #2a6db5; box-shadow: 0 0 0 2px rgba(42,109,181,.15); }
@@ -502,9 +506,9 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
         <div className="modal" onClick={e => e.stopPropagation()}>
           <h2>Add Property</h2>
 
-          <div className="form-row"><label>Name <span className="required">*</span></label><div className="field"><input type="text" value={form.name} onChange={e => set("name", e.target.value)}/></div></div>
+          <div className="form-row"><label>Name <span className="required">*</span><span className="help-tip" data-tip="Human-readable label for this property, shown in the generated form.">?</span></label><div className="field"><input type="text" value={form.name} onChange={e => set("name", e.target.value)}/></div></div>
           <div className="form-row">
-            <label>Property Path <span className="required">*</span></label>
+            <label>Field Identifier <span className="required">*</span><span className="rdf-term">sh:path</span><span className="help-tip" data-tip="The RDF predicate (edge) that connects the subject to this value in the graph. Use Gen to auto-create one, or Browse to pick a standard predicate like qudt:value or foaf:name.">?</span></label>
             <div className="field">
               <div className="input-with-btn">
                 <input type="text" value={form.property_path} onChange={e => set("property_path", e.target.value)}/>
@@ -513,21 +517,21 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
               </div>
             </div>
           </div>
-          <div className="form-row"><label>Datatype</label><div className="field"><select value={form.datatype} onChange={e => set("datatype", e.target.value)}>{DATATYPES.map(d => <option key={d} value={d}>{d}</option>)}</select></div></div>
+          <div className="form-row"><label>Datatype<span className="help-tip" data-tip="The XSD datatype of the value, e.g. xsd:decimal for numbers, xsd:string for text. Auto-set when a Concept Type is selected.">?</span></label><div className="field"><select value={form.datatype} onChange={e => set("datatype", e.target.value)}>{DATATYPES.map(d => <option key={d} value={d}>{d}</option>)}</select></div></div>
 
-          <div className="form-row"><label>Min Count</label><div className="field"><input type="text" value={form.min_count} onChange={e => set("min_count", e.target.value)} placeholder="optional"/></div></div>
-          <div className="form-row"><label>Max Count</label><div className="field"><input type="text" value={form.max_count} onChange={e => set("max_count", e.target.value)} placeholder="optional"/></div></div>
+          <div className="form-row"><label>Min Count<span className="help-tip" data-tip="Minimum number of values required. Set to 1 to make this field mandatory.">?</span></label><div className="field"><input type="text" value={form.min_count} onChange={e => set("min_count", e.target.value)} placeholder="optional"/></div></div>
+          <div className="form-row"><label>Max Count<span className="help-tip" data-tip="Maximum number of values allowed. Set to 1 to allow only a single value.">?</span></label><div className="field"><input type="text" value={form.max_count} onChange={e => set("max_count", e.target.value)} placeholder="optional"/></div></div>
 
           {(isString || isLang) && <>
-            <div className="form-row"><label>Min Length</label><div className="field"><input type="text" value={form.min_length} onChange={e => set("min_length", e.target.value)} placeholder="optional"/></div></div>
-            <div className="form-row"><label>Max Length</label><div className="field"><input type="text" value={form.max_length} onChange={e => set("max_length", e.target.value)} placeholder="optional"/></div></div>
-            <div className="form-row"><label>Pattern</label><div className="field"><input type="text" value={form.pattern} onChange={e => set("pattern", e.target.value)} placeholder="optional regex, e.g. ^[A-Za-z]+$" style={{fontFamily:"monospace"}}/></div></div>
+            <div className="form-row"><label>Min Length<span className="help-tip" data-tip="Minimum number of characters the string value must have.">?</span></label><div className="field"><input type="text" value={form.min_length} onChange={e => set("min_length", e.target.value)} placeholder="optional"/></div></div>
+            <div className="form-row"><label>Max Length<span className="help-tip" data-tip="Maximum number of characters the string value may have.">?</span></label><div className="field"><input type="text" value={form.max_length} onChange={e => set("max_length", e.target.value)} placeholder="optional"/></div></div>
+            <div className="form-row"><label>Pattern<span className="help-tip" data-tip="Regular expression the value must match, e.g. ^[A-Z]{2}$ for a two-letter code.">?</span></label><div className="field"><input type="text" value={form.pattern} onChange={e => set("pattern", e.target.value)} placeholder="optional regex, e.g. ^[A-Za-z]+$" style={{fontFamily:"monospace"}}/></div></div>
           </>}
 
           {isLang && <>
-            <div className="form-row"><label>Language In</label><div className="field"><input type="text" value={form.language_in} onChange={e => set("language_in", e.target.value)} placeholder='e.g. "en","de","fr"'/></div></div>
+            <div className="form-row"><label>Language In<span className="help-tip" data-tip='Restrict to specific language tags, e.g. "en","de". Comma-separated.'>?</span></label><div className="field"><input type="text" value={form.language_in} onChange={e => set("language_in", e.target.value)} placeholder='e.g. "en","de","fr"'/></div></div>
             <div className="form-row">
-              <label>Unique Lang</label>
+              <label>Unique Lang<span className="help-tip" data-tip="If checked, at most one value per language tag is allowed.">?</span></label>
               <div className="field" style={{paddingTop:"6px"}}>
                 <input type="checkbox" checked={form.unique_lang} onChange={e => set("unique_lang", e.target.checked)}/> <small>one value per language tag</small>
               </div>
@@ -535,19 +539,19 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
           </>}
 
           {hasBounds && <>
-            <div className="form-row"><label>Min Inclusive</label><div className="field"><input type="text" value={form.min_inclusive} onChange={e => set("min_inclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
-            <div className="form-row"><label>Max Inclusive</label><div className="field"><input type="text" value={form.max_inclusive} onChange={e => set("max_inclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
-            <div className="form-row"><label>Min Exclusive</label><div className="field"><input type="text" value={form.min_exclusive} onChange={e => set("min_exclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
-            <div className="form-row"><label>Max Exclusive</label><div className="field"><input type="text" value={form.max_exclusive} onChange={e => set("max_exclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
+            <div className="form-row"><label>Min Inclusive<span className="help-tip" data-tip="The value must be ≥ this number (or date).">?</span></label><div className="field"><input type="text" value={form.min_inclusive} onChange={e => set("min_inclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
+            <div className="form-row"><label>Max Inclusive<span className="help-tip" data-tip="The value must be ≤ this number (or date).">?</span></label><div className="field"><input type="text" value={form.max_inclusive} onChange={e => set("max_inclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
+            <div className="form-row"><label>Min Exclusive<span className="help-tip" data-tip="The value must be strictly > this number (or date).">?</span></label><div className="field"><input type="text" value={form.min_exclusive} onChange={e => set("min_exclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
+            <div className="form-row"><label>Max Exclusive<span className="help-tip" data-tip="The value must be strictly < this number (or date).">?</span></label><div className="field"><input type="text" value={form.max_exclusive} onChange={e => set("max_exclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
           </>}
 
-          <div className="form-row"><label>sh:in</label><div className="field"><input type="text" value={form.in_values} onChange={e => set("in_values", e.target.value)} placeholder='comma-separated, e.g. "red","green","blue"'/></div></div>
-          <div className="form-row"><label>sh:hasValue</label><div className="field"><input type="text" value={form.has_value} onChange={e => set("has_value", e.target.value)} placeholder="optional fixed value"/></div></div>
+          <div className="form-row"><label>Allowed Values<span className="rdf-term">sh:in</span><span className="help-tip" data-tip="Restrict the value to a fixed list. Comma-separated, quote strings: \"red\",\"green\". Auto-populated from Concept Type for physical quantities.">?</span></label><div className="field"><input type="text" value={form.in_values} onChange={e => set("in_values", e.target.value)} placeholder='comma-separated, e.g. "red","green","blue"'/></div></div>
+          <div className="form-row"><label>Fixed Value<span className="rdf-term">sh:hasValue</span><span className="help-tip" data-tip="The property must have exactly this value. Useful for type tags or constants.">?</span></label><div className="field"><input type="text" value={form.has_value} onChange={e => set("has_value", e.target.value)} placeholder="optional fixed value"/></div></div>
 
-          <div className="form-row"><label>Description</label><div className="field"><textarea value={form.description} onChange={e => set("description", e.target.value)}/></div></div>
+          <div className="form-row"><label>Description<span className="help-tip" data-tip="Human-readable description shown as a tooltip in the generated form.">?</span></label><div className="field"><textarea value={form.description} onChange={e => set("description", e.target.value)}/></div></div>
 
           <div className="form-row">
-            <label>Semantic Class (sh:class)</label>
+            <label>Concept Type<span className="rdf-term">sh:class</span><span className="help-tip" data-tip="The semantic type of the value — what kind of thing it is. Setting this to a physical quantity (e.g. qudt:Mass) auto-sets the datatype and enables a unit dropdown in the generated form.">?</span></label>
             <div className="field">
               <div className="input-with-btn">
                 <input type="text" value={form.sh_class} onChange={e => set("sh_class", e.target.value)} placeholder="e.g., foaf:Person, qudt:Mass"/>
