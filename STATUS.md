@@ -1,5 +1,29 @@
 # Session Status
-Last updated: 2026-06-14
+Last updated: 2026-06-15
+
+## What Was Done (2026-06-15)
+
+### Semantic Unit Dropdown — End-to-End Working
+- **`SHACLExporter` now loads `OntologyManager`** at construction time (auto-discovers
+  QUDT/FOAF/etc. from the shared library cache). Uses `get_enrichment_engine()` singleton
+  so ontologies are only loaded once.
+- **`sh:in` list emitted for quantity-kind properties**: when a `leaf_property` has
+  `sh_class` that resolves to `unit_dropdown` (e.g. `qudt:Mass`, `qudt:Temperature`,
+  `qudt:Pressure` etc.), the exporter now emits the full QUDT `sh:in (unit:KiloGM
+  unit:GM ...)` list — shacl-form renders this as a native dropdown.
+- **`dash:editor dash:InstancesSelectEditor`** is now emitted for unit fields (was
+  incorrectly `dash:DecimalFieldEditor`).
+- **`unit:`, `qudt:`, `quantitykind:` prefixes** always included in exported Turtle.
+- **Priority**: `unit_iris` from semantic enrichment overrides manual `sh:in` / `in_values`
+  on the brick when `sh_class` is a physical quantity kind.
+- All 60 tests still pass.
+
+### Next step
+- Create a Mass brick in the brick app (add a property with `sh:class = qudt:Mass`,
+  datatype `xsd:decimal`), assemble a schema, export → open the form HTML in browser
+  to verify the unit dropdown renders.
+
+---
 
 ## What Was Done (2026-06-12)
 

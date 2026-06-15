@@ -13,9 +13,16 @@ from common.enrichment_engine import EnrichmentEngine
 class SHACLExporter:
     """Export schemas and bricks to SHACL format"""
     
-    def __init__(self, brick_integration: BrickIntegration):
+    def __init__(self, brick_integration: BrickIntegration, ontology_manager=None):
         self.brick_integration = brick_integration
-        self._enrichment = EnrichmentEngine(ontology_manager=None)
+        if ontology_manager is None:
+            try:
+                from brick_app.core.ontology_manager import OntologyManager
+                ontology_manager = OntologyManager()
+            except Exception:
+                pass
+        from common.enrichment_engine import get_enrichment_engine
+        self._enrichment = get_enrichment_engine(ontology_manager)
 
     # ── High-level convenience ─────────────────────────────────────────────
 
@@ -170,12 +177,15 @@ class SHACLExporter:
             "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .",
             "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .",
             "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
+            "@prefix qudt: <http://qudt.org/schema/qudt/> .",
+            "@prefix quantitykind: <http://qudt.org/vocab/quantitykind/> .",
+            "@prefix unit: <http://qudt.org/vocab/unit/> .",
             f"@prefix schema: <http://example.org/schema/{schema.schema_id}/> .",
         ]
 
         # Collect prefixes from all bricks: target_class + leaf_property paths + edges
         seen_prefixes = set()
-        reserved = {"sh", "dash", "xsd", "rdf", "rdfs", "schema"}
+        reserved = {"sh", "dash", "xsd", "rdf", "rdfs", "schema", "qudt", "quantitykind", "unit"}
         all_brick_ids = ([schema.root_brick_id] if schema.root_brick_id else []) + schema.component_brick_ids
         
         def collect_prefixes_from_brick(brick, schema_obj):
@@ -289,7 +299,7 @@ class SHACLExporter:
         "uri_input":        "dash:URIEditor",
         "textarea":         "dash:TextAreaEditor",
         "language_text":    "dash:TextAreaEditor",
-        "unit_dropdown":    "dash:DecimalFieldEditor",
+        "unit_dropdown":    "dash:InstancesSelectEditor",
         "property_suggestions": "dash:TextFieldEditor",
     }
     _WIDGET_TO_VIEWER = {
@@ -306,23 +316,39 @@ class SHACLExporter:
         "property_suggestions": "dash:LabelViewer",
     }
 
-    def _get_dash_editor(self, datatype: str, sh_class: str = "") -> str:
-        """Resolve dash:editor via EnrichmentEngine (Layer 0 + 2/3), fall back to datatype map."""
+    def _get_enrichment_context(self, datatype: str, sh_class: str = ""):
+        """Return the best EnrichmentContext for a property (sh:class takes priority)."""
         if sh_class:
             ctx = self._enrichment.enrich(sh_class)
             if ctx.widget != "text":
-                return self._WIDGET_TO_EDITOR.get(ctx.widget, "dash:TextFieldEditor")
-        ctx = self._enrichment.enrich_datatype(datatype)
+                return ctx
+        return self._enrichment.enrich_datatype(datatype)
+
+    def _get_dash_editor(self, datatype: str, sh_class: str = "") -> str:
+        """Resolve dash:editor via EnrichmentEngine (Layer 0 + 2/3), fall back to datatype map."""
+        ctx = self._get_enrichment_context(datatype, sh_class)
         return self._WIDGET_TO_EDITOR.get(ctx.widget, "dash:TextFieldEditor")
 
     def _get_dash_viewer(self, datatype: str, sh_class: str = "") -> str:
         """Resolve dash:viewer via EnrichmentEngine (Layer 0 + 2/3), fall back to datatype map."""
-        if sh_class:
-            ctx = self._enrichment.enrich(sh_class)
-            if ctx.widget != "text":
-                return self._WIDGET_TO_VIEWER.get(ctx.widget, "dash:LabelViewer")
-        ctx = self._enrichment.enrich_datatype(datatype)
+        ctx = self._get_enrichment_context(datatype, sh_class)
         return self._WIDGET_TO_VIEWER.get(ctx.widget, "dash:LabelViewer")
+
+    def _get_unit_in_list(self, sh_class: str) -> Optional[List[str]]:
+        """If sh_class resolves to unit_dropdown, return the applicable unit IRIs, else None."""
+        if not sh_class:
+            return None
+        ctx = self._enrichment.enrich(sh_class)
+        if ctx.widget == "unit_dropdown" and ctx.enrichments.get("has_units"):
+            return ctx.enrichments.get("applicable_units", [])
+        return None
+
+    def _format_unit_iri(self, iri: str) -> str:
+        """Shorten a QUDT unit IRI to a prefixed name for Turtle output."""
+        unit_base = "http://qudt.org/vocab/unit/"
+        if iri.startswith(unit_base):
+            return f"unit:{iri[len(unit_base):]}"
+        return f"<{iri}>"
 
     def generate_property_groups(self, schema: Schema) -> str:
         """Generate sh:PropertyGroup declarations for schema groups"""
@@ -395,15 +421,19 @@ class SHACLExporter:
                 shacl_lines.append(f"        sh:minCount {min_count} ;")
             if max_count is not None:
                 shacl_lines.append(f"        sh:maxCount {max_count} ;")
-            if in_values:
-                vals = " ".join(f'"{v}"' for v in in_values)
-                shacl_lines.append(f"        sh:in ({vals}) ;")
             if min_incl is not None:
                 shacl_lines.append(f"        sh:minInclusive {min_incl} ;")
             if max_incl is not None:
                 shacl_lines.append(f"        sh:maxInclusive {max_incl} ;")
             if sh_class:
                 shacl_lines.append(f"        sh:class {self._format_uri(sh_class)} ;")
+            unit_iris = self._get_unit_in_list(sh_class)
+            if unit_iris:
+                unit_list = " ".join(self._format_unit_iri(u) for u in unit_iris)
+                shacl_lines.append(f"        sh:in ({unit_list}) ;")
+            elif in_values:
+                vals = " ".join(f'"{v}"' for v in in_values)
+                shacl_lines.append(f"        sh:in ({vals}) ;")
             shacl_lines.append(f"        sh:order {order} ;")
             if group_id:
                 shacl_lines.append(f"        sh:group schema:{group_id.replace(' ', '_')} ;")
