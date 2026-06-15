@@ -402,6 +402,20 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
         const data = await resp.json();
         if (data.status === "success") {
           setEnrichment(data.data);
+          const WIDGET_TO_DATATYPE = {
+            "unit_dropdown":  "xsd:decimal",
+            "decimal_input":  "xsd:decimal",
+            "integer_input":  "xsd:integer",
+            "boolean_toggle": "xsd:boolean",
+            "date_picker":    "xsd:date",
+            "datetime_picker":"xsd:dateTime",
+            "uri_input":      "xsd:anyURI",
+            "language_text":  "rdf:langString",
+          };
+          const suggested = WIDGET_TO_DATATYPE[data.data?.widget];
+          if (suggested && (form.datatype === "xsd:string" || form.datatype === "")) {
+            set("datatype", suggested);
+          }
         } else {
           setEnrichment(null);
         }
