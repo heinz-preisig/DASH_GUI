@@ -432,11 +432,26 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
     set("property_path", DEFAULT_NAMESPACE + frag);
   };
 
+  const RANGE_TO_DATATYPE = {
+    "http://www.w3.org/2001/XMLSchema#string":  "xsd:string",
+    "http://www.w3.org/2001/XMLSchema#decimal": "xsd:decimal",
+    "http://www.w3.org/2001/XMLSchema#float":   "xsd:float",
+    "http://www.w3.org/2001/XMLSchema#integer": "xsd:integer",
+    "http://www.w3.org/2001/XMLSchema#boolean": "xsd:boolean",
+    "http://www.w3.org/2001/XMLSchema#date":    "xsd:date",
+    "http://www.w3.org/2001/XMLSchema#dateTime":"xsd:dateTime",
+    "http://www.w3.org/2001/XMLSchema#anyURI":  "xsd:anyURI",
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString": "rdf:langString",
+  };
+
   const handleOntSelect = item => {
     set("property_path", item.uri);
     if (!form.name || form.name.startsWith("New ")) {
       const last = item.uri.includes("#") ? item.uri.split("#").pop() : item.uri.split("/").pop();
       if (last) set("name", last);
+    }
+    if (item.range && RANGE_TO_DATATYPE[item.range]) {
+      set("datatype", RANGE_TO_DATATYPE[item.range]);
     }
     setShowOntBrowser(false);
   };
