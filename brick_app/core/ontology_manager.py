@@ -83,50 +83,38 @@ class OntologyManager:
         classes = {}
         properties = {}
         
-        # Extract classes (both OWL.Class and rdfs:Class)
-        class_uris = set()
-        for class_uri in graph.subjects(RDF.type, OWL.Class):
-            if isinstance(class_uri, URIRef):
-                class_uris.add(class_uri)
-        for class_uri in graph.subjects(RDF.type, RDFS.Class):
-            if isinstance(class_uri, URIRef):
-                class_uris.add(class_uri)
-
-        # Also treat SHACL NodeShapes as classes
-        for shape_uri in graph.subjects(RDF.type, SH.NodeShape):
-            if isinstance(shape_uri, URIRef):
-                class_uris.add(shape_uri)
-
-        # QUDT: QuantityKind and Unit instances (typed as qudt:QuantityKind / qudt:Unit)
-        QUDT = Namespace('http://qudt.org/schema/qudt/')
-        for qudt_type in (QUDT.QuantityKind, QUDT.Unit):
-            for uri in graph.subjects(RDF.type, qudt_type):
-                if isinstance(uri, URIRef):
-                    class_uris.add(uri)
-
-        # SKOS: ConceptScheme members and Concepts
+        # Extract any named entity that carries a label — works for OWL classes,
+        # QUDT quantity kinds, SKOS concepts, BRICK entities, or any vocabulary.
         SKOS = Namespace('http://www.w3.org/2004/02/skos/core#')
-        for skos_type in (SKOS.Concept, SKOS.ConceptScheme):
-            for uri in graph.subjects(RDF.type, skos_type):
-                if isinstance(uri, URIRef):
-                    class_uris.add(uri)
-        
-        for class_uri in class_uris:
-            class_name = str(class_uri).split('#')[-1] if '#' in str(class_uri) else str(class_uri).split('/')[-1]
-            comment = ""
-            for comment_obj in graph.objects(class_uri, RDFS.comment):
-                comment = str(comment_obj)
-                break
-            # Fall back to sh:description if no rdfs:comment
-            if not comment:
-                for desc_obj in graph.objects(class_uri, SH.description):
-                    comment = str(desc_obj)
+        label_predicates = (RDFS.label, SKOS.prefLabel)
+
+        for label_pred in label_predicates:
+            for uri in graph.subjects(label_pred, None):
+                if not isinstance(uri, URIRef):
+                    continue
+                uri_str = str(uri)
+                if uri_str in classes:
+                    continue
+                local = uri_str.split('#')[-1] if '#' in uri_str else uri_str.split('/')[-1]
+                # Collect the best available label
+                name = local
+                for lbl in graph.objects(uri, RDFS.label):
+                    name = str(lbl)
                     break
-            
-            classes[str(class_uri)] = {
-                'name': class_name,
-                'comment': comment
-            }
+                if name == local:
+                    for lbl in graph.objects(uri, SKOS.prefLabel):
+                        name = str(lbl)
+                        break
+                # Collect description
+                comment = ""
+                for c in graph.objects(uri, RDFS.comment):
+                    comment = str(c)
+                    break
+                if not comment:
+                    for c in graph.objects(uri, SH.description):
+                        comment = str(c)
+                        break
+                classes[uri_str] = {'name': name, 'comment': comment}
         
         # Extract properties (OWL properties and rdf:Property)
         prop_uris = set()
