@@ -694,7 +694,15 @@ class BrickWebAPI:
                 }), 404
             
             ontologies = backend_session.editor_backend.ontology_manager.ontologies
-            if ontology_name in ontologies:
+            if ontology_name == "_all":
+                seen = {}
+                for ont_data in ontologies.values():
+                    for uri, meta in (ont_data.get('classes', {}) or {}).items():
+                        if uri not in seen:
+                            seen[uri] = meta
+                items = [{"uri": uri, "label": meta.get("name", uri.split("#")[-1].split("/")[-1]), "comment": meta.get("comment", "")} for uri, meta in seen.items()]
+                return jsonify({"status": "success", "data": sorted(items, key=lambda x: x["label"].lower())})
+            elif ontology_name in ontologies:
                 raw = ontologies[ontology_name].get('classes', {})
                 items = [
                     {"uri": uri, "label": meta.get("name", uri.split("#")[-1].split("/")[-1]), "comment": meta.get("comment", "")}
@@ -718,7 +726,15 @@ class BrickWebAPI:
                 }), 404
             
             ontologies = backend_session.editor_backend.ontology_manager.ontologies
-            if ontology_name in ontologies:
+            if ontology_name == "_all":
+                seen = {}
+                for ont_data in ontologies.values():
+                    for uri, meta in (ont_data.get('properties', {}) or {}).items():
+                        if uri not in seen:
+                            seen[uri] = meta
+                items = [{"uri": uri, "label": meta.get("name", uri.split("#")[-1].split("/")[-1]), "comment": meta.get("comment", ""), "domain": meta.get("domain", ""), "range": meta.get("range", "")} for uri, meta in seen.items()]
+                return jsonify({"status": "success", "data": sorted(items, key=lambda x: x["label"].lower())})
+            elif ontology_name in ontologies:
                 raw = ontologies[ontology_name].get('properties', {})
                 items = [
                     {"uri": uri, "label": meta.get("name", uri.split("#")[-1].split("/")[-1]), "comment": meta.get("comment", ""), "domain": meta.get("domain", ""), "range": meta.get("range", "")}
