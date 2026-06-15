@@ -91,11 +91,25 @@ class OntologyManager:
         for class_uri in graph.subjects(RDF.type, RDFS.Class):
             if isinstance(class_uri, URIRef):
                 class_uris.add(class_uri)
-        
+
         # Also treat SHACL NodeShapes as classes
         for shape_uri in graph.subjects(RDF.type, SH.NodeShape):
             if isinstance(shape_uri, URIRef):
                 class_uris.add(shape_uri)
+
+        # QUDT: QuantityKind and Unit instances (typed as qudt:QuantityKind / qudt:Unit)
+        QUDT = Namespace('http://qudt.org/schema/qudt/')
+        for qudt_type in (QUDT.QuantityKind, QUDT.Unit):
+            for uri in graph.subjects(RDF.type, qudt_type):
+                if isinstance(uri, URIRef):
+                    class_uris.add(uri)
+
+        # SKOS: ConceptScheme members and Concepts
+        SKOS = Namespace('http://www.w3.org/2004/02/skos/core#')
+        for skos_type in (SKOS.Concept, SKOS.ConceptScheme):
+            for uri in graph.subjects(RDF.type, skos_type):
+                if isinstance(uri, URIRef):
+                    class_uris.add(uri)
         
         for class_uri in class_uris:
             class_name = str(class_uri).split('#')[-1] if '#' in str(class_uri) else str(class_uri).split('/')[-1]
