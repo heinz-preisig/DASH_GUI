@@ -382,7 +382,7 @@ class SHACLExporter:
         for order, lp in enumerate(leaf_props):
             path = lp.get('path', '')
             label = lp.get('label', path)
-            datatype = lp.get('datatype', 'xsd:string')
+            datatype = lp.get('datatype') or None
             min_count = lp.get('min_count', 0)
             max_count = lp.get('max_count', None)
             description = lp.get('description', '')
@@ -390,6 +390,7 @@ class SHACLExporter:
             min_incl = lp.get('min_inclusive', None)
             max_incl = lp.get('max_inclusive', None)
             sh_class = lp.get('sh_class', '')
+            default_unit = lp.get('default_unit', None)
             if not path:
                 continue
             shacl_lines.append("    sh:property [")
@@ -397,7 +398,8 @@ class SHACLExporter:
             shacl_lines.append(f'        sh:name "{label}"@en ;')
             if description:
                 shacl_lines.append(f'        sh:description "{description}"@en ;')
-            shacl_lines.append(f"        sh:datatype {datatype} ;")
+            if datatype:
+                shacl_lines.append(f"        sh:datatype {datatype} ;")
             if min_count is not None:
                 shacl_lines.append(f"        sh:minCount {min_count} ;")
             if max_count is not None:
@@ -415,6 +417,8 @@ class SHACLExporter:
             elif in_values:
                 vals = " ".join(f'"{v}"' for v in in_values)
                 shacl_lines.append(f"        sh:in ({vals}) ;")
+            if default_unit:
+                shacl_lines.append(f"        sh:defaultValue {self._format_unit_iri(default_unit)} ;")
             shacl_lines.append(f"        sh:order {order} ;")
             if group_id:
                 shacl_lines.append(f"        sh:group schema:{group_id.replace(' ', '_')} ;")

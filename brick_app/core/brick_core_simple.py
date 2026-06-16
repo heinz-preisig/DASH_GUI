@@ -48,13 +48,19 @@ class LeafProperty:
     min_inclusive: Optional[float] = None
     max_inclusive: Optional[float] = None
     single_line: Optional[bool] = None  # dash:singleLine
+    default_unit: Optional[str] = None  # preferred unit IRI (e.g. qudt:KiloGM); emitted as sh:defaultValue
     
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'LeafProperty':
-        return cls(**data)
+        # Migrate legacy 'unit' key saved by older UI versions
+        if 'unit' in data and 'default_unit' not in data:
+            data = {**data, 'default_unit': data['unit']}
+        valid_fields = {f.name for f in cls.__dataclass_fields__.values()}
+        filtered = {k: v for k, v in data.items() if k in valid_fields}
+        return cls(**filtered)
 
 
 @dataclass

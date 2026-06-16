@@ -52,8 +52,7 @@ Last updated: 2026-06-15
 ### Next Steps
 - End-to-end test: create Mass brick → assemble schema → export → verify unit dropdown
   renders in the browser form.
-- Fix: deleted component not removed from component list in schema app UI (bug identified,
-  fix pending — `removeComp` calls `loadComponents()` but UI state may be stale).
+- ~~Fix: deleted component not removed from component list~~ **FIXED** (2026-06-16): `removeComp` now computes `filteredIds` first, passes them to `loadComponents(filteredIds)` before `onSaved` propagates.
 
 ---
 
@@ -224,6 +223,10 @@ curl "http://localhost:5001/api/session/<session_id>/ontologies"
   may need a custom DASH extension for a real unit-aware widget
 - `extend_schema` not exposed in web API
 - `common/` outside sub-packages — fine for local/Docker, breaks standalone `pip install`
+- **Frontend refactor (future)** — both `brick_app` and `schema_app` UIs are single-file
+  inline-JSX/Babel templates (~1400 and ~1250 lines). Migrate to a proper **Vite + React**
+  build (separate `.jsx` component files, hot reload, TypeScript optional). Flask serves
+  the compiled `static/bundle.js`. No functional change needed — pure DX improvement.
 
 ## Troubleshooting
 

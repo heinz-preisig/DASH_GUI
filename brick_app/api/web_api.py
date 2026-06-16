@@ -306,6 +306,7 @@ class BrickWebAPI:
                 "label": prop_name,
                 "datatype": data.get('datatype', None),
                 "node_kind": None,
+                "sh_class": data.get('sh_class') or None,
                 "in_values": [],
                 "has_value": None,
                 "min_count": int(data['min_count']) if data.get('min_count') not in (None, '') else 0,
@@ -314,6 +315,7 @@ class BrickWebAPI:
                 "min_inclusive": float(data['min_inclusive']) if data.get('min_inclusive') not in (None, '') else None,
                 "max_inclusive": float(data['max_inclusive']) if data.get('max_inclusive') not in (None, '') else None,
                 "single_line": None,
+                "default_unit": data.get('default_unit') or None,
             }
             if data.get('pattern'):
                 leaf['pattern'] = data['pattern']

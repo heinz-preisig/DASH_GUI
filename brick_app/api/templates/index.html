@@ -365,7 +365,7 @@ function DownloadOntologyModal({ onClose, onToast }) {
 function PropertyEditorModal({ sessionId, onSave, onClose }) {
   const EMPTY_FORM = {
     name: "", property_path: "", datatype: "xsd:string", description: "",
-    sh_class: "",
+    sh_class: "", unit: "",
     min_count: "", max_count: "",
     min_length: "", max_length: "", pattern: "",
     min_inclusive: "", max_inclusive: "", min_exclusive: "", max_exclusive: "",
@@ -495,6 +495,9 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
     if (!form.unique_lang)    delete data.unique_lang;
     if (!form.in_values)      delete data.in_values;
     if (!form.has_value)      delete data.has_value;
+    // Save selected unit as default_unit; drop raw 'unit' key
+    if (form.unit) { data.default_unit = form.unit; } else { delete data.default_unit; }
+    delete data.unit;
     onSave(data);
   };
 
@@ -1020,7 +1023,7 @@ function BrickEditor({ sessionId, brickData, onSaved, onToast, dirtyFromProps, c
       datatype: brickData.properties?.datatype || "xsd:string",
     });
     setDirty(false);
-  }, [brickData]);
+  }, [brickData?.brick_id]);
 
   const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setDirty(true); };
 
