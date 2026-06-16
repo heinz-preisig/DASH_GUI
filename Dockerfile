@@ -10,15 +10,15 @@ ARG GIT_SHA=unknown
 WORKDIR /app/web
 
 # Copy web interface package files
-COPY schema_app_v2/interfaces/web/package*.json ./
+COPY schema_app/interfaces/web/package*.json ./
 
 # Install npm dependencies
 RUN npm install
 
 # Copy web interface source
-COPY schema_app_v2/interfaces/web/src ./src
-COPY schema_app_v2/interfaces/web/vite.config.js ./
-COPY schema_app_v2/interfaces/web/index.html ./
+COPY schema_app/interfaces/web/src ./src
+COPY schema_app/interfaces/web/vite.config.js ./
+COPY schema_app/interfaces/web/index.html ./
 
 # Build React app
 RUN npm run build
@@ -46,11 +46,11 @@ WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 
 # Copy React build from node-builder (verified to exist)
-COPY --from=node-builder /app/web/static ./schema_app_v2/interfaces/web/static
+COPY --from=node-builder /app/web/static ./schema_app/interfaces/web/static
 
 # Verify the React build was copied correctly
-RUN ls -la /app/schema_app_v2/interfaces/web/static/dist/ && \
-    test -f /app/schema_app_v2/interfaces/web/static/dist/index.html && \
+RUN ls -la /app/schema_app/interfaces/web/static/dist/ && \
+    test -f /app/schema_app/interfaces/web/static/dist/index.html && \
     echo "✓ React build verified"
 
 # Copy application code (excluding node_modules and other dev artifacts)
@@ -60,9 +60,9 @@ COPY . .
 RUN chmod +x docker-entrypoint.sh
 
 # Final verification: Ensure React build is present
-RUN if [ -f /app/schema_app_v2/interfaces/web/static/dist/index.html ]; then \
+RUN if [ -f /app/schema_app/interfaces/web/static/dist/index.html ]; then \
         echo "✓ React build present in final image"; \
-        ls -la /app/schema_app_v2/interfaces/web/static/dist/; \
+        ls -la /app/schema_app/interfaces/web/static/dist/; \
     else \
         echo "✗ ERROR: React build missing!"; \
         exit 1; \
