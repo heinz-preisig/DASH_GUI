@@ -70,7 +70,8 @@ def main():
         "Schema.org": "https://schema.org/version/latest/schemaorg-current-https.ttl",
         "FOAF": "http://xmlns.com/foaf/spec/index.rdf",
         "DCTERMS": "http://purl.org/dc/terms/",
-        "BRICK": "https://brickschema.org/schema/1.3.0/Brick.ttl"
+        "BRICK": "https://brickschema.org/schema/1.3.0/Brick.ttl",
+        "SKOS": "http://www.w3.org/2004/02/skos/core"
     }
     
     print("Downloading default ontologies...")

@@ -1,5 +1,63 @@
 # Session Status
-Last updated: 2026-06-15
+Last updated: 2026-06-17
+
+## What Was Done (2026-06-17, afternoon) — Talk Slides
+
+### Talk Materials — docs/talks/
+
+1. **Technical deep dive PPTX generated** (`technical_deep_dive/generate_slides.py`)
+   - 18 slides, dark theme
+   - Slides 7-9 broadened to show QUDT as example, not the only ontology
+   - SPARQL rationale added to Q&A slide and README
+
+2. **Light theme versions created** for both talks
+   - `basic_intro/generate_slides_light.py` → `basic_intro_slides_light.pptx` (13 slides)
+   - `technical_deep_dive/generate_slides_light.py` → `technical_deep_dive_slides_light.pptx` (18 slides)
+   - White background, dark text, tinted boxes, full-width title bar replacing pill
+
+3. **"Getting Started" slide added** to basic intro (slide 12 of 13)
+   - 4-step: Download → run `dev-start-both-docker.sh` → open browser → data stays local
+   - Docker framed as invisible packaging
+
+4. **SPARQL discussion documented** in `technical_deep_dive/README.md` Q&A section
+
+---
+
+## What Was Done (2026-06-17, morning)
+
+### 1. extend_schema Web API Endpoint
+- Added `POST /api/session/<session_id>/schemas/extend` to `schema_app/interfaces/web/flask_app.py`
+- Enables creating schemas that extend existing ones with additional bricks
+- Returns 201 with new schema data on success
+
+### 2. skos_selector Widget — Complete
+- Downloaded SKOS core vocabulary (`skos.rdf`) to ontology cache
+- Added `_build_skos_enrichment()` to EnrichmentEngine — extracts concepts from SKOS concept schemes
+- Updated widget_rules.ttl parsing to load SKOS rules (already existed)
+- Added SKOS Concept Selector UI to brick_app PropertyEditorModal
+- Shows dropdown of available concepts when sh:class triggers `skos_selector`
+
+### 3. entity_lookup Widget — Complete
+- Added `triggerSubClassOf` parsing to WidgetRules
+- Added `_try_subclassof()` resolution layer to EnrichmentEngine (follows rdfs:subClassOf chain)
+- Added entity_lookup rules to widget_rules.ttl for FOAF Agent and Schema.org Thing
+- Added Entity Lookup UI to brick_app PropertyEditorModal
+- Shows search input for entity types (Person, Organization, etc.)
+
+### 4. SHACL Constraint Export — Fixed
+- Added missing constraint exports to `shacl_export.py`:
+  - `sh:minExclusive`, `sh:maxExclusive`
+  - `sh:minLength`, `sh:maxLength`
+  - `sh:pattern` (with regex escaping)
+  - `sh:languageIn` (comma-separated → space-separated list)
+  - `sh:uniqueLang`
+- All constraint fields from PropertyEditorModal now export correctly
+
+### 5. DASH Editor Mappings — Updated
+- Added `skos_selector` → `dash:InstancesSelectEditor` (dropdown for SKOS concepts)
+- Added `entity_lookup` → `dash:AutoCompleteEditor` (searchable entity lookup)
+- Verified `unit_dropdown` correctly maps to `dash:InstancesSelectEditor`
+- Updated `_WIDGET_TO_EDITOR` and `_WIDGET_TO_VIEWER` mappings in `shacl_export.py`
 
 ## What Was Done (2026-06-15, afternoon)
 
@@ -75,18 +133,19 @@ Last updated: 2026-06-15
 - `brick_app/core/enrichment_engine.py` is a thin re-export from `common`
 - Both `brick_app` and `schema_app` import from `common`
 
-### Enrichment Engine layers — all verified
+### Enrichment Engine layers — all verified (updated 2026-06-17)
 | Layer | Trigger | Widget type |
 |-------|---------|-------------|
 | 0 | `sh:datatype` (e.g. `xsd:boolean`) | `boolean_toggle`, `date_picker`, `decimal_input`, etc. |
 | 1 | ProMo dimensional signature | `unit_dropdown` |
-| 2 | QUDT/ontology predicate query | `unit_dropdown` |
+| 2 | QUDT/ontology predicate query | `unit_dropdown`, `skos_selector` |
 | 3 | IRI namespace prefix | `property_suggestions` |
+| 4 | `rdfs:subClassOf` inheritance | `entity_lookup` |
 
 ### Enrichment wired into SHACL exporter (the core goal)
 - `schema_app/core/shacl_export.py` `_get_dash_editor()` / `_get_dash_viewer()`
   now call `EnrichmentEngine` instead of using a hardcoded datatype map
-- Resolution order: `sh:class` (Layers 1–3) → `sh:datatype` (Layer 0) → fallback
+- Resolution order: `sh:class` (Layers 1–4) → `sh:datatype` (Layer 0) → fallback
 - Exported Turtle now contains **semantically-correct** `dash:editor` /
   `dash:viewer` annotations — these drive the Darmstadt `shacl-form`
   end-user widget rendering
@@ -217,11 +276,13 @@ curl "http://localhost:5001/api/session/<session_id>/ontologies"
 
 ## Pending / Next Steps
 
-- **`skos_selector` widget** — stubs in `widget_rules.ttl`, needs a SKOS vocabulary loaded
-- **`entity_lookup` widget** — stubs in `widget_rules.ttl`, needs named-entity class hierarchy
-- **`unit_dropdown` in exported SHACL** — currently maps to `dash:DecimalFieldEditor`;
-  may need a custom DASH extension for a real unit-aware widget
-- `extend_schema` not exposed in web API
+### Completed (2026-06-17)
+- ✅ **`skos_selector` widget** — SKOS vocabulary loaded, enrichment engine extracts concepts, frontend shows dropdown
+- ✅ **`entity_lookup` widget** — `triggerSubClassOf` resolution added, rules for FOAF/Schema.org, frontend shows search input
+- ✅ **`unit_dropdown` in exported SHACL** — correctly maps to `dash:InstancesSelectEditor` with `sh:in` unit list
+- ✅ `extend_schema` web API endpoint — `POST /api/session/<id>/schemas/extend` exposed and working
+
+### Still Pending
 - `common/` outside sub-packages — fine for local/Docker, breaks standalone `pip install`
 - **Frontend refactor (future)** — both `brick_app` and `schema_app` UIs are single-file
   inline-JSX/Babel templates (~1400 and ~1250 lines). Migrate to a proper **Vite + React**

@@ -282,6 +282,8 @@ class SHACLExporter:
         "language_text":    "dash:TextAreaEditor",
         "unit_dropdown":    "dash:InstancesSelectEditor",
         "property_suggestions": "dash:TextFieldEditor",
+        "skos_selector":    "dash:InstancesSelectEditor",
+        "entity_lookup":    "dash:AutoCompleteEditor",
     }
     _WIDGET_TO_VIEWER = {
         "text":             "dash:LabelViewer",
@@ -295,6 +297,8 @@ class SHACLExporter:
         "language_text":    "dash:LabelViewer",
         "unit_dropdown":    "dash:LabelViewer",
         "property_suggestions": "dash:LabelViewer",
+        "skos_selector":    "dash:LabelViewer",
+        "entity_lookup":    "dash:LabelViewer",
     }
 
     def _get_enrichment_context(self, datatype: str, sh_class: str = ""):
@@ -389,6 +393,13 @@ class SHACLExporter:
             in_values = lp.get('in_values', [])
             min_incl = lp.get('min_inclusive', None)
             max_incl = lp.get('max_inclusive', None)
+            min_excl = lp.get('min_exclusive', None)
+            max_excl = lp.get('max_exclusive', None)
+            min_len = lp.get('min_length', None)
+            max_len = lp.get('max_length', None)
+            pattern = lp.get('pattern', None)
+            language_in = lp.get('language_in', None)
+            unique_lang = lp.get('unique_lang', False)
             sh_class = lp.get('sh_class', '')
             default_unit = lp.get('default_unit', None)
             if not path:
@@ -408,6 +419,22 @@ class SHACLExporter:
                 shacl_lines.append(f"        sh:minInclusive {min_incl} ;")
             if max_incl is not None:
                 shacl_lines.append(f"        sh:maxInclusive {max_incl} ;")
+            if min_excl is not None:
+                shacl_lines.append(f"        sh:minExclusive {min_excl} ;")
+            if max_excl is not None:
+                shacl_lines.append(f"        sh:maxExclusive {max_excl} ;")
+            if min_len is not None:
+                shacl_lines.append(f"        sh:minLength {min_len} ;")
+            if max_len is not None:
+                shacl_lines.append(f"        sh:maxLength {max_len} ;")
+            if pattern:
+                escaped_pattern = pattern.replace('\\', '\\\\').replace('"', '\\"')
+                shacl_lines.append(f'        sh:pattern "{escaped_pattern}" ;')
+            if language_in:
+                lang_list = " ".join(f'"{lang.strip()}"' for lang in language_in.split(","))
+                shacl_lines.append(f"        sh:languageIn ({lang_list}) ;")
+            if unique_lang:
+                shacl_lines.append("        sh:uniqueLang true ;")
             if sh_class:
                 shacl_lines.append(f"        sh:class {self._format_uri(sh_class)} ;")
             unit_iris = self._get_unit_in_list(sh_class)

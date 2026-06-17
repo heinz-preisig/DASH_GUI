@@ -133,6 +133,7 @@ class WidgetRules:
         self.rules_by_signature: Dict[Tuple[int, ...], Dict] = {}
         self.rules_by_predicate: Dict[str, Dict] = {}
         self.rules_by_namespace: List[Tuple[str, Dict]] = []
+        self.rules_by_subclassof: List[Tuple[str, Dict]] = []
         self._load(rules_file)
 
     def _load(self, rules_file: Path):
@@ -152,6 +153,8 @@ class WidgetRules:
                     self.rules_by_predicate[pred] = rule
                 for nspc in rule.get("trigger_namespaces", []):
                     self.rules_by_namespace.append((nspc, rule))
+                for subclass in rule.get("trigger_subclassof", []):
+                    self.rules_by_subclassof.append((subclass, rule))
         except Exception as e:
             print(f"Warning: could not load widget_rules.ttl: {e}")
 
@@ -201,6 +204,10 @@ class WidgetRules:
         if namespaces:
             rule["trigger_namespaces"] = namespaces
 
+        subclassof = _all("triggerSubClassOf")
+        if subclassof:
+            rule["trigger_subclassof"] = subclassof
+
         si_unit = _one("siUnit")
         if si_unit:
             rule["si_unit"] = si_unit
@@ -244,6 +251,7 @@ class EnrichmentEngine:
             self._try_dimensional(full_iri, label, description)
             or self._try_predicate(full_iri, label, description)
             or self._try_namespace(full_iri, label, description)
+            or self._try_subclassof(full_iri, label, description)
             or EnrichmentContext(
                 class_iri=full_iri,
                 label=label or full_iri.split("/")[-1].split("#")[-1],
@@ -276,6 +284,55 @@ class EnrichmentEngine:
             widget="text",
             resolution="none",
         )
+
+    # ── Resolution layer 4: rdfs:subClassOf inheritance ──────────────────────
+
+    def _try_subclassof(self, iri: str, label: str, desc: str) -> Optional[EnrichmentContext]:
+        """
+        Check if the class is a subclass of any triggerSubClassOf class in widget_rules.ttl.
+        Follows rdfs:subClassOf chain up to 3 levels.
+        """
+        if not self.ontology_manager or not self.rules.rules_by_subclassof:
+            return None
+        try:
+            from rdflib import URIRef, RDFS
+            node = URIRef(iri)
+            for ont_data in self.ontology_manager.ontologies.values():
+                graph = ont_data.get("graph")
+                if graph is None:
+                    continue
+                # Collect class and its superclasses (up to 3 levels)
+                candidates = [node]
+                current = [node]
+                for _ in range(3):
+                    parents = []
+                    for c in current:
+                        for p in graph.objects(c, RDFS.subClassOf):
+                            if isinstance(p, URIRef):
+                                parents.append(p)
+                                candidates.append(p)
+                    current = parents
+                    if not current:
+                        break
+                # Check each candidate against rules
+                for candidate in candidates:
+                    candidate_iri = str(candidate)
+                    for trigger_class, rule in self.rules.rules_by_subclassof:
+                        if candidate_iri == trigger_class:
+                            enrichments = {}
+                            if rule.get("widget") == "entity_lookup":
+                                enrichments = {"entity_type": rule.get("label", ""), "has_entity_lookup": True}
+                            return EnrichmentContext(
+                                class_iri=iri,
+                                label=label or iri.split("/")[-1].split("#")[-1],
+                                description=desc,
+                                widget=rule["widget"],
+                                resolution="subclassof",
+                                enrichments=enrichments,
+                            )
+            return None
+        except Exception:
+            return None
 
     # ── Resolution layer 1: ProMo dimensional signature ──────────────────────
 
@@ -357,6 +414,8 @@ class EnrichmentEngine:
                             elif rule.get("widget") == "property_suggestions":
                                 props = self._get_property_suggestions(graph, candidate)
                                 enrichments = {"suggested_properties": props, "has_suggestions": bool(props)}
+                            elif rule.get("widget") == "skos_selector":
+                                enrichments = self._build_skos_enrichment(graph, candidate, objects, rule)
                             return EnrichmentContext(
                                 class_iri=iri,
                                 label=label or iri.split("/")[-1].split("#")[-1],
@@ -413,6 +472,39 @@ class EnrichmentEngine:
             "applicable_units": unit_iris,
             "unit_labels": unit_labels,
             "has_units": bool(unit_iris),
+        }
+
+    def _build_skos_enrichment(self, graph, class_node, objects, rule) -> Dict[str, Any]:
+        """Build SKOS concept scheme enrichment with available concepts."""
+        from rdflib import URIRef, RDF, RDFS, SKOS
+        concepts = []
+        # Get the concept scheme URI(s) from the objects
+        scheme_uris = [str(o) for o in objects]
+        # Find all concepts in the scheme
+        for scheme_uri in scheme_uris:
+            scheme_ref = URIRef(scheme_uri)
+            for concept in graph.subjects(SKOS.inScheme, scheme_ref):
+                concept_iri = str(concept)
+                # Get prefLabel if available
+                label = concept_iri.split("/")[-1].split("#")[-1]
+                for lbl in graph.objects(concept, SKOS.prefLabel):
+                    label = str(lbl)
+                    break
+                if not any(c["iri"] == concept_iri for c in concepts):
+                    concepts.append({"iri": concept_iri, "label": label})
+            # Also look for top concepts
+            for concept in graph.objects(scheme_ref, SKOS.hasTopConcept):
+                concept_iri = str(concept)
+                label = concept_iri.split("/")[-1].split("#")[-1]
+                for lbl in graph.objects(concept, SKOS.prefLabel):
+                    label = str(lbl)
+                    break
+                if not any(c["iri"] == concept_iri for c in concepts):
+                    concepts.append({"iri": concept_iri, "label": label})
+        return {
+            "concept_scheme": scheme_uris[0] if scheme_uris else "",
+            "concepts": sorted(concepts, key=lambda x: x["label"]),
+            "has_concepts": bool(concepts),
         }
 
     def _get_property_suggestions(self, graph, class_node) -> List[str]:

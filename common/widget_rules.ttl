@@ -237,11 +237,17 @@ dashgui:StringInputRule a dashgui:WidgetRule ;
 #     dashgui:triggerPredicate skos:member .
 
 
-# ── PLANNED: Entity lookup (trigger: sh:class is a named-entity class) ────────
-# dashgui:EntityLookupRule a dashgui:WidgetRule ;
-#     dashgui:widget "entity_lookup" ;
-#     dashgui:label "Entity" ;
-#     dashgui:triggerSubClassOf <some:NamedEntityClass> .
+# ── Entity lookup (trigger: sh:class is a named-entity class) ────────────────
+
+ dashgui:FoafAgentEntityRule a dashgui:WidgetRule ;
+     dashgui:widget "entity_lookup" ;
+     dashgui:label "Person or Agent" ;
+     dashgui:triggerSubClassOf <http://xmlns.com/foaf/0.1/Agent> .
+
+ dashgui:SchemaOrgThingEntityRule a dashgui:WidgetRule ;
+     dashgui:widget "entity_lookup" ;
+     dashgui:label "Schema.org Entity" ;
+     dashgui:triggerSubClassOf <https://schema.org/Thing> .
 
 
 # ── Predicate-based rules (fallback 1: query cached ontology graphs) ──────────

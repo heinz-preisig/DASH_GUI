@@ -617,6 +617,54 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
                   </div>
                 </div>
               )}
+
+              {/* SKOS Concept Selector — fires for skos_selector widget */}
+              {enrichment && enrichment.widget === "skos_selector" && enrichment.enrichments.has_concepts && (
+                <div style={{marginTop: "12px", padding: "8px", background: "#fff8f0", borderRadius: "4px"}}>
+                  <label style={{fontSize: "12px", fontWeight: "bold", display: "block", marginBottom: "4px"}}>
+                    SKOS Concept Scheme: {enrichment.label}
+                    <span style={{fontWeight: "normal", color: "#888", marginLeft: "6px", fontSize: "11px"}}>via {enrichment.resolution}</span>
+                  </label>
+                  <select
+                    value={form.has_value || ""}
+                    onChange={e => set("has_value", e.target.value)}
+                    style={{width: "100%", padding: "4px", fontSize: "13px"}}
+                  >
+                    <option value="">(select a concept)</option>
+                    {enrichment.enrichments.concepts.map(concept => (
+                      <option key={concept.iri} value={concept.iri}>
+                        {concept.label} — {concept.iri}
+                      </option>
+                    ))}
+                  </select>
+                  <small style={{color: "#666", marginTop: "4px", display: "block"}}>
+                    Select to set sh:hasValue, or use sh:in for multiple allowed values
+                  </small>
+                </div>
+              )}
+
+              {/* Entity Lookup — fires for entity_lookup widget */}
+              {enrichment && enrichment.widget === "entity_lookup" && enrichment.enrichments.has_entity_lookup && (
+                <div style={{marginTop: "12px", padding: "8px", background: "#f8f0ff", borderRadius: "4px"}}>
+                  <label style={{fontSize: "12px", fontWeight: "bold", display: "block", marginBottom: "4px"}}>
+                    Entity Lookup: {enrichment.enrichments.entity_type}
+                    <span style={{fontWeight: "normal", color: "#888", marginLeft: "6px", fontSize: "11px"}}>via {enrichment.resolution}</span>
+                  </label>
+                  <div className="input-with-btn">
+                    <input
+                      type="text"
+                      value={form.has_value || ""}
+                      onChange={e => set("has_value", e.target.value)}
+                      placeholder={`Search for a ${enrichment.enrichments.entity_type}...`}
+                      style={{flex: 1, padding: "4px", fontSize: "13px"}}
+                    />
+                    <button className="btn btn-secondary btn-sm">Search</button>
+                  </div>
+                  <small style={{color: "#666", marginTop: "4px", display: "block"}}>
+                    Entity lookup enables searching external knowledge bases for {enrichment.enrichments.entity_type.toLowerCase()} entities
+                  </small>
+                </div>
+              )}
             </div>
           </div>
 
