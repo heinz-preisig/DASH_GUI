@@ -177,6 +177,7 @@ class SHACLExporter:
             "dash":  "http://datashapes.org/dash#",
             "ex":    "http://example.org/ex/#",
             "schema": f"http://example.org/schema/{schema.schema_id}/",
+            "bat":   "http://example.org/bat#",
         }
         # Harvest every prefix binding from every loaded ontology graph
         om = getattr(self._enrichment, 'ontology_manager', None)
@@ -466,7 +467,7 @@ class SHACLExporter:
             label = child_ui.label if child_ui and child_ui.label else child_brick.name
             order = child_ui.sequence if child_ui else 0
             shacl_lines.append("    sh:property [")
-            shacl_lines.append(f"        sh:path {path} ;")
+            shacl_lines.append(f"        sh:path {self._format_uri(path)} ;")
             shacl_lines.append(f"        sh:node schema:{self._safe_name(child_brick.name)} ;")
             shacl_lines.append(f'        sh:name "{label}"@en ;')
             if child_ui and child_ui.help_text:

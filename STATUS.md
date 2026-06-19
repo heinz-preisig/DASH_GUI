@@ -1,5 +1,22 @@
 # Session Status
-Last updated: 2026-06-17
+Last updated: 2026-06-19
+
+## What Was Done (2026-06-19, afternoon) — Brick Web UI Babel Fix
+
+### Bug Fixed: Brick Web UI failed to render
+- **Symptom**: Browser console error: `Cannot load preset react relative to / in a browser`
+  followed by a blank page.
+- **Root cause**: `@/home/heinz/1_Gits/ShaclForms/DASH_GUI/brick_app/api/templates/index.html`
+  registered a custom Babel preset (`classic-react`) that internally referenced the
+  `react` preset. Babel standalone could not resolve that nested preset in the browser.
+- **Fix**: Removed the custom `Babel.registerPreset` block and changed the inline
+  JSX script tag to use the built-in Babel standalone react preset directly:
+  `type="text/babel" data-presets="react"`.
+- **File changed**: `@/home/heinz/1_Gits/ShaclForms/DASH_GUI/brick_app/api/templates/index.html`
+- **Verification**: `uv run python run_brick_app_web.py` → open `http://localhost:5001`
+  and confirm the page renders and the console no longer shows the preset error.
+
+---
 
 ## What Was Done (2026-06-17, afternoon) — Talk Slides
 

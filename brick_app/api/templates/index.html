@@ -6,7 +6,7 @@
   <title>Brick App v2</title>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.7/babel.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, sans-serif; font-size: 14px; background: #f0f2f5; color: #222; height: 100vh; display: flex; flex-direction: column; }
@@ -100,7 +100,7 @@
 <body>
 <div id="root"></div>
 
-<script type="text/babel">
+<script type="text/babel" data-presets="react">
 {% raw %}
 const { useState, useEffect, useCallback, useRef } = React;
 

@@ -128,7 +128,27 @@ uv run python run_schema_app_web.py     # Schema app → http://localhost:5000
 ### Prerequisites
 - Docker installed on your system
 
-### Quick Start
+### Quick Start (end-user scripts)
+```bash
+# Linux / macOS
+./start.sh
+
+# Windows (PowerShell)
+.\start.ps1
+
+# Open browser automatically
+./start.sh --open
+.\start.ps1 -Open
+```
+Both scripts start the Schema App on `http://localhost:5000` and the Brick App on `http://localhost:5001`, mounting the sibling `ShaclForm-library` directory for data persistence.
+
+```bash
+# Stop the apps
+./stop.sh           # Linux / macOS
+.\stop.ps1          # Windows
+```
+
+### Developer Quick Start
 ```bash
 # Build and start Schema App
 ./dev-start-schema-docker.sh
@@ -146,8 +166,12 @@ docker-compose up -d
 - `Dockerfile` - Multi-stage build (web-only, ~100MB)
 - `docker-compose.yml` - Both apps with volume persistence
 - `docker-entrypoint.sh` - App selection script
-- `dev-start-schema-docker.sh` - Quick start for Schema App
-- `dev-start-brick-docker.sh` - Quick start for Brick App
+- `start.sh` - End-user start script for Linux/macOS
+- `start.ps1` - End-user start script for Windows
+- `stop.sh` - End-user stop script for Linux/macOS
+- `stop.ps1` - End-user stop script for Windows
+- `dev-start-schema-docker.sh` - Developer quick start for Schema App
+- `dev-start-brick-docker.sh` - Developer quick start for Brick App
 
 ## 🔧 Development Setup
 
@@ -187,6 +211,10 @@ DASH_GUI/
 ├── shared_libraries/          # Brick & schema libraries (bundled DigiPass)
 ├── Dockerfile                       # Docker build (web-only)
 ├── docker-compose.yml               # Docker Compose config
+├── start.sh                         # End-user start: Linux/macOS (both apps)
+├── start.ps1                        # End-user start: Windows (both apps)
+├── stop.sh                          # End-user stop: Linux/macOS
+├── stop.ps1                         # End-user stop: Windows
 ├── dev-start-schema-docker.sh       # Quick start: Schema App in Docker
 ├── dev-start-brick-docker.sh        # Quick start: Brick App in Docker
 ├── run_schema_app_web.py            # Web launcher: Schema App (Flask)

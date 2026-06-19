@@ -57,7 +57,7 @@ RUN ls -la /app/schema_app/interfaces/web/static/dist/ && \
 COPY . .
 
 # Make entrypoint executable
-RUN chmod +x docker-entrypoint.sh
+RUN chmod +x docker-entrypoint.sh docker-healthcheck.sh
 
 # Final verification: Ensure React build is present
 RUN if [ -f /app/schema_app/interfaces/web/static/dist/index.html ]; then \
@@ -71,9 +71,9 @@ RUN if [ -f /app/schema_app/interfaces/web/static/dist/index.html ]; then \
 # Expose web ports (both apps)
 EXPOSE 5000 5001
 
-# Health check (works for both apps, checks schema app by default)
+# Health check (uses PORT env var so it works for both apps)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/')" || exit 1
+    CMD ./docker-healthcheck.sh
 
 # Default data path — mounted outside the /app code tree
 ENV SHARED_LIBRARIES_ROOT=/ShaclForm-library
