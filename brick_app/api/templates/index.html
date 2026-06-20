@@ -6,7 +6,7 @@
   <title>Brick App v2</title>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.7/babel.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, sans-serif; font-size: 14px; background: #f0f2f5; color: #222; height: 100vh; display: flex; flex-direction: column; }
@@ -47,7 +47,11 @@
 
     /* Forms */
     .form-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
-    .form-row label { width: 130px; min-width: 130px; font-size: 12px; color: #555; padding-top: 7px; }
+    .form-row label { width: 150px; min-width: 150px; font-size: 12px; color: #555; padding-top: 7px; }
+    .form-row label .rdf-term { display: block; font-size: 10px; color: #999; font-family: monospace; margin-top: 1px; }
+    /* Tooltip */
+    .help-tip { display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: #b0bec5; color: #fff; font-size: 10px; font-weight: bold; text-align: center; line-height: 14px; cursor: help; margin-left: 4px; position: relative; vertical-align: middle; }
+    .help-tip:hover::after { content: attr(data-tip); position: absolute; left: 20px; top: -4px; background: #333; color: #fff; padding: 6px 9px; border-radius: 5px; font-size: 11px; white-space: pre-wrap; max-width: 260px; z-index: 9999; line-height: 1.5; font-weight: normal; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
     .form-row .field { flex: 1; }
     input[type=text], select, textarea { width: 100%; padding: 6px 9px; border: 1px solid #cdd5de; border-radius: 4px; font-size: 13px; font-family: inherit; background: #fff; }
     input[type=text]:focus, select:focus, textarea:focus { outline: none; border-color: #2a6db5; box-shadow: 0 0 0 2px rgba(42,109,181,.15); }
@@ -96,7 +100,7 @@
 <body>
 <div id="root"></div>
 
-<script type="text/babel">
+<script type="text/babel" data-presets="react">
 {% raw %}
 const { useState, useEffect, useCallback, useRef } = React;
 
@@ -164,7 +168,7 @@ function Toast({ msg, type, onDone }) {
 /* ── OntologyBrowserModal ────────────────────────────── */
 function OntologyBrowserModal({ mode, sessionId, onSelect, onClose }) {
   const [ontologies, setOntologies] = useState([]);
-  const [selectedOnt, setSelectedOnt] = useState("");
+  const [selectedOnt, setSelectedOnt] = useState("_all");
   const [items, setItems] = useState([]);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(null);
@@ -201,7 +205,7 @@ function OntologyBrowserModal({ mode, sessionId, onSelect, onClose }) {
           <label>Ontology</label>
           <div className="field">
             <select value={selectedOnt} onChange={e => setSelectedOnt(e.target.value)}>
-              <option value="">Select ontology…</option>
+              <option value="_all">— All ontologies —</option>
               {ontologies.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
@@ -214,7 +218,7 @@ function OntologyBrowserModal({ mode, sessionId, onSelect, onClose }) {
         </div>
         <div className="ont-results">
           {filtered.length === 0
-            ? <div className="empty-hint">{selectedOnt ? "No results" : "Select an ontology above"}</div>
+            ? <div className="empty-hint">{query ? "No results" : "Loading…"}</div>
             : filtered.map((it, i) => (
               <div key={i} className={`ont-result-item ${selected === it ? "selected" : ""}`}
                    onClick={() => setSelected(it)}>
@@ -361,7 +365,7 @@ function DownloadOntologyModal({ onClose, onToast }) {
 function PropertyEditorModal({ sessionId, onSave, onClose }) {
   const EMPTY_FORM = {
     name: "", property_path: "", datatype: "xsd:string", description: "",
-    sh_class: "",
+    sh_class: "", unit: "",
     min_count: "", max_count: "",
     min_length: "", max_length: "", pattern: "",
     min_inclusive: "", max_inclusive: "", min_exclusive: "", max_exclusive: "",
@@ -402,6 +406,20 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
         const data = await resp.json();
         if (data.status === "success") {
           setEnrichment(data.data);
+          const WIDGET_TO_DATATYPE = {
+            "unit_dropdown":  "xsd:decimal",
+            "decimal_input":  "xsd:decimal",
+            "integer_input":  "xsd:integer",
+            "boolean_toggle": "xsd:boolean",
+            "date_picker":    "xsd:date",
+            "datetime_picker":"xsd:dateTime",
+            "uri_input":      "xsd:anyURI",
+            "language_text":  "rdf:langString",
+          };
+          const suggested = WIDGET_TO_DATATYPE[data.data?.widget];
+          if (suggested && (form.datatype === "xsd:string" || form.datatype === "")) {
+            set("datatype", suggested);
+          }
         } else {
           setEnrichment(null);
         }
@@ -432,11 +450,26 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
     set("property_path", DEFAULT_NAMESPACE + frag);
   };
 
+  const RANGE_TO_DATATYPE = {
+    "http://www.w3.org/2001/XMLSchema#string":  "xsd:string",
+    "http://www.w3.org/2001/XMLSchema#decimal": "xsd:decimal",
+    "http://www.w3.org/2001/XMLSchema#float":   "xsd:float",
+    "http://www.w3.org/2001/XMLSchema#integer": "xsd:integer",
+    "http://www.w3.org/2001/XMLSchema#boolean": "xsd:boolean",
+    "http://www.w3.org/2001/XMLSchema#date":    "xsd:date",
+    "http://www.w3.org/2001/XMLSchema#dateTime":"xsd:dateTime",
+    "http://www.w3.org/2001/XMLSchema#anyURI":  "xsd:anyURI",
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString": "rdf:langString",
+  };
+
   const handleOntSelect = item => {
     set("property_path", item.uri);
     if (!form.name || form.name.startsWith("New ")) {
       const last = item.uri.includes("#") ? item.uri.split("#").pop() : item.uri.split("/").pop();
       if (last) set("name", last);
+    }
+    if (item.range && RANGE_TO_DATATYPE[item.range]) {
+      set("datatype", RANGE_TO_DATATYPE[item.range]);
     }
     setShowOntBrowser(false);
   };
@@ -462,6 +495,9 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
     if (!form.unique_lang)    delete data.unique_lang;
     if (!form.in_values)      delete data.in_values;
     if (!form.has_value)      delete data.has_value;
+    // Save selected unit as default_unit; drop raw 'unit' key
+    if (form.unit) { data.default_unit = form.unit; } else { delete data.default_unit; }
+    delete data.unit;
     onSave(data);
   };
 
@@ -473,9 +509,9 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
         <div className="modal" onClick={e => e.stopPropagation()}>
           <h2>Add Property</h2>
 
-          <div className="form-row"><label>Name <span className="required">*</span></label><div className="field"><input type="text" value={form.name} onChange={e => set("name", e.target.value)}/></div></div>
+          <div className="form-row"><label>Name <span className="required">*</span><span className="help-tip" data-tip="Human-readable label for this property, shown in the generated form.">?</span></label><div className="field"><input type="text" value={form.name} onChange={e => set("name", e.target.value)}/></div></div>
           <div className="form-row">
-            <label>Property Path <span className="required">*</span></label>
+            <label>Field Identifier <span className="required">*</span><span className="rdf-term">sh:path</span><span className="help-tip" data-tip="The RDF predicate (edge) that connects the subject to this value in the graph. Use Gen to auto-create one, or Browse to pick a standard predicate like qudt:value or foaf:name.">?</span></label>
             <div className="field">
               <div className="input-with-btn">
                 <input type="text" value={form.property_path} onChange={e => set("property_path", e.target.value)}/>
@@ -484,21 +520,21 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
               </div>
             </div>
           </div>
-          <div className="form-row"><label>Datatype</label><div className="field"><select value={form.datatype} onChange={e => set("datatype", e.target.value)}>{DATATYPES.map(d => <option key={d} value={d}>{d}</option>)}</select></div></div>
+          <div className="form-row"><label>Datatype<span className="help-tip" data-tip="The XSD datatype of the value, e.g. xsd:decimal for numbers, xsd:string for text. Auto-set when a Concept Type is selected.">?</span></label><div className="field"><select value={form.datatype} onChange={e => set("datatype", e.target.value)}>{DATATYPES.map(d => <option key={d} value={d}>{d}</option>)}</select></div></div>
 
-          <div className="form-row"><label>Min Count</label><div className="field"><input type="text" value={form.min_count} onChange={e => set("min_count", e.target.value)} placeholder="optional"/></div></div>
-          <div className="form-row"><label>Max Count</label><div className="field"><input type="text" value={form.max_count} onChange={e => set("max_count", e.target.value)} placeholder="optional"/></div></div>
+          <div className="form-row"><label>Min Count<span className="help-tip" data-tip="Minimum number of values required. Set to 1 to make this field mandatory.">?</span></label><div className="field"><input type="text" value={form.min_count} onChange={e => set("min_count", e.target.value)} placeholder="optional"/></div></div>
+          <div className="form-row"><label>Max Count<span className="help-tip" data-tip="Maximum number of values allowed. Set to 1 to allow only a single value.">?</span></label><div className="field"><input type="text" value={form.max_count} onChange={e => set("max_count", e.target.value)} placeholder="optional"/></div></div>
 
           {(isString || isLang) && <>
-            <div className="form-row"><label>Min Length</label><div className="field"><input type="text" value={form.min_length} onChange={e => set("min_length", e.target.value)} placeholder="optional"/></div></div>
-            <div className="form-row"><label>Max Length</label><div className="field"><input type="text" value={form.max_length} onChange={e => set("max_length", e.target.value)} placeholder="optional"/></div></div>
-            <div className="form-row"><label>Pattern</label><div className="field"><input type="text" value={form.pattern} onChange={e => set("pattern", e.target.value)} placeholder="optional regex, e.g. ^[A-Za-z]+$" style={{fontFamily:"monospace"}}/></div></div>
+            <div className="form-row"><label>Min Length<span className="help-tip" data-tip="Minimum number of characters the string value must have.">?</span></label><div className="field"><input type="text" value={form.min_length} onChange={e => set("min_length", e.target.value)} placeholder="optional"/></div></div>
+            <div className="form-row"><label>Max Length<span className="help-tip" data-tip="Maximum number of characters the string value may have.">?</span></label><div className="field"><input type="text" value={form.max_length} onChange={e => set("max_length", e.target.value)} placeholder="optional"/></div></div>
+            <div className="form-row"><label>Pattern<span className="help-tip" data-tip="Regular expression the value must match, e.g. ^[A-Z]{2}$ for a two-letter code.">?</span></label><div className="field"><input type="text" value={form.pattern} onChange={e => set("pattern", e.target.value)} placeholder="optional regex, e.g. ^[A-Za-z]+$" style={{fontFamily:"monospace"}}/></div></div>
           </>}
 
           {isLang && <>
-            <div className="form-row"><label>Language In</label><div className="field"><input type="text" value={form.language_in} onChange={e => set("language_in", e.target.value)} placeholder='e.g. "en","de","fr"'/></div></div>
+            <div className="form-row"><label>Language In<span className="help-tip" data-tip='Restrict to specific language tags, e.g. "en","de". Comma-separated.'>?</span></label><div className="field"><input type="text" value={form.language_in} onChange={e => set("language_in", e.target.value)} placeholder='e.g. "en","de","fr"'/></div></div>
             <div className="form-row">
-              <label>Unique Lang</label>
+              <label>Unique Lang<span className="help-tip" data-tip="If checked, at most one value per language tag is allowed.">?</span></label>
               <div className="field" style={{paddingTop:"6px"}}>
                 <input type="checkbox" checked={form.unique_lang} onChange={e => set("unique_lang", e.target.checked)}/> <small>one value per language tag</small>
               </div>
@@ -506,19 +542,19 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
           </>}
 
           {hasBounds && <>
-            <div className="form-row"><label>Min Inclusive</label><div className="field"><input type="text" value={form.min_inclusive} onChange={e => set("min_inclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
-            <div className="form-row"><label>Max Inclusive</label><div className="field"><input type="text" value={form.max_inclusive} onChange={e => set("max_inclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
-            <div className="form-row"><label>Min Exclusive</label><div className="field"><input type="text" value={form.min_exclusive} onChange={e => set("min_exclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
-            <div className="form-row"><label>Max Exclusive</label><div className="field"><input type="text" value={form.max_exclusive} onChange={e => set("max_exclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
+            <div className="form-row"><label>Min Inclusive<span className="help-tip" data-tip="The value must be ≥ this number (or date).">?</span></label><div className="field"><input type="text" value={form.min_inclusive} onChange={e => set("min_inclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
+            <div className="form-row"><label>Max Inclusive<span className="help-tip" data-tip="The value must be ≤ this number (or date).">?</span></label><div className="field"><input type="text" value={form.max_inclusive} onChange={e => set("max_inclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
+            <div className="form-row"><label>Min Exclusive<span className="help-tip" data-tip="The value must be strictly > this number (or date).">?</span></label><div className="field"><input type="text" value={form.min_exclusive} onChange={e => set("min_exclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
+            <div className="form-row"><label>Max Exclusive<span className="help-tip" data-tip="The value must be strictly less than this number (or date).">?</span></label><div className="field"><input type="text" value={form.max_exclusive} onChange={e => set("max_exclusive", e.target.value)} placeholder={placeholderBounds}/></div></div>
           </>}
 
-          <div className="form-row"><label>sh:in</label><div className="field"><input type="text" value={form.in_values} onChange={e => set("in_values", e.target.value)} placeholder='comma-separated, e.g. "red","green","blue"'/></div></div>
-          <div className="form-row"><label>sh:hasValue</label><div className="field"><input type="text" value={form.has_value} onChange={e => set("has_value", e.target.value)} placeholder="optional fixed value"/></div></div>
+          <div className="form-row"><label>Allowed Values<span className="rdf-term">sh:in</span><span className="help-tip" data-tip="Restrict the value to a fixed list. Comma-separated, quote strings: 'red','green'. Auto-populated from Concept Type for physical quantities.">?</span></label><div className="field"><input type="text" value={form.in_values} onChange={e => set("in_values", e.target.value)} placeholder='comma-separated, e.g. "red","green","blue"'/></div></div>
+          <div className="form-row"><label>Fixed Value<span className="rdf-term">sh:hasValue</span><span className="help-tip" data-tip="The property must have exactly this value. Useful for type tags or constants.">?</span></label><div className="field"><input type="text" value={form.has_value} onChange={e => set("has_value", e.target.value)} placeholder="optional fixed value"/></div></div>
 
-          <div className="form-row"><label>Description</label><div className="field"><textarea value={form.description} onChange={e => set("description", e.target.value)}/></div></div>
+          <div className="form-row"><label>Description<span className="help-tip" data-tip="Human-readable description shown as a tooltip in the generated form.">?</span></label><div className="field"><textarea value={form.description} onChange={e => set("description", e.target.value)}/></div></div>
 
           <div className="form-row">
-            <label>Semantic Class (sh:class)</label>
+            <label>Concept Type<span className="rdf-term">sh:class</span><span className="help-tip" data-tip="The semantic type of the value — what kind of thing it is. Setting this to a physical quantity (e.g. qudt:Mass) auto-sets the datatype and enables a unit dropdown in the generated form.">?</span></label>
             <div className="field">
               <div className="input-with-btn">
                 <input type="text" value={form.sh_class} onChange={e => set("sh_class", e.target.value)} placeholder="e.g., foaf:Person, qudt:Mass"/>
@@ -579,6 +615,54 @@ function PropertyEditorModal({ sessionId, onSave, onClose }) {
                       </button>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* SKOS Concept Selector — fires for skos_selector widget */}
+              {enrichment && enrichment.widget === "skos_selector" && enrichment.enrichments.has_concepts && (
+                <div style={{marginTop: "12px", padding: "8px", background: "#fff8f0", borderRadius: "4px"}}>
+                  <label style={{fontSize: "12px", fontWeight: "bold", display: "block", marginBottom: "4px"}}>
+                    SKOS Concept Scheme: {enrichment.label}
+                    <span style={{fontWeight: "normal", color: "#888", marginLeft: "6px", fontSize: "11px"}}>via {enrichment.resolution}</span>
+                  </label>
+                  <select
+                    value={form.has_value || ""}
+                    onChange={e => set("has_value", e.target.value)}
+                    style={{width: "100%", padding: "4px", fontSize: "13px"}}
+                  >
+                    <option value="">(select a concept)</option>
+                    {enrichment.enrichments.concepts.map(concept => (
+                      <option key={concept.iri} value={concept.iri}>
+                        {concept.label} — {concept.iri}
+                      </option>
+                    ))}
+                  </select>
+                  <small style={{color: "#666", marginTop: "4px", display: "block"}}>
+                    Select to set sh:hasValue, or use sh:in for multiple allowed values
+                  </small>
+                </div>
+              )}
+
+              {/* Entity Lookup — fires for entity_lookup widget */}
+              {enrichment && enrichment.widget === "entity_lookup" && enrichment.enrichments.has_entity_lookup && (
+                <div style={{marginTop: "12px", padding: "8px", background: "#f8f0ff", borderRadius: "4px"}}>
+                  <label style={{fontSize: "12px", fontWeight: "bold", display: "block", marginBottom: "4px"}}>
+                    Entity Lookup: {enrichment.enrichments.entity_type}
+                    <span style={{fontWeight: "normal", color: "#888", marginLeft: "6px", fontSize: "11px"}}>via {enrichment.resolution}</span>
+                  </label>
+                  <div className="input-with-btn">
+                    <input
+                      type="text"
+                      value={form.has_value || ""}
+                      onChange={e => set("has_value", e.target.value)}
+                      placeholder={`Search for a ${enrichment.enrichments.entity_type}...`}
+                      style={{flex: 1, padding: "4px", fontSize: "13px"}}
+                    />
+                    <button className="btn btn-secondary btn-sm">Search</button>
+                  </div>
+                  <small style={{color: "#666", marginTop: "4px", display: "block"}}>
+                    Entity lookup enables searching external knowledge bases for {enrichment.enrichments.entity_type.toLowerCase()} entities
+                  </small>
                 </div>
               )}
             </div>
@@ -987,7 +1071,7 @@ function BrickEditor({ sessionId, brickData, onSaved, onToast, dirtyFromProps, c
       datatype: brickData.properties?.datatype || "xsd:string",
     });
     setDirty(false);
-  }, [brickData]);
+  }, [brickData?.brick_id]);
 
   const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setDirty(true); };
 

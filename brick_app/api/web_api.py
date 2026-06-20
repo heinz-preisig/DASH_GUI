@@ -306,6 +306,7 @@ class BrickWebAPI:
                 "label": prop_name,
                 "datatype": data.get('datatype', None),
                 "node_kind": None,
+                "sh_class": data.get('sh_class') or None,
                 "in_values": [],
                 "has_value": None,
                 "min_count": int(data['min_count']) if data.get('min_count') not in (None, '') else 0,
@@ -314,6 +315,7 @@ class BrickWebAPI:
                 "min_inclusive": float(data['min_inclusive']) if data.get('min_inclusive') not in (None, '') else None,
                 "max_inclusive": float(data['max_inclusive']) if data.get('max_inclusive') not in (None, '') else None,
                 "single_line": None,
+                "default_unit": data.get('default_unit') or None,
             }
             if data.get('pattern'):
                 leaf['pattern'] = data['pattern']
@@ -694,7 +696,15 @@ class BrickWebAPI:
                 }), 404
             
             ontologies = backend_session.editor_backend.ontology_manager.ontologies
-            if ontology_name in ontologies:
+            if ontology_name == "_all":
+                seen = {}
+                for ont_data in ontologies.values():
+                    for uri, meta in (ont_data.get('classes', {}) or {}).items():
+                        if uri not in seen:
+                            seen[uri] = meta
+                items = [{"uri": uri, "label": meta.get("name", uri.split("#")[-1].split("/")[-1]), "comment": meta.get("comment", "")} for uri, meta in seen.items()]
+                return jsonify({"status": "success", "data": sorted(items, key=lambda x: x["label"].lower())})
+            elif ontology_name in ontologies:
                 raw = ontologies[ontology_name].get('classes', {})
                 items = [
                     {"uri": uri, "label": meta.get("name", uri.split("#")[-1].split("/")[-1]), "comment": meta.get("comment", "")}
@@ -718,7 +728,15 @@ class BrickWebAPI:
                 }), 404
             
             ontologies = backend_session.editor_backend.ontology_manager.ontologies
-            if ontology_name in ontologies:
+            if ontology_name == "_all":
+                seen = {}
+                for ont_data in ontologies.values():
+                    for uri, meta in (ont_data.get('properties', {}) or {}).items():
+                        if uri not in seen:
+                            seen[uri] = meta
+                items = [{"uri": uri, "label": meta.get("name", uri.split("#")[-1].split("/")[-1]), "comment": meta.get("comment", ""), "domain": meta.get("domain", ""), "range": meta.get("range", "")} for uri, meta in seen.items()]
+                return jsonify({"status": "success", "data": sorted(items, key=lambda x: x["label"].lower())})
+            elif ontology_name in ontologies:
                 raw = ontologies[ontology_name].get('properties', {})
                 items = [
                     {"uri": uri, "label": meta.get("name", uri.split("#")[-1].split("/")[-1]), "comment": meta.get("comment", ""), "domain": meta.get("domain", ""), "range": meta.get("range", "")}

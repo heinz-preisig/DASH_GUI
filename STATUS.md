@@ -1,5 +1,135 @@
 # Session Status
-Last updated: 2026-06-14
+Last updated: 2026-06-19
+
+## What Was Done (2026-06-19, afternoon) — Brick Web UI Babel Fix
+
+### Bug Fixed: Brick Web UI failed to render
+- **Symptom**: Browser console error: `Cannot load preset react relative to / in a browser`
+  followed by a blank page.
+- **Root cause**: `@/home/heinz/1_Gits/ShaclForms/DASH_GUI/brick_app/api/templates/index.html`
+  registered a custom Babel preset (`classic-react`) that internally referenced the
+  `react` preset. Babel standalone could not resolve that nested preset in the browser.
+- **Fix**: Removed the custom `Babel.registerPreset` block and changed the inline
+  JSX script tag to use the built-in Babel standalone react preset directly:
+  `type="text/babel" data-presets="react"`.
+- **File changed**: `@/home/heinz/1_Gits/ShaclForms/DASH_GUI/brick_app/api/templates/index.html`
+- **Verification**: `uv run python run_brick_app_web.py` → open `http://localhost:5001`
+  and confirm the page renders and the console no longer shows the preset error.
+
+---
+
+## What Was Done (2026-06-17, afternoon) — Talk Slides
+
+### Talk Materials — docs/talks/
+
+1. **Technical deep dive PPTX generated** (`technical_deep_dive/generate_slides.py`)
+   - 18 slides, dark theme
+   - Slides 7-9 broadened to show QUDT as example, not the only ontology
+   - SPARQL rationale added to Q&A slide and README
+
+2. **Light theme versions created** for both talks
+   - `basic_intro/generate_slides_light.py` → `basic_intro_slides_light.pptx` (13 slides)
+   - `technical_deep_dive/generate_slides_light.py` → `technical_deep_dive_slides_light.pptx` (18 slides)
+   - White background, dark text, tinted boxes, full-width title bar replacing pill
+
+3. **"Getting Started" slide added** to basic intro (slide 12 of 13)
+   - 4-step: Download → run `dev-start-both-docker.sh` → open browser → data stays local
+   - Docker framed as invisible packaging
+
+4. **SPARQL discussion documented** in `technical_deep_dive/README.md` Q&A section
+
+---
+
+## What Was Done (2026-06-17, morning)
+
+### 1. extend_schema Web API Endpoint
+- Added `POST /api/session/<session_id>/schemas/extend` to `schema_app/interfaces/web/flask_app.py`
+- Enables creating schemas that extend existing ones with additional bricks
+- Returns 201 with new schema data on success
+
+### 2. skos_selector Widget — Complete
+- Downloaded SKOS core vocabulary (`skos.rdf`) to ontology cache
+- Added `_build_skos_enrichment()` to EnrichmentEngine — extracts concepts from SKOS concept schemes
+- Updated widget_rules.ttl parsing to load SKOS rules (already existed)
+- Added SKOS Concept Selector UI to brick_app PropertyEditorModal
+- Shows dropdown of available concepts when sh:class triggers `skos_selector`
+
+### 3. entity_lookup Widget — Complete
+- Added `triggerSubClassOf` parsing to WidgetRules
+- Added `_try_subclassof()` resolution layer to EnrichmentEngine (follows rdfs:subClassOf chain)
+- Added entity_lookup rules to widget_rules.ttl for FOAF Agent and Schema.org Thing
+- Added Entity Lookup UI to brick_app PropertyEditorModal
+- Shows search input for entity types (Person, Organization, etc.)
+
+### 4. SHACL Constraint Export — Fixed
+- Added missing constraint exports to `shacl_export.py`:
+  - `sh:minExclusive`, `sh:maxExclusive`
+  - `sh:minLength`, `sh:maxLength`
+  - `sh:pattern` (with regex escaping)
+  - `sh:languageIn` (comma-separated → space-separated list)
+  - `sh:uniqueLang`
+- All constraint fields from PropertyEditorModal now export correctly
+
+### 5. DASH Editor Mappings — Updated
+- Added `skos_selector` → `dash:InstancesSelectEditor` (dropdown for SKOS concepts)
+- Added `entity_lookup` → `dash:AutoCompleteEditor` (searchable entity lookup)
+- Verified `unit_dropdown` correctly maps to `dash:InstancesSelectEditor`
+- Updated `_WIDGET_TO_EDITOR` and `_WIDGET_TO_VIEWER` mappings in `shacl_export.py`
+
+## What Was Done (2026-06-15, afternoon)
+
+### Ontology Browser — Generic Label-Driven Entity Extraction
+- Replaced hardcoded type-based class extraction (`owl:Class`, `qudt:QuantityKind`, etc.)
+  with a **general label-driven approach**: any `URIRef` subject carrying `rdfs:label` or
+  `skos:prefLabel` is indexed as a browsable entity. Covers OWL, QUDT, SKOS, BRICK, and
+  any future vocabulary without special-casing.
+- Result: `qudt_quantitykind` now shows **1217 entities**, `qudt-units` 2906, etc.
+
+### Ontology Browser — "All Ontologies" Default
+- Added `_all` virtual ontology to API: merges classes (or properties) across all loaded
+  ontologies in a single response.
+- Browser now **opens pre-selected on "— All ontologies —"** so all items load immediately
+  on open. User can still narrow to a single ontology via the dropdown.
+- Eliminates the need to know which sub-ontology (e.g. `qudt-datatype` vs `qudt-units`)
+  contains the predicate you want.
+
+### SHACL Exporter — Generic Prefix Resolution
+- Replaced the hardcoded `@prefix` block with a fully **ontology-graph-driven** approach:
+  1. Build a prefix→namespace map by harvesting namespace bindings from every loaded
+     ontology graph (`g.namespaces()` across all ontologies in `OntologyManager`).
+  2. Generate Turtle body first, then scan it for used `prefix:localname` tokens.
+  3. Emit only the `@prefix` declarations actually needed.
+- Only 4 built-ins not found in any ontology graph are declared explicitly: `sh:`, `dash:`,
+  `ex:`, `schema:`.
+- Fixes `Undefined prefix "ex:"` error on schema reference edges.
+- Any new ontology loaded automatically makes its prefixes available — no code changes needed.
+
+### Add Property UX Improvements
+- **Double labels** on the two most confusing fields:
+  - "Field Identifier" with `sh:path` in small grey monospace below
+  - "Concept Type" with `sh:class` in small grey monospace below
+  - "Allowed Values" with `sh:in`, "Fixed Value" with `sh:hasValue`
+- **`?` help tooltips** on every field with plain-English one-sentence explanations.
+- **Auto-set datatype from `sh:class`**: when Concept Type is set and enrichment resolves
+  to `unit_dropdown`, datatype auto-sets to `xsd:decimal`; `boolean_toggle` → `xsd:boolean`;
+  `date_picker` → `xsd:date`; etc. Generic rule, no vocabulary special-casing.
+- **Auto-set datatype from `rdfs:range`**: when a property is selected from the browser,
+  its `rdfs:range` (if declared) auto-fills the datatype field.
+
+### Semantic Unit Dropdown — End-to-End Working
+- **`SHACLExporter` now loads `OntologyManager`** at construction time. Uses
+  `get_enrichment_engine()` singleton so ontologies are only loaded once.
+- **`sh:in` list emitted for quantity-kind properties**: `qudt:Mass`, `qudt:Temperature`,
+  etc. resolve to `unit_dropdown` and emit the full QUDT unit list as `sh:in`.
+- **`dash:editor dash:InstancesSelectEditor`** emitted for unit fields.
+- All 60 tests still pass.
+
+### Next Steps
+- End-to-end test: create Mass brick → assemble schema → export → verify unit dropdown
+  renders in the browser form.
+- ~~Fix: deleted component not removed from component list~~ **FIXED** (2026-06-16): `removeComp` now computes `filteredIds` first, passes them to `loadComponents(filteredIds)` before `onSaved` propagates.
+
+---
 
 ## What Was Done (2026-06-12)
 
@@ -20,18 +150,19 @@ Last updated: 2026-06-14
 - `brick_app/core/enrichment_engine.py` is a thin re-export from `common`
 - Both `brick_app` and `schema_app` import from `common`
 
-### Enrichment Engine layers — all verified
+### Enrichment Engine layers — all verified (updated 2026-06-17)
 | Layer | Trigger | Widget type |
 |-------|---------|-------------|
 | 0 | `sh:datatype` (e.g. `xsd:boolean`) | `boolean_toggle`, `date_picker`, `decimal_input`, etc. |
 | 1 | ProMo dimensional signature | `unit_dropdown` |
-| 2 | QUDT/ontology predicate query | `unit_dropdown` |
+| 2 | QUDT/ontology predicate query | `unit_dropdown`, `skos_selector` |
 | 3 | IRI namespace prefix | `property_suggestions` |
+| 4 | `rdfs:subClassOf` inheritance | `entity_lookup` |
 
 ### Enrichment wired into SHACL exporter (the core goal)
 - `schema_app/core/shacl_export.py` `_get_dash_editor()` / `_get_dash_viewer()`
   now call `EnrichmentEngine` instead of using a hardcoded datatype map
-- Resolution order: `sh:class` (Layers 1–3) → `sh:datatype` (Layer 0) → fallback
+- Resolution order: `sh:class` (Layers 1–4) → `sh:datatype` (Layer 0) → fallback
 - Exported Turtle now contains **semantically-correct** `dash:editor` /
   `dash:viewer` annotations — these drive the Darmstadt `shacl-form`
   end-user widget rendering
@@ -162,12 +293,18 @@ curl "http://localhost:5001/api/session/<session_id>/ontologies"
 
 ## Pending / Next Steps
 
-- **`skos_selector` widget** — stubs in `widget_rules.ttl`, needs a SKOS vocabulary loaded
-- **`entity_lookup` widget** — stubs in `widget_rules.ttl`, needs named-entity class hierarchy
-- **`unit_dropdown` in exported SHACL** — currently maps to `dash:DecimalFieldEditor`;
-  may need a custom DASH extension for a real unit-aware widget
-- `extend_schema` not exposed in web API
+### Completed (2026-06-17)
+- ✅ **`skos_selector` widget** — SKOS vocabulary loaded, enrichment engine extracts concepts, frontend shows dropdown
+- ✅ **`entity_lookup` widget** — `triggerSubClassOf` resolution added, rules for FOAF/Schema.org, frontend shows search input
+- ✅ **`unit_dropdown` in exported SHACL** — correctly maps to `dash:InstancesSelectEditor` with `sh:in` unit list
+- ✅ `extend_schema` web API endpoint — `POST /api/session/<id>/schemas/extend` exposed and working
+
+### Still Pending
 - `common/` outside sub-packages — fine for local/Docker, breaks standalone `pip install`
+- **Frontend refactor (future)** — both `brick_app` and `schema_app` UIs are single-file
+  inline-JSX/Babel templates (~1400 and ~1250 lines). Migrate to a proper **Vite + React**
+  build (separate `.jsx` component files, hot reload, TypeScript optional). Flask serves
+  the compiled `static/bundle.js`. No functional change needed — pure DX improvement.
 
 ## Troubleshooting
 

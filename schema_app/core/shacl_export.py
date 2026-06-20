@@ -13,9 +13,16 @@ from common.enrichment_engine import EnrichmentEngine
 class SHACLExporter:
     """Export schemas and bricks to SHACL format"""
     
-    def __init__(self, brick_integration: BrickIntegration):
+    def __init__(self, brick_integration: BrickIntegration, ontology_manager=None):
         self.brick_integration = brick_integration
-        self._enrichment = EnrichmentEngine(ontology_manager=None)
+        if ontology_manager is None:
+            try:
+                from brick_app.core.ontology_manager import OntologyManager
+                ontology_manager = OntologyManager()
+            except Exception:
+                pass
+        from common.enrichment_engine import get_enrichment_engine
+        self._enrichment = get_enrichment_engine(ontology_manager)
 
     # ── High-level convenience ─────────────────────────────────────────────
 
@@ -76,10 +83,6 @@ class SHACLExporter:
     def export_schema(self, schema: Schema, library_name: Optional[str] = None) -> str:
         """Export a complete schema to SHACL Turtle format"""
         lines = []
-        
-        # Add prefixes
-        lines.extend(self._generate_prefixes(schema, library_name))
-        lines.append("")
         
         # Export all shapes using _generate_hierarchical_shacl (consistent schema: prefix)
         exported_bricks = set()
@@ -160,65 +163,54 @@ class SHACLExporter:
         # Add schema metadata
         lines.extend(self._generate_schema_metadata(schema))
 
-        return "\n".join(lines)
+        # Build body first, then prepend only the prefixes actually used
+        body = "\n".join(lines)
+        prefix_lines = self._generate_prefixes_for_body(body, schema)
+        return "\n".join(prefix_lines) + "\n\n" + body
     
+    def _build_prefix_map(self, schema: Schema) -> dict:
+        """Build a prefix->namespace map from loaded ontology graphs + built-ins."""
+        import re
+        # Built-ins not present in any ontology graph
+        prefix_map = {
+            "sh":    "http://www.w3.org/ns/shacl#",
+            "dash":  "http://datashapes.org/dash#",
+            "ex":    "http://example.org/ex/#",
+            "schema": f"http://example.org/schema/{schema.schema_id}/",
+            "bat":   "http://example.org/bat#",
+        }
+        # Harvest every prefix binding from every loaded ontology graph
+        om = getattr(self._enrichment, 'ontology_manager', None)
+        if om:
+            for ont_data in om.ontologies.values():
+                g = ont_data.get('graph')
+                if g is None:
+                    continue
+                for pfx, ns in g.namespaces():
+                    pfx = str(pfx)
+                    if pfx and pfx not in prefix_map:
+                        prefix_map[pfx] = str(ns)
+        return prefix_map
+
+    def _generate_prefixes_for_body(self, body: str, schema: Schema) -> List[str]:
+        """Scan the Turtle body, collect used prefixes, return @prefix declarations."""
+        import re
+        prefix_map = self._build_prefix_map(schema)
+        # Strip angle-bracket URIs and string literals so we don't match http:// etc.
+        stripped = re.sub(r'<[^>]*>', ' ', body)       # remove <URI>
+        stripped = re.sub(r'"[^"]*"', ' ', stripped)   # remove "strings"
+        stripped = re.sub(r'#[^\n]*', ' ', stripped)   # remove # comments
+        used = set(re.findall(r'\b([A-Za-z_][\w-]*):[A-Za-z_]', stripped))
+        lines = []
+        for pfx in sorted(used):
+            if pfx in prefix_map:
+                lines.append(f"@prefix {pfx}: <{prefix_map[pfx]}> .")
+            # unknown prefixes: skip — they came from full URIs wrapped in <> already
+        return lines
+
     def _generate_prefixes(self, schema: Schema, library_name: Optional[str] = None) -> List[str]:
-        """Generate prefix declarations"""
-        prefixes = [
-            "@prefix sh: <http://www.w3.org/ns/shacl#> .",
-            "@prefix dash: <http://datashapes.org/dash#> .",
-            "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .",
-            "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .",
-            "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
-            f"@prefix schema: <http://example.org/schema/{schema.schema_id}/> .",
-        ]
-
-        # Collect prefixes from all bricks: target_class + leaf_property paths + edges
-        seen_prefixes = set()
-        reserved = {"sh", "dash", "xsd", "rdf", "rdfs", "schema"}
-        all_brick_ids = ([schema.root_brick_id] if schema.root_brick_id else []) + schema.component_brick_ids
-        
-        def collect_prefixes_from_brick(brick, schema_obj):
-            """Extract prefixes from a brick's properties and edges"""
-            candidates = []
-            if getattr(brick, 'target_class', '') and ":" in brick.target_class:
-                candidates.append(brick.target_class.split(":")[0])
-            for lp in (getattr(brick, 'leaf_properties', []) or []):
-                path = lp.get('path', '')
-                if path and ":" in path:
-                    candidates.append(path.split(":")[0])
-            # Check edge paths for this brick as parent
-            if schema_obj and hasattr(schema_obj, 'edges'):
-                for edge in schema_obj.edges:
-                    if edge.parent_brick_id == brick.brick_id and edge.path_iri and ":" in edge.path_iri:
-                        candidates.append(edge.path_iri.split(":")[0])
-            return candidates
-        
-        # Track all bricks we've scanned (including edge children)
-        scanned_brick_ids = set(all_brick_ids)
-        
-        for brick_id in list(all_brick_ids):  # Use list() to avoid mutation during iteration
-            brick = self.brick_integration.get_brick_by_id(brick_id, library_name)
-            if not brick:
-                continue
-            for prefix in collect_prefixes_from_brick(brick, schema):
-                if prefix and prefix not in seen_prefixes and prefix not in reserved:
-                    prefixes.append(f"@prefix {prefix}: <http://example.org/{prefix}/#> .")
-                    seen_prefixes.add(prefix)
-            
-            # Also scan child bricks from edges (may not be in component list)
-            if schema and hasattr(schema, 'edges'):
-                for edge in schema.edges:
-                    if edge.parent_brick_id == brick_id:
-                        child_brick = self.brick_integration.get_brick_by_id(edge.child_brick_id, library_name)
-                        if child_brick and edge.child_brick_id not in scanned_brick_ids:
-                            scanned_brick_ids.add(edge.child_brick_id)
-                            for prefix in collect_prefixes_from_brick(child_brick, schema):
-                                if prefix and prefix not in seen_prefixes and prefix not in reserved:
-                                    prefixes.append(f"@prefix {prefix}: <http://example.org/{prefix}/#> .")
-                                    seen_prefixes.add(prefix)
-
-        return prefixes
+        """Stub kept for compatibility — real work done in _generate_prefixes_for_body."""
+        return []
     
     def _generate_schema_metadata(self, schema: Schema) -> List[str]:
         """Generate schema metadata as comments"""
@@ -289,8 +281,10 @@ class SHACLExporter:
         "uri_input":        "dash:URIEditor",
         "textarea":         "dash:TextAreaEditor",
         "language_text":    "dash:TextAreaEditor",
-        "unit_dropdown":    "dash:DecimalFieldEditor",
+        "unit_dropdown":    "dash:InstancesSelectEditor",
         "property_suggestions": "dash:TextFieldEditor",
+        "skos_selector":    "dash:InstancesSelectEditor",
+        "entity_lookup":    "dash:AutoCompleteEditor",
     }
     _WIDGET_TO_VIEWER = {
         "text":             "dash:LabelViewer",
@@ -304,25 +298,43 @@ class SHACLExporter:
         "language_text":    "dash:LabelViewer",
         "unit_dropdown":    "dash:LabelViewer",
         "property_suggestions": "dash:LabelViewer",
+        "skos_selector":    "dash:LabelViewer",
+        "entity_lookup":    "dash:LabelViewer",
     }
 
-    def _get_dash_editor(self, datatype: str, sh_class: str = "") -> str:
-        """Resolve dash:editor via EnrichmentEngine (Layer 0 + 2/3), fall back to datatype map."""
+    def _get_enrichment_context(self, datatype: str, sh_class: str = ""):
+        """Return the best EnrichmentContext for a property (sh:class takes priority)."""
         if sh_class:
             ctx = self._enrichment.enrich(sh_class)
             if ctx.widget != "text":
-                return self._WIDGET_TO_EDITOR.get(ctx.widget, "dash:TextFieldEditor")
-        ctx = self._enrichment.enrich_datatype(datatype)
+                return ctx
+        return self._enrichment.enrich_datatype(datatype)
+
+    def _get_dash_editor(self, datatype: str, sh_class: str = "") -> str:
+        """Resolve dash:editor via EnrichmentEngine (Layer 0 + 2/3), fall back to datatype map."""
+        ctx = self._get_enrichment_context(datatype, sh_class)
         return self._WIDGET_TO_EDITOR.get(ctx.widget, "dash:TextFieldEditor")
 
     def _get_dash_viewer(self, datatype: str, sh_class: str = "") -> str:
         """Resolve dash:viewer via EnrichmentEngine (Layer 0 + 2/3), fall back to datatype map."""
-        if sh_class:
-            ctx = self._enrichment.enrich(sh_class)
-            if ctx.widget != "text":
-                return self._WIDGET_TO_VIEWER.get(ctx.widget, "dash:LabelViewer")
-        ctx = self._enrichment.enrich_datatype(datatype)
+        ctx = self._get_enrichment_context(datatype, sh_class)
         return self._WIDGET_TO_VIEWER.get(ctx.widget, "dash:LabelViewer")
+
+    def _get_unit_in_list(self, sh_class: str) -> Optional[List[str]]:
+        """If sh_class resolves to unit_dropdown, return the applicable unit IRIs, else None."""
+        if not sh_class:
+            return None
+        ctx = self._enrichment.enrich(sh_class)
+        if ctx.widget == "unit_dropdown" and ctx.enrichments.get("has_units"):
+            return ctx.enrichments.get("applicable_units", [])
+        return None
+
+    def _format_unit_iri(self, iri: str) -> str:
+        """Shorten a QUDT unit IRI to a prefixed name for Turtle output."""
+        unit_base = "http://qudt.org/vocab/unit/"
+        if iri.startswith(unit_base):
+            return f"unit:{iri[len(unit_base):]}"
+        return f"<{iri}>"
 
     def generate_property_groups(self, schema: Schema) -> str:
         """Generate sh:PropertyGroup declarations for schema groups"""
@@ -375,14 +387,22 @@ class SHACLExporter:
         for order, lp in enumerate(leaf_props):
             path = lp.get('path', '')
             label = lp.get('label', path)
-            datatype = lp.get('datatype', 'xsd:string')
+            datatype = lp.get('datatype') or None
             min_count = lp.get('min_count', 0)
             max_count = lp.get('max_count', None)
             description = lp.get('description', '')
             in_values = lp.get('in_values', [])
             min_incl = lp.get('min_inclusive', None)
             max_incl = lp.get('max_inclusive', None)
+            min_excl = lp.get('min_exclusive', None)
+            max_excl = lp.get('max_exclusive', None)
+            min_len = lp.get('min_length', None)
+            max_len = lp.get('max_length', None)
+            pattern = lp.get('pattern', None)
+            language_in = lp.get('language_in', None)
+            unique_lang = lp.get('unique_lang', False)
             sh_class = lp.get('sh_class', '')
+            default_unit = lp.get('default_unit', None)
             if not path:
                 continue
             shacl_lines.append("    sh:property [")
@@ -390,20 +410,43 @@ class SHACLExporter:
             shacl_lines.append(f'        sh:name "{label}"@en ;')
             if description:
                 shacl_lines.append(f'        sh:description "{description}"@en ;')
-            shacl_lines.append(f"        sh:datatype {datatype} ;")
+            if datatype:
+                shacl_lines.append(f"        sh:datatype {datatype} ;")
             if min_count is not None:
                 shacl_lines.append(f"        sh:minCount {min_count} ;")
             if max_count is not None:
                 shacl_lines.append(f"        sh:maxCount {max_count} ;")
-            if in_values:
-                vals = " ".join(f'"{v}"' for v in in_values)
-                shacl_lines.append(f"        sh:in ({vals}) ;")
             if min_incl is not None:
                 shacl_lines.append(f"        sh:minInclusive {min_incl} ;")
             if max_incl is not None:
                 shacl_lines.append(f"        sh:maxInclusive {max_incl} ;")
+            if min_excl is not None:
+                shacl_lines.append(f"        sh:minExclusive {min_excl} ;")
+            if max_excl is not None:
+                shacl_lines.append(f"        sh:maxExclusive {max_excl} ;")
+            if min_len is not None:
+                shacl_lines.append(f"        sh:minLength {min_len} ;")
+            if max_len is not None:
+                shacl_lines.append(f"        sh:maxLength {max_len} ;")
+            if pattern:
+                escaped_pattern = pattern.replace('\\', '\\\\').replace('"', '\\"')
+                shacl_lines.append(f'        sh:pattern "{escaped_pattern}" ;')
+            if language_in:
+                lang_list = " ".join(f'"{lang.strip()}"' for lang in language_in.split(","))
+                shacl_lines.append(f"        sh:languageIn ({lang_list}) ;")
+            if unique_lang:
+                shacl_lines.append("        sh:uniqueLang true ;")
             if sh_class:
                 shacl_lines.append(f"        sh:class {self._format_uri(sh_class)} ;")
+            unit_iris = self._get_unit_in_list(sh_class)
+            if unit_iris:
+                unit_list = " ".join(self._format_unit_iri(u) for u in unit_iris)
+                shacl_lines.append(f"        sh:in ({unit_list}) ;")
+            elif in_values:
+                vals = " ".join(f'"{v}"' for v in in_values)
+                shacl_lines.append(f"        sh:in ({vals}) ;")
+            if default_unit:
+                shacl_lines.append(f"        sh:defaultValue {self._format_unit_iri(default_unit)} ;")
             shacl_lines.append(f"        sh:order {order} ;")
             if group_id:
                 shacl_lines.append(f"        sh:group schema:{group_id.replace(' ', '_')} ;")
@@ -424,7 +467,7 @@ class SHACLExporter:
             label = child_ui.label if child_ui and child_ui.label else child_brick.name
             order = child_ui.sequence if child_ui else 0
             shacl_lines.append("    sh:property [")
-            shacl_lines.append(f"        sh:path {path} ;")
+            shacl_lines.append(f"        sh:path {self._format_uri(path)} ;")
             shacl_lines.append(f"        sh:node schema:{self._safe_name(child_brick.name)} ;")
             shacl_lines.append(f'        sh:name "{label}"@en ;')
             if child_ui and child_ui.help_text:

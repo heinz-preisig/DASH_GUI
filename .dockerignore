@@ -41,6 +41,6 @@ archive/
 shared_libraries_backup_*/
 
 # Web build artifacts - must be rebuilt fresh in Docker
-schema_app_v2/interfaces/web/static/
-schema_app_v2/interfaces/web/node_modules/
-schema_app_v2/interfaces/web/package-lock.json
+schema_app/interfaces/web/static/
+schema_app/interfaces/web/node_modules/
+schema_app/interfaces/web/package-lock.json

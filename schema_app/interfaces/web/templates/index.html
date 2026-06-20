@@ -6,7 +6,14 @@
   <title>Schema App v2</title>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.7/babel.min.js"></script>
+  <script>
+    Babel.registerPreset('classic-react', {
+      presets: [
+        ['react', { runtime: 'classic' }]
+      ]
+    });
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, sans-serif; font-size: 14px; background: #f0f2f5; color: #222; height: 100vh; display: flex; flex-direction: column; }
@@ -42,9 +49,26 @@
     .ref-meta { font-size: 11px; color: #7a8899; }
 
     /* Tree view */
-    .tree-node { padding: 4px 0 4px 16px; font-size: 13px; }
-    .tree-node-root { padding: 4px 0; font-weight: 700; font-size: 13px; color: #1a3a5c; }
-    .tree-node-children { border-left: 1px dashed #cdd5de; margin-left: 8px; }
+    .tree-node { padding: 4px 0 4px 8px; font-size: 13px; }
+    .tree-node-content { display: flex; align-items: center; gap: 6px; padding: 3px 6px; border-radius: 4px; cursor: context-menu; transition: background 0.15s; }
+    .tree-node-content:hover { background: #f0f5fb; }
+    .tree-node-root { font-weight: 600; color: #1a3a5c; }
+    .tree-node-children { border-left: 2px solid #e8edf2; margin-left: 11px; padding-left: 4px; }
+
+    /* Type icons */
+    .type-icon { width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+    .icon-node { color: #2a6db5; }      /* ⬡ NodeShape - blue */
+    .icon-prop { color: #198754; }      /* ▭ PropertyShape - green */
+    .icon-ref { color: #fd7e14; }        /* ↗ Schema Reference - orange */
+
+    /* Expand/collapse */
+    .expand-btn { width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 10px; color: #7a8899; transition: transform 0.2s; flex-shrink: 0; }
+    .expand-btn:hover { color: #333; }
+    .expand-btn.expanded { transform: rotate(90deg); }
+    .expand-btn.leaf { visibility: hidden; }
+
+    /* Child count badge */
+    .child-badge { font-size: 10px; padding: 1px 5px; background: #e8edf2; color: #555; border-radius: 8px; margin-left: auto; }
 
     /* Brick browser */
     .brick-browser { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; border: 1px solid #dde3ea; border-radius: 4px; padding: 4px; }
@@ -115,7 +139,7 @@
 <body>
 <div id="root"></div>
 
-<script type="text/babel">
+<script type="text/babel" data-presets="classic-react">
 {% raw %}
 const { useState, useEffect, useCallback, useRef } = React;
 
@@ -432,6 +456,7 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, brickLibrar
   const [validation, setValidation] = useState(null);
   const [rootBrickName, setRootBrickName] = useState("");
   const [tab, setTab] = useState("details");
+  const [selectedComp, setSelectedComp] = useState(null);
   const [showAddComp, setShowAddComp] = useState(false);
   const [showAddRef, setShowAddRef] = useState(false);
 
@@ -516,9 +541,10 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, brickLibrar
     const r = await api("DELETE", `/api/session/${sessionId}/schemas/${schemaData.schema_id}/components/${encodeURIComponent(brickId)}`);
     if (r.status === "success") {
       onToast("Component removed", "success");
-      loadComponents();
+      const filteredIds = (schemaData.component_brick_ids || []).filter(id => id !== brickId);
+      onSaved({ ...schemaData, component_brick_ids: filteredIds });
+      loadComponents(filteredIds);
       loadTree();
-      onSaved({ ...schemaData, component_brick_ids: (schemaData.component_brick_ids || []).filter(id => id !== brickId) });
     } else onToast(r.message || "Failed", "error");
   };
 
@@ -665,19 +691,55 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, brickLibrar
           </div>
           {components.length === 0
             ? <div className="empty-hint">No components — add bricks above</div>
-            : components.map(c => (
-              <div key={c.brick_id} style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 0", borderBottom:"1px solid #f0f0f0" }}>
-                <div style={{ flex:1 }}>
-                  <div className="comp-name">{c.name || c.brick_id}</div>
-                  <div className="comp-meta">
-                    <span className={`brick-type-badge ${c.object_type === "NodeShape" ? "badge-node" : "badge-prop"}`}>{c.object_type || "?"}</span>
-                    {c.target_class && <span style={{ marginLeft:6 }}>{c.target_class}</span>}
-                    {c.property_path && <span style={{ marginLeft:6 }}>{c.property_path}</span>}
+            : components.map(c => {
+              const isOpen = selectedComp === c.brick_id;
+              const props = c.leaf_properties || [];
+              return (
+                <div key={c.brick_id} style={{ borderBottom:"1px solid #f0f0f0" }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 0", cursor:"pointer" }}
+                       onClick={() => setSelectedComp(isOpen ? null : c.brick_id)}>
+                    <span style={{ fontSize:11, color:"#888", userSelect:"none" }}>{isOpen ? "▾" : "▸"}</span>
+                    <div style={{ flex:1 }}>
+                      <div className="comp-name">{c.name || c.brick_id}</div>
+                      <div className="comp-meta">
+                        <span className={`brick-type-badge ${c.object_type === "NodeShape" ? "badge-node" : "badge-prop"}`}>{c.object_type || "?"}</span>
+                        {c.target_class && <span style={{ marginLeft:6 }}>{c.target_class}</span>}
+                        {c.property_path && <span style={{ marginLeft:6 }}>{c.property_path}</span>}
+                        {props.length > 0 && <span style={{ marginLeft:8, color:"#888", fontSize:11 }}>{props.length} propert{props.length === 1 ? "y" : "ies"}</span>}
+                      </div>
+                    </div>
+                    <button className="btn btn-danger btn-sm" onClick={e => { e.stopPropagation(); removeComp(c.brick_id); }}>✕</button>
                   </div>
+                  {isOpen && (
+                    <div style={{ paddingLeft:20, paddingBottom:8 }}>
+                      {props.length === 0
+                        ? <div style={{ color:"#888", fontSize:12, fontStyle:"italic" }}>No properties defined</div>
+                        : <table style={{ width:"100%", fontSize:12, borderCollapse:"collapse" }}>
+                            <thead>
+                              <tr style={{ color:"#888", textAlign:"left", borderBottom:"1px solid #eee" }}>
+                                <th style={{ paddingRight:12, paddingBottom:4 }}>Path</th>
+                                <th style={{ paddingRight:12 }}>Label</th>
+                                <th style={{ paddingRight:12 }}>Datatype</th>
+                                <th>Count</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {props.map((p, i) => (
+                                <tr key={i} style={{ borderBottom:"1px solid #f5f5f5" }}>
+                                  <td style={{ paddingRight:12, paddingTop:3, fontFamily:"monospace", color:"#2a6db5" }}>{p.path}</td>
+                                  <td style={{ paddingRight:12, paddingTop:3 }}>{p.label || "—"}</td>
+                                  <td style={{ paddingRight:12, paddingTop:3, color:"#666" }}>{p.datatype || p.sh_class || "—"}</td>
+                                  <td style={{ paddingTop:3, color:"#666" }}>{p.min_count ?? 0}..{p.max_count ?? "*"}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                      }
+                    </div>
+                  )}
                 </div>
-                <button className="btn btn-danger btn-sm" onClick={() => removeComp(c.brick_id)}>✕</button>
-              </div>
-            ))
+              );
+            })
           }
         </div>
       )}
@@ -874,9 +936,10 @@ function SchemaEditor({ sessionId, schemaData, allSchemas, brickLib, brickLibrar
 /* ── TreeView ────────────────────────────────────────── */
 function TreeView({ tree, rootBrickId, components, refs, groups, onAddChild, onToast, sessionId, schemaId }) {
   const compMap = Object.fromEntries(components.map(c => [c.brick_id, c]));
-  const [ctxMenu, setCtxMenu] = useState(null); // { x, y, brickId, brickName }
+  const [ctxMenu, setCtxMenu] = useState(null);
   const [showAddChildModal, setShowAddChildModal] = useState(false);
   const [selectedParentId, setSelectedParentId] = useState(null);
+  const [expanded, setExpanded] = useState(new Set()); // Set of expanded node IDs
 
   const handleContextMenu = (e, brickId, brickName) => {
     e.preventDefault();
@@ -890,29 +953,78 @@ function TreeView({ tree, rootBrickId, components, refs, groups, onAddChild, onT
     setCtxMenu(null);
   };
 
+  const toggleExpand = (brickId) => {
+    const next = new Set(expanded);
+    if (next.has(brickId)) next.delete(brickId);
+    else next.add(brickId);
+    setExpanded(next);
+  };
+
+  const getTypeIcon = (objectType) => {
+    if (objectType === "NodeShape") return { icon: "⬡", className: "icon-node", title: "NodeShape" };
+    if (objectType === "PropertyShape") return { icon: "▭", className: "icon-prop", title: "PropertyShape" };
+    return { icon: "◆", className: "", title: "Component" };
+  };
+
   const renderNode = (brickId, depth = 0) => {
     const brick = compMap[brickId];
     const children = tree.tree?.[brickId] || [];
     const brickRefs = refs.filter(r => r.attach_to_brick_id === brickId);
+    const hasChildren = children.length > 0 || brickRefs.length > 0;
+    const isExpanded = expanded.has(brickId) || depth < 2; // Auto-expand first 2 levels
+    const typeInfo = getTypeIcon(brick?.object_type);
+    const totalChildren = children.length + brickRefs.length;
+
     return (
-      <div key={brickId} style={{ paddingLeft: depth * 16 }}>
+      <div key={brickId} className="tree-node" style={{ paddingLeft: depth * 14 }}>
         <div
-          style={{ padding:"3px 0", fontSize:13, fontWeight: depth === 0 ? 600 : 400, cursor: "context-menu" }}
+          className={`tree-node-content ${depth === 0 ? "tree-node-root" : ""}`}
           onContextMenu={(e) => handleContextMenu(e, brickId, brick?.name || brickId)}
         >
-          {depth === 0 ? "◆ " : "├ "}{brick?.name || brickId}
-          {brick?.object_type && (
-            <span className={`brick-type-badge ${brick.object_type === "NodeShape" ? "badge-node" : "badge-prop"}`} style={{ marginLeft:5 }}>
-              {brick.object_type === "NodeShape" ? "N" : "P"}
-            </span>
+          {/* Expand/collapse button */}
+          <span
+            className={`expand-btn ${isExpanded ? "expanded" : ""} ${!hasChildren ? "leaf" : ""}`}
+            onClick={() => hasChildren && toggleExpand(brickId)}
+          >
+            ▶
+          </span>
+
+          {/* Type icon */}
+          <span className={`type-icon ${typeInfo.className}`} title={typeInfo.title}>
+            {typeInfo.icon}
+          </span>
+
+          {/* Name */}
+          <span style={{ fontWeight: depth === 0 ? 600 : 400 }}>
+            {brick?.name || brickId}
+          </span>
+
+          {/* Child count badge (if collapsed and has children) */}
+          {!isExpanded && totalChildren > 0 && (
+            <span className="child-badge">{totalChildren}</span>
           )}
         </div>
-        {brickRefs.map((ref, i) => (
-          <div key={i} style={{ paddingLeft:16, fontSize:12, color:"#8888cc", fontStyle:"italic" }}>
-            └ ⬡ {ref.label || ref.schema_id} ({ref.property_path})
+
+        {/* Children (only if expanded) */}
+        {isExpanded && (
+          <div className="tree-node-children">
+            {/* Schema references first */}
+            {brickRefs.map((ref, i) => (
+              <div
+                key={`ref-${i}`}
+                className="tree-node-content"
+                style={{ paddingLeft: 8, fontSize: 12, color: "#666", fontStyle: "italic" }}
+                title={`Reference via ${ref.property_path}`}
+              >
+                <span className="expand-btn leaf">▶</span>
+                <span className="type-icon icon-ref" title="Schema Reference">↗</span>
+                <span>{ref.label || ref.schema_id}</span>
+              </div>
+            ))}
+            {/* Child components */}
+            {children.map(childId => renderNode(childId, depth + 1))}
           </div>
-        ))}
-        {children.map(childId => renderNode(childId, depth + 1))}
+        )}
       </div>
     );
   };
@@ -969,7 +1081,7 @@ function TreeView({ tree, rootBrickId, components, refs, groups, onAddChild, onT
   );
 
   return (
-    <div style={{ fontFamily:"monospace" }}>
+    <div style={{ fontFamily: "system-ui, -apple-system, sans-serif", padding: "4px 0" }}>
       {/* Root components (not in groups) */}
       {roots.map(id => renderNode(id, 0))}
 

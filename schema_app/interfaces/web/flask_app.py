@@ -289,6 +289,40 @@ class SchemaWebAPI:
                 return self._ok({"message": "Schema deleted"})
             return self._err("Failed to delete schema", 500)
 
+        @self.app.route('/api/session/<session_id>/schemas/extend', methods=['POST'])
+        def extend_schema(session_id):
+            s = self._get_session(session_id)
+            if not s:
+                return self._err("Session not found", 404)
+            data = request.get_json() or {}
+            parent_schema_id = data.get('parent_schema_id')
+            name = data.get('name', '')
+            if not parent_schema_id:
+                return self._err("parent_schema_id is required")
+            if not name.strip():
+                return self._err("name is required")
+            library = self._slib(s)
+            # Verify parent exists
+            parent = s.schema_core.load_schema(parent_schema_id, library)
+            if not parent:
+                return self._err("Parent schema not found", 404)
+            additional_brick_ids = data.get('additional_brick_ids', [])
+            schema = s.schema_core.extend_schema(
+                parent_schema_id=parent_schema_id,
+                name=name,
+                description=data.get('description', ''),
+                additional_brick_ids=additional_brick_ids,
+                brick_integration=s.brick_integration
+            )
+            if not schema:
+                return self._err("Failed to extend schema", 500)
+            s.current_schema = schema
+            s._emit_event('schema_created', schema.to_dict())
+            # Save the new extended schema
+            if s.schema_core.save_schema(schema, library):
+                self._export_all(s, schema, library)
+            return self._ok(self._serialize_schema(schema), 201)
+
         # ── Schema validation & export ─────────────────────────────────────
 
         @self.app.route('/api/session/<session_id>/schemas/<schema_id>/validate', methods=['POST'])

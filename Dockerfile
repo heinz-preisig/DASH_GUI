@@ -10,15 +10,15 @@ ARG GIT_SHA=unknown
 WORKDIR /app/web
 
 # Copy web interface package files
-COPY schema_app_v2/interfaces/web/package*.json ./
+COPY schema_app/interfaces/web/package*.json ./
 
 # Install npm dependencies
 RUN npm install
 
 # Copy web interface source
-COPY schema_app_v2/interfaces/web/src ./src
-COPY schema_app_v2/interfaces/web/vite.config.js ./
-COPY schema_app_v2/interfaces/web/index.html ./
+COPY schema_app/interfaces/web/src ./src
+COPY schema_app/interfaces/web/vite.config.js ./
+COPY schema_app/interfaces/web/index.html ./
 
 # Build React app
 RUN npm run build
@@ -46,23 +46,23 @@ WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 
 # Copy React build from node-builder (verified to exist)
-COPY --from=node-builder /app/web/static ./schema_app_v2/interfaces/web/static
+COPY --from=node-builder /app/web/static ./schema_app/interfaces/web/static
 
 # Verify the React build was copied correctly
-RUN ls -la /app/schema_app_v2/interfaces/web/static/dist/ && \
-    test -f /app/schema_app_v2/interfaces/web/static/dist/index.html && \
+RUN ls -la /app/schema_app/interfaces/web/static/dist/ && \
+    test -f /app/schema_app/interfaces/web/static/dist/index.html && \
     echo "✓ React build verified"
 
 # Copy application code (excluding node_modules and other dev artifacts)
 COPY . .
 
 # Make entrypoint executable
-RUN chmod +x docker-entrypoint.sh
+RUN chmod +x docker-entrypoint.sh docker-healthcheck.sh
 
 # Final verification: Ensure React build is present
-RUN if [ -f /app/schema_app_v2/interfaces/web/static/dist/index.html ]; then \
+RUN if [ -f /app/schema_app/interfaces/web/static/dist/index.html ]; then \
         echo "✓ React build present in final image"; \
-        ls -la /app/schema_app_v2/interfaces/web/static/dist/; \
+        ls -la /app/schema_app/interfaces/web/static/dist/; \
     else \
         echo "✗ ERROR: React build missing!"; \
         exit 1; \
@@ -71,9 +71,9 @@ RUN if [ -f /app/schema_app_v2/interfaces/web/static/dist/index.html ]; then \
 # Expose web ports (both apps)
 EXPOSE 5000 5001
 
-# Health check (works for both apps, checks schema app by default)
+# Health check (uses PORT env var so it works for both apps)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/')" || exit 1
+    CMD ./docker-healthcheck.sh
 
 # Default data path — mounted outside the /app code tree
 ENV SHARED_LIBRARIES_ROOT=/ShaclForm-library

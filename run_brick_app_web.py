@@ -12,7 +12,7 @@ ROOT = Path(__file__).parent
 sys.path.insert(0, str(ROOT))
 
 parser = argparse.ArgumentParser(description='Brick App v2 Web Launcher')
-parser.add_argument('--port', type=int, default=5001, help='Port (default: 5001)')
+parser.add_argument('--port', type=int, default=5000, help='Port (default: 5000)')
 parser.add_argument('--host', type=str, default='localhost', help='Host to bind (default: localhost, use 0.0.0.0 for Docker)')
 parser.add_argument('--debug', action='store_true', help='Enable Flask debug mode')
 args = parser.parse_args()
