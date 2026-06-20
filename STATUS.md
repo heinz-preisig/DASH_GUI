@@ -225,6 +225,7 @@ uv run python run_schema_app_web.py   # → http://localhost:5001
 
 # Tests
 uv run python -m pytest tests/ -v     # 66 tests, all passing
+./run_tests.sh                         # same thing, as a shell script
 ```
 
 ## Quick API Tests (with Brick server running on :5000)
