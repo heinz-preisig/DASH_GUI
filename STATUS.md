@@ -220,27 +220,27 @@ uv run python run_brick_app_qt.py
 uv run python run_schema_app_qt.py
 
 # Web
-uv run python run_brick_app_web.py    # → http://localhost:5001
-uv run python run_schema_app_web.py   # → http://localhost:5000
+uv run python run_brick_app_web.py    # → http://localhost:5000
+uv run python run_schema_app_web.py   # → http://localhost:5001
 
 # Tests
-uv run python -m pytest tests/ -v     # 60 tests, all passing
+uv run python -m pytest tests/ -v     # 66 tests, all passing
 ```
 
-## Quick API Tests (with server running on :5001)
+## Quick API Tests (with Brick server running on :5000)
 
 ```bash
 # Layer 0 — datatype
-curl "http://localhost:5001/api/enrichment/datatype?datatype=xsd:boolean"
+curl "http://localhost:5000/api/enrichment/datatype?datatype=xsd:boolean"
 
 # Layer 2 — QUDT predicate
-curl "http://localhost:5001/api/enrichment?class_iri=http://qudt.org/vocab/quantitykind/Mass"
+curl "http://localhost:5000/api/enrichment?class_iri=http://qudt.org/vocab/quantitykind/Mass"
 
 # Layer 3 — namespace
-curl "http://localhost:5001/api/enrichment?class_iri=foaf:Person"
+curl "http://localhost:5000/api/enrichment?class_iri=foaf:Person"
 
 # Ontology browser
-curl "http://localhost:5001/api/session/<session_id>/ontologies"
+curl "http://localhost:5000/api/session/<session_id>/ontologies"
 ```
 
 ## Key Files
