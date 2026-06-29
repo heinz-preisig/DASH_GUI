@@ -208,9 +208,25 @@ class BrickCore:
         library_path = os.path.join(self.repository_path, lib_name)
         safe_name = sanitize_filename(brick_to_save.name)
         brick_file = os.path.join(library_path, f"{safe_name}_{brick_to_save.brick_id}.json")
-        
+
         # Ensure directory exists
         os.makedirs(library_path, exist_ok=True)
+
+        # Remove any existing file for this brick_id with a different name (rename case)
+        bid = brick_to_save.brick_id
+        for existing in os.listdir(library_path):
+            if not existing.endswith('.json'):
+                continue
+            if (existing.endswith(f"_{bid}.json") or existing == f"{bid}.json") and \
+                    existing != os.path.basename(brick_file):
+                old_path = os.path.join(library_path, existing)
+                try:
+                    os.remove(old_path)
+                    old_ttl = old_path.replace('.json', '.ttl')
+                    if os.path.exists(old_ttl):
+                        os.remove(old_ttl)
+                except Exception:
+                    pass
         
         try:
             with open(brick_file, 'w') as f:
