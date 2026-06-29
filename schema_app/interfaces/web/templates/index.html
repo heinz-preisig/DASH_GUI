@@ -363,7 +363,7 @@ function AddChildModal({ sessionId, schemaId, parentId, components, onAdded, onC
 
   const submit = async () => {
     if (!selected) return;
-    const r = await api("POST", `/schemas/${schemaId}/components/${selected}/parent`, {
+    const r = await api("POST", `/api/session/${sessionId}/schemas/${schemaId}/components/${encodeURIComponent(selected)}/parent`, {
       parent_brick_id: parentId,
       path_iri: pathIri,
       label: label || selected

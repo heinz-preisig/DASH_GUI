@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { componentApi } from '../api';
+import { api } from '../api';
 
 /**
  * AddChildModal - Modal for adding an existing component as a child of another component
@@ -25,7 +25,7 @@ export function AddChildModal({ sessionId, schemaId, parentId, components, onAdd
     if (!selected) return;
 
     try {
-      const r = await componentApi.setParent(schemaId, selected, {
+      const r = await api('POST', `/session/${sessionId}/schemas/${schemaId}/components/${encodeURIComponent(selected)}/parent`, {
         parent_brick_id: parentId,
         path_iri: pathIri,
         label: label || selected
