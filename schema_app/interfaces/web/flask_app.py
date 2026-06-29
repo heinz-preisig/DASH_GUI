@@ -520,6 +520,56 @@ class SchemaWebAPI:
             s.schema_core.save_schema(schema, library)
             return self._ok({"message": "Component removed"})
 
+        @self.app.route('/api/session/<session_id>/schemas/<schema_id>/components/<brick_id>/parent', methods=['POST'])
+        def set_component_parent(session_id, schema_id, brick_id):
+            s = self._get_session(session_id)
+            if not s:
+                return self._err("Session not found", 404)
+            library = self._slib(s)
+            schema = s.schema_core.load_schema(schema_id, library)
+            if not schema:
+                return self._err("Schema not found", 404)
+            data = request.get_json() or {}
+            parent_brick_id = data.get('parent_brick_id')
+            if not parent_brick_id:
+                return self._err("parent_brick_id is required")
+            if brick_id not in schema.component_brick_ids:
+                return self._err("Component not found", 404)
+            if parent_brick_id not in schema.component_brick_ids:
+                return self._err("Parent component not found", 404)
+            path_iri = data.get('path_iri', '')
+            label = data.get('label', '')
+            sequence = data.get('sequence', len(schema.get_edges_from(parent_brick_id)))
+            from schema_app.core.schema_core import SchemaEdge
+            schema.remove_component_parent(brick_id)
+            edge = SchemaEdge(
+                child_brick_id=brick_id,
+                parent_brick_id=parent_brick_id,
+                path_iri=path_iri or f"ex:has{brick_id[:8]}",
+                label=label or brick_id,
+                sequence=sequence,
+            )
+            schema.add_edge(edge)
+            s.schema_core.save_schema(schema, library)
+            s._emit_event('component_parent_set', {'brick_id': brick_id, 'parent_brick_id': parent_brick_id})
+            return self._ok({"message": "Parent set"})
+
+        @self.app.route('/api/session/<session_id>/schemas/<schema_id>/components/<brick_id>/parent', methods=['DELETE'])
+        def remove_component_parent(session_id, schema_id, brick_id):
+            s = self._get_session(session_id)
+            if not s:
+                return self._err("Session not found", 404)
+            library = self._slib(s)
+            schema = s.schema_core.load_schema(schema_id, library)
+            if not schema:
+                return self._err("Schema not found", 404)
+            removed = schema.remove_component_parent(brick_id)
+            if not removed:
+                return self._err("No parent found for component", 404)
+            s.schema_core.save_schema(schema, library)
+            s._emit_event('component_parent_removed', {'brick_id': brick_id})
+            return self._ok({"message": "Parent removed"})
+
         # ── Schema refs ────────────────────────────────────────────────────
 
         @self.app.route('/api/session/<session_id>/schemas/<schema_id>/refs', methods=['GET'])
