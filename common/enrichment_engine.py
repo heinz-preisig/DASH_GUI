@@ -269,6 +269,8 @@ class EnrichmentEngine:
         Called by frontends directly with the property's datatype value.
         Returns EnrichmentContext; widget=="text" means no special widget.
         """
+        if not datatype_iri:
+            return EnrichmentContext(class_iri="", label="", widget="text", resolution="none")
         full_iri = self._expand_common_prefixes(datatype_iri)
         rule = self.rules.rules_by_datatype.get(full_iri)
         if rule:
@@ -571,6 +573,8 @@ class EnrichmentEngine:
 
     def _expand_common_prefixes(self, prefixed: str) -> str:
         """Expand well-known prefixed names to full IRIs."""
+        if not prefixed:
+            return ""
         if "://" in prefixed:
             return prefixed
         prefixes = {
