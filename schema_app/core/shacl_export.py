@@ -246,9 +246,10 @@ class SHACLExporter:
         if not brick:
             return
         
-        # Get UI metadata
+        # Get UI metadata (prefer edge sequence when UIMetadata is absent)
         ui_metadata = schema.get_component_ui_metadata(brick_id)
-        sequence = ui_metadata.sequence if ui_metadata else None
+        edge = schema.get_edge_to(brick_id) if hasattr(schema, 'get_edge_to') else None
+        sequence = (ui_metadata.sequence if ui_metadata else None) or (edge.sequence if edge else None)
         group_id = ui_metadata.group_id if ui_metadata else None
         
         # Generate hierarchical SHACL
@@ -464,14 +465,18 @@ class SHACLExporter:
             edge = schema.get_edge_to(child_id) if hasattr(schema, 'get_edge_to') else None
             path = (edge.path_iri if edge and edge.path_iri
                     else f"schema:has{self._safe_name(child_brick.name).capitalize()}")
-            label = child_ui.label if child_ui and child_ui.label else child_brick.name
-            order = child_ui.sequence if child_ui else 0
+            label = (edge.label if edge and edge.label
+                     else (child_ui.label if child_ui and child_ui.label else child_brick.name))
+            order = (edge.sequence if edge is not None
+                     else (child_ui.sequence if child_ui else 0))
+            description = (edge.description if edge and edge.description
+                           else (child_ui.help_text if child_ui and child_ui.help_text else ""))
             shacl_lines.append("    sh:property [")
             shacl_lines.append(f"        sh:path {self._format_uri(path)} ;")
             shacl_lines.append(f"        sh:node schema:{self._safe_name(child_brick.name)} ;")
             shacl_lines.append(f'        sh:name "{label}"@en ;')
-            if child_ui and child_ui.help_text:
-                shacl_lines.append(f'        sh:description "{child_ui.help_text}"@en ;')
+            if description:
+                shacl_lines.append(f'        sh:description "{description}"@en ;')
             shacl_lines.append(f"        sh:order {order} ;")
             if child_ui and child_ui.group_id:
                 shacl_lines.append(f"        sh:group schema:{child_ui.group_id.replace(' ', '_')} ;")
