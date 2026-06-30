@@ -98,6 +98,12 @@ class SchemaWebAPI:
             dist_dir = os.path.join(os.path.dirname(__file__), 'static', 'dist', 'assets')
             return send_from_directory(dist_dir, filename)
 
+        @self.app.route('/static/<path:filename>')
+        def serve_static(filename):
+            """Serve local static files (e.g. shacl-form bundle)"""
+            static_dir = os.path.join(os.path.dirname(__file__), 'static')
+            return send_from_directory(static_dir, filename)
+
         # ── Sessions ───────────────────────────────────────────────────────
 
         @self.app.route('/api/session', methods=['POST'])
@@ -431,13 +437,17 @@ class SchemaWebAPI:
             if not schema:
                 return self._err("Schema not found", 404)
             shapes_url = f"/api/session/{session_id}/schemas/{schema_id}/shapes"
+            schema_ns = f"http://example.org/schema/{schema_id}/"
+            root_brick = s.brick_integration.get_brick_by_id(schema.root_brick_id) if schema.root_brick_id else None
+            root_shape_name = root_brick.name.replace(" ", "_") if root_brick else schema.root_brick_id or ""
+            root_shape_subject = f"{schema_ns}{root_shape_name}" if root_shape_name else ""
             html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{schema.name} — Form Preview</title>
-  <script src="https://cdn.jsdelivr.net/npm/@ulb-darmstadt/shacl-form/dist/bundle.js" type="module"></script>
+  <script type="module" src="/static/shacl-form-bundle.js"></script>
   <style>
     body {{ font-family: Arial, sans-serif; max-width: 860px; margin: 40px auto; padding: 0 20px; }}
     h1 {{ font-size: 1.4rem; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 8px; }}
@@ -453,6 +463,7 @@ class SchemaWebAPI:
   {f'<p class="desc">{schema.description}</p>' if schema.description else ''}
   <shacl-form id="shacl-form"
     data-shapes-url="{shapes_url}"
+    {f'data-shape-subject="{root_shape_subject}"' if root_shape_subject else ''}
     data-collapse="open">
   </shacl-form>
   <div class="actions">

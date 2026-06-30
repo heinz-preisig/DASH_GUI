@@ -364,7 +364,7 @@ class Schema:
     def get_groups_by_sequence(self) -> List[Dict[str, Any]]:
         """Get groups sorted by sequence"""
         groups_list = [{'id': gid, **gdata} for gid, gdata in self.groups.items()]
-        groups_list.sort(key=lambda x: x['sequence'])
+        groups_list.sort(key=lambda x: x.get('sequence', 0))
         return groups_list
     
     def get_components_without_group(self) -> List[str]:

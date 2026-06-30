@@ -1,5 +1,44 @@
 # Session Status
-Last updated: 2026-06-19
+Last updated: 2026-06-30
+
+## What Was Done (2026-06-30) — Schema Web UI & Form Preview Fixes
+
+### Bug Fixed: Schema Web UI blank page
+- **Symptom**: Browser showed blank white page at `http://localhost:5001`
+- **Root cause**: `Babel.registerPreset('classic-react', ...)` in `schema_app/interfaces/web/templates/index.html`
+  raced against Babel script load — same pattern as brick web UI fix from 2026-06-19.
+- **Fix**: Removed `registerPreset` block, switched to built-in `react` preset, pinned Babel to stable `@7.23.6`.
+- **File changed**: `schema_app/interfaces/web/templates/index.html`
+
+### Bug Fixed: Form preview failing (404, syntax error, class constructor error)
+- **Symptom**: Chain of errors when clicking Preview Form: 404 on bundle, then `Unexpected token 'export'`, then N3 class constructor TypeError.
+- **Root cause**: `shacl-form` CDN URL used non-existent path `dist/bundle.js`; the actual `dist/bundle.js` is an ES module requiring `type="module"`; esm.sh downcompiled ES classes breaking N3.
+- **Fix**: Extracted `dist/bundle.js` from the npm tarball, served it locally via a new `/static/<filename>` Flask route, load with `type="module" src="/static/shacl-form-bundle.js"`.
+- **Files changed**: `schema_app/interfaces/web/flask_app.py`, `schema_app/core/shacl_export.py`
+- **Static asset**: `schema_app/interfaces/web/static/shacl-form-bundle.js` (728 KB, `@ulb-darmstadt/shacl-form@3.1.0`)
+
+### Bug Fixed: Optional nested sections collapsed in form (`+ Dimensions`, `+ Min Temperature`)
+- **Root cause**: `shacl_export.py` emitted `sh:minCount 0` on `sh:node` property blocks; `shacl-form` collapses optional node sections.
+- **Fix**: Skip emitting `sh:minCount` when value is 0 (it's the SHACL default anyway).
+- **File changed**: `schema_app/core/shacl_export.py`
+
+### Bug Fixed: Child sections got `sh:order 0` and wrong labels
+- **Root cause**: `component_ui_metadata` is empty in demo schema; exporter fell back to `0` for order and brick name for label.
+- **Fix**: Prefer `edge.sequence` and `edge.label` over UIMetadata in both `_generate_hierarchical_shacl` and `_export_component_hierarchy`.
+- **File changed**: `schema_app/core/shacl_export.py`
+
+### Bug Fixed: Qt schema GUI crash on UI Metadata editor open
+- **Error**: `KeyError: 'sequence'` in `get_groups_by_sequence()`
+- **Fix**: Use `.get('sequence', 0)` — demo schema groups have no `sequence` key.
+- **File changed**: `schema_app/core/schema_core.py`
+
+### Qt schema GUI: Preview tab replaced with SHACL viewer
+- Renamed `previewTab` → `shaclTab`, widget `previewTextEdit` → `shaclTextEdit` (monospace)
+- Both `export_shacl()` and `generate_web_form()` now populate the SHACL tab
+- Form preview stays in the system browser (no embedded browser widget needed)
+- **Files changed**: `schema_app/interfaces/qt/ui/main_window.ui`, `schema_app/interfaces/qt/schema_gui.py`
+
+---
 
 ## What Was Done (2026-06-19, afternoon) — Brick Web UI Babel Fix
 

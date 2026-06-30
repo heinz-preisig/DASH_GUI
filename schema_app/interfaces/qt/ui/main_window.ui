@@ -357,18 +357,21 @@
             </item>
            </layout>
           </widget>
-          <widget class="QWidget" name="previewTab">
+          <widget class="QWidget" name="shaclTab">
            <attribute name="title">
-            <string>Preview</string>
+            <string>SHACL</string>
            </attribute>
-           <layout class="QVBoxLayout" name="previewLayout">
+           <layout class="QVBoxLayout" name="shaclLayout">
             <item>
-             <widget class="QTextEdit" name="previewTextEdit">
+             <widget class="QTextEdit" name="shaclTextEdit">
               <property name="readOnly">
                <bool>true</bool>
               </property>
               <property name="placeholderText">
-               <string>Schema preview will appear here</string>
+               <string>Generated SHACL Turtle will appear here. Click "Export SHACL" or "Generate Web Form" to populate.</string>
+              </property>
+              <property name="fontFamily">
+               <string>monospace</string>
               </property>
              </widget>
             </item>

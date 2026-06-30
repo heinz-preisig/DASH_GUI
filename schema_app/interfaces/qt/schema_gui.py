@@ -252,6 +252,8 @@ class SchemaGUI(QMainWindow):
             turtle_str = exporter.export_schema(self.current_schema)
             with open(file_path, 'w') as f:
                 f.write(turtle_str)
+            if hasattr(self.ui, 'shaclTextEdit'):
+                self.ui.shaclTextEdit.setPlainText(turtle_str)
             self.ui.statusbar.showMessage(f"Exported SHACL to: {file_path}")
         except Exception as e:
             QMessageBox.critical(self, "Export Error", f"Failed to export: {e}")
@@ -627,8 +629,12 @@ class SchemaGUI(QMainWindow):
             import webbrowser
             lib_name = self.schema_core.active_library
             output_dir = os.path.join(self.schema_core.repository_path, lib_name)
-            SHACLExporter(self.brick_integration).export_all(self.current_schema, output_dir)
+            exporter = SHACLExporter(self.brick_integration)
+            turtle_str = exporter.export_schema(self.current_schema)
+            exporter.export_all(self.current_schema, output_dir)
             html_path = os.path.join(output_dir, f"{self.current_schema.schema_id}_form.html")
+            if hasattr(self.ui, 'shaclTextEdit'):
+                self.ui.shaclTextEdit.setPlainText(turtle_str)
             webbrowser.open(f"file://{html_path}")
             self.ui.statusbar.showMessage(f"Form opened in browser: {html_path}")
         except Exception as e:

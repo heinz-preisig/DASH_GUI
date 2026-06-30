@@ -35,7 +35,7 @@ class SHACLExporter:
 <head>
   <meta charset="UTF-8">
   <title>{schema.name} \u2014 Form</title>
-  <script src="https://cdn.jsdelivr.net/npm/@ulb-darmstadt/shacl-form/dist/bundle.js" type="module"></script>
+  <script type="module" src="https://unpkg.com/@ulb-darmstadt/shacl-form@3.1.0/dist/bundle.js"></script>
   <style>
     body {{ font-family: Arial, sans-serif; max-width: 860px; margin: 40px auto; padding: 0 20px; }}
     h1 {{ font-size: 1.4rem; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 8px; }}
@@ -481,7 +481,7 @@ class SHACLExporter:
             if child_ui and child_ui.group_id:
                 shacl_lines.append(f"        sh:group schema:{child_ui.group_id.replace(' ', '_')} ;")
             if edge:
-                if edge.min_count is not None:
+                if edge.min_count is not None and edge.min_count > 0:
                     shacl_lines.append(f"        sh:minCount {edge.min_count} ;")
                 if edge.max_count is not None:
                     shacl_lines.append(f"        sh:maxCount {edge.max_count} ;")

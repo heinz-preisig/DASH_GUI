@@ -264,6 +264,36 @@ except Exception as e:
 "
 ```
 
+## Form Preview Issues
+
+### shacl-form Fails to Load
+
+#### Problem: `Unexpected token 'export'` or `Failed to resolve module specifier "n3"`
+**Causes**:
+- `dist/bundle.js` from `@ulb-darmstadt/shacl-form` is an ES module — must be loaded with `type="module"`
+- CDN services like esm.sh may downcompile ES classes, breaking N3's `ReadableStream` subclassing
+
+**Solution**: Serve the bundle locally (already set up):
+```
+schema_app/interfaces/web/static/shacl-form-bundle.js
+```
+Loaded in `flask_app.py` as:
+```html
+<script type="module" src="/static/shacl-form-bundle.js"></script>
+```
+To upgrade the bundle to a new version:
+```bash
+cd /tmp
+curl -sL "https://registry.npmjs.org/@ulb-darmstadt/shacl-form/-/shacl-form-X.Y.Z.tgz" | tar -xz
+cp package/dist/bundle.js /path/to/DASH_GUI/schema_app/interfaces/web/static/shacl-form-bundle.js
+```
+
+#### Problem: Optional nested sections appear as `+ Section Name` (collapsed)
+**Cause**: `shacl_export.py` emitting `sh:minCount 0` on `sh:node` property blocks triggers `shacl-form` to render them as collapsed optional sections.
+**Fix**: Already applied — `sh:minCount` is only emitted when value `>= 1`.
+
+---
+
 ## Schema Issues
 
 ### Validation Errors
